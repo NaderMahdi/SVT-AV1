@@ -1258,7 +1258,10 @@ void CopyStatisticsToRefObject(
     ((EbReferenceObject_t*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->objectPtr)->tmpLayerIdx = (uint8_t)picture_control_set_ptr->temporal_layer_index;
     ((EbReferenceObject_t*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->objectPtr)->isSceneChange = picture_control_set_ptr->parent_pcs_ptr->scene_change_flag;
 
-
+#if FAST_CDEF
+	Av1Common* cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
+	((EbReferenceObject_t*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->objectPtr)->cdef_frame_strength = picture_control_set_ptr->parent_pcs_ptr->cdef_frame_strength;
+#endif
 }
 
 

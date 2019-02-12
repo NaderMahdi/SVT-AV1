@@ -591,6 +591,40 @@ void SetSliceAndPictureChromaQpOffsets(
 
 }
 
+#if FAST_CDEF
+/******************************************************
+* Set the reference cdef strength for a given picture
+******************************************************/
+set_reference_cdef_strength(
+	PictureControlSet_t                    *picture_control_set_ptr)
+{
+
+	if (picture_control_set_ptr->slice_type == I_SLICE) {
+		picture_control_set_ptr->parent_pcs_ptr->use_ref_frame_cdef_strength = 0;
+		picture_control_set_ptr->parent_pcs_ptr->cdf_ref_frame_strenght = 0;
+	}
+	else if (picture_control_set_ptr->slice_type == B_SLICE) {
+		EbReferenceObject_t  * refObjL0, *refObjL1;
+		refObjL0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->objectPtr;
+		refObjL1 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->objectPtr;
+
+		int32_t strength = (refObjL0->cdef_frame_strength + refObjL1->cdef_frame_strength) / 2;
+		picture_control_set_ptr->parent_pcs_ptr->use_ref_frame_cdef_strength = 1;
+		picture_control_set_ptr->parent_pcs_ptr->cdf_ref_frame_strenght = strength;
+	}
+	else if (picture_control_set_ptr->slice_type == P_SLICE) {
+		EbReferenceObject_t  * refObjL0;
+		refObjL0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->objectPtr;
+		int32_t strength = refObjL0->cdef_frame_strength;
+		picture_control_set_ptr->parent_pcs_ptr->use_ref_frame_cdef_strength = 1;
+		picture_control_set_ptr->parent_pcs_ptr->cdf_ref_frame_strenght = strength;
+	}
+	else {
+		printf("Not supported picture type");
+	}
+
+}
+#endif
 /******************************************************
 * Compute Tc, and Beta offsets for a given picture
 ******************************************************/
@@ -2674,6 +2708,11 @@ void* ModeDecisionConfigurationKernel(void *input_ptr)
             picture_control_set_ptr,
             picture_control_set_ptr->slice_type == I_SLICE ? EB_FALSE : picture_control_set_ptr->parent_pcs_ptr->scene_transition_flag[REF_LIST_0]);
 
+#if FAST_CDEF
+		// Set reference strength 
+		set_reference_cdef_strength(
+			picture_control_set_ptr);
+#endif
 
         SetGlobalMotionField(
             picture_control_set_ptr);

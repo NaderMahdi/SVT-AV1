@@ -49,6 +49,7 @@ extern "C" {
 #define    DLF_TEST3                                       0
 #define    DLF_TEST4                                       0
 
+
 #define INTRA_CORE_OPT                                  1
 
 #define ENCODER_MODE_CLEANUP                            1                                          
@@ -141,7 +142,7 @@ extern "C" {
 #define REST_REF_ONLY                                   0 //REST for ref frame only
 #define REDUCE_COPY_CDEF                                1
 
-
+#define	FAST_CDEF                                       0
 /********************************************************/
 /****************** Pre-defined Values ******************/
 /********************************************************/
