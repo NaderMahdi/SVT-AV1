@@ -627,7 +627,13 @@ static void apply_sgr(int32_t sgr_params_idx, const uint8_t *dat8, int32_t width
 static SgrprojInfo search_selfguided_restoration(
     const uint8_t *dat8, int32_t width, int32_t height, int32_t dat_stride,
     const uint8_t *src8, int32_t src_stride, int32_t use_highbitdepth, int32_t bit_depth,
-    int32_t pu_width, int32_t pu_height, int32_t *rstbuf)
+    int32_t pu_width, int32_t pu_height, int32_t *rstbuf
+#if FAST_SG
+	, 
+	int8_t sg_ref_frame_ep[2],
+	int32_t sg_frame_ep_cnt[SGRPROJ_PARAMS]
+#endif
+)
 {
     int32_t *flt0 = rstbuf;
     int32_t *flt1 = flt0 + RESTORATION_UNITPELS_MAX;
@@ -639,7 +645,49 @@ static SgrprojInfo search_selfguided_restoration(
         pu_width == RESTORATION_PROC_UNIT_SIZE);
     assert(pu_height == (RESTORATION_PROC_UNIT_SIZE >> 1) ||
         pu_height == RESTORATION_PROC_UNIT_SIZE);
+#if FAST_SG
+	// NADER: change the step to play with the number of iterations 
+#if	SG_TEST2_STEP0
+	int8_t step = 0;
+#elif SG_TEST2_STEP1
+	int8_t step = 1;
+#elif SG_TEST2_STEP4
+	int8_t step = 4;
+#else 
+	int8_t step = 0;//SGRPROJ_PARAMS;
+#endif
 
+	int8_t mid_ep = sg_ref_frame_ep[0] < 0 && sg_ref_frame_ep[1] < 0 ? 0 :
+		sg_ref_frame_ep[1] < 0 ? sg_ref_frame_ep[0] :
+		sg_ref_frame_ep[0] < 0 ? sg_ref_frame_ep[1] :
+		(sg_ref_frame_ep[0] + sg_ref_frame_ep[1]) / 2;
+
+	int8_t start_ep = sg_ref_frame_ep[0] < 0 && sg_ref_frame_ep[1] < 0 ? 0 : AOMMAX(0, mid_ep - step);
+	int8_t end_ep = sg_ref_frame_ep[0] < 0 && sg_ref_frame_ep[1] < 0 ? SGRPROJ_PARAMS : AOMMIN(SGRPROJ_PARAMS, mid_ep + step);
+
+	for (ep = start_ep; ep < end_ep; ep++) {
+		int32_t exq[2];
+		apply_sgr(ep, dat8, width, height, dat_stride, use_highbitdepth, bit_depth,
+			pu_width, pu_height, flt0, flt1, flt_stride);
+		aom_clear_system_state();
+		const sgr_params_type *const params = &sgr_params[ep];
+		get_proj_subspace(src8, width, height, src_stride, dat8, dat_stride,
+			use_highbitdepth, flt0, flt_stride, flt1, flt_stride, exq,
+			params);
+		aom_clear_system_state();
+		encode_xq(exq, exqd, params);
+		int64_t err = finer_search_pixel_proj_error(
+			src8, width, height, src_stride, dat8, dat_stride, use_highbitdepth,
+			flt0, flt_stride, flt1, flt_stride, 2, exqd, params);
+		if (besterr == -1 || err < besterr) {
+			bestep = ep;
+			besterr = err;
+			bestxqd[0] = exqd[0];
+			bestxqd[1] = exqd[1];
+		}
+	}
+	sg_frame_ep_cnt[bestep]++;
+#else
     for (ep = 0; ep < SGRPROJ_PARAMS; ep++) {
         int32_t exq[2];
         apply_sgr(ep, dat8, width, height, dat_stride, use_highbitdepth, bit_depth,
@@ -661,7 +709,7 @@ static SgrprojInfo search_selfguided_restoration(
             bestxqd[1] = exqd[1];
         }
     }
-
+#endif
     SgrprojInfo ret;
     ret.ep = bestep;
     ret.xqd[0] = bestxqd[0];
@@ -694,7 +742,11 @@ static void search_sgrproj(const RestorationTileLimits *limits,
     RestUnitSearchInfo *rusi = &rsc->rusi[rest_unit_idx];
 
     const Macroblock *const x = rsc->x;
+#if FAST_SG
+	Av1Common *const cm = rsc->cm;
+#else
     const Av1Common *const cm = rsc->cm;
+#endif
     const int32_t highbd = cm->use_highbitdepth;
     const int32_t bit_depth = cm->bit_depth;
 
@@ -713,7 +765,12 @@ static void search_sgrproj(const RestorationTileLimits *limits,
         dgd_start, limits->h_end - limits->h_start,
         limits->v_end - limits->v_start, rsc->dgd_stride, src_start,
         rsc->src_stride, highbd, bit_depth, procunit_width, procunit_height,
-        cm->rst_tmpbuf);
+        cm->rst_tmpbuf
+#if FAST_SG
+		, cm->sg_ref_frame_ep,
+		cm->sg_frame_ep_cnt
+#endif
+	);
 
     RestorationUnitInfo rui;
     rui.restoration_type = RESTORE_SGRPROJ;
@@ -1673,8 +1730,11 @@ static void search_sgrproj_seg(const RestorationTileLimits *limits,
     RestSearchCtxt *rsc = (RestSearchCtxt *)priv;
     RestUnitSearchInfo *rusi = &rsc->rusi[rest_unit_idx];
 
-   
-    const Av1Common *const cm = rsc->cm;
+#if FAST_SG
+	Av1Common *const cm = rsc->cm;
+#else
+	const Av1Common *const cm = rsc->cm;
+#endif
     const int32_t highbd = cm->use_highbitdepth;
     const int32_t bit_depth = cm->bit_depth;
 
@@ -1693,7 +1753,12 @@ static void search_sgrproj_seg(const RestorationTileLimits *limits,
         dgd_start, limits->h_end - limits->h_start,
         limits->v_end - limits->v_start, rsc->dgd_stride, src_start,
         rsc->src_stride, highbd, bit_depth, procunit_width, procunit_height,
-        rsc->tmpbuf);
+        rsc->tmpbuf
+#if FAST_SG
+		, cm->sg_ref_frame_ep,
+		cm->sg_frame_ep_cnt
+#endif
+	);
 
 
     RestorationUnitInfo rui;

@@ -591,6 +591,40 @@ void SetSliceAndPictureChromaQpOffsets(
 
 }
 
+#if FAST_SG
+/******************************************************
+* Set the reference sg ep for a given picture
+******************************************************/
+set_reference_sg_ep(
+	PictureControlSet_t                    *picture_control_set_ptr)
+{
+
+	Av1Common* cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
+
+	memset(cm->sg_frame_ep_cnt, 0, SGRPROJ_PARAMS * sizeof(int32_t));
+	cm->sg_frame_ep = 0;
+
+	// NADER: set cm->sg_ref_frame_ep[0] = cm->sg_ref_frame_ep[1] = -1 to perform all iterations
+	if (picture_control_set_ptr->slice_type == I_SLICE) {
+		cm->sg_ref_frame_ep[0] = cm->sg_ref_frame_ep[1] = -1;
+	}
+	else if (picture_control_set_ptr->slice_type == B_SLICE) {
+		EbReferenceObject_t  * refObjL0, *refObjL1;
+		refObjL0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->objectPtr;
+		refObjL1 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->objectPtr;
+		cm->sg_ref_frame_ep[0] = refObjL0->sg_frame_ep;
+		cm->sg_ref_frame_ep[1] = refObjL1->sg_frame_ep;
+	}
+	else if (picture_control_set_ptr->slice_type == P_SLICE) {
+		EbReferenceObject_t  * refObjL0;
+		refObjL0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->objectPtr;
+		cm->sg_ref_frame_ep[0] = refObjL0->sg_frame_ep;
+	}
+	else {
+		printf("Not supported picture type");
+	}
+}
+#endif
 #if FAST_CDEF
 /******************************************************
 * Set the reference cdef strength for a given picture
@@ -2709,11 +2743,16 @@ void* ModeDecisionConfigurationKernel(void *input_ptr)
             picture_control_set_ptr->slice_type == I_SLICE ? EB_FALSE : picture_control_set_ptr->parent_pcs_ptr->scene_transition_flag[REF_LIST_0]);
 
 #if FAST_CDEF
-		// Set reference strength 
+		// Set reference cdef strength 
 		set_reference_cdef_strength(
 			picture_control_set_ptr);
 #endif
 
+#if FAST_SG
+		// Set reference sg ep 
+		set_reference_sg_ep(
+			picture_control_set_ptr);
+#endif
         SetGlobalMotionField(
             picture_control_set_ptr);
 

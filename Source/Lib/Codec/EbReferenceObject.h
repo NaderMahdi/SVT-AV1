@@ -37,6 +37,9 @@ typedef struct EbReferenceObject_s {
 #if FAST_CDEF
 	uint32_t                        cdef_frame_strength;
 #endif
+#if FAST_SG
+	int8_t                          sg_frame_ep;
+#endif
 } EbReferenceObject_t;
 
 typedef struct EbReferenceObjectDescInitData_s {
