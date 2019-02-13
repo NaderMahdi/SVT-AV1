@@ -402,7 +402,26 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
     else {
         picture_control_set_ptr->loop_filter_mode = 0;
-    }
+    } 
+	// CDEF Level                                   Settings
+	// 0                                            OFF
+	// 1                                            4 step refinement
+	// 2                                            8 step refinement
+	// 3                                            16 step refinement
+	SequenceControlSet_t                    *sequence_control_set_ptr;
+	sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->objectPtr;
+	if (sequence_control_set_ptr->enable_cdef) {
+		if (picture_control_set_ptr->enc_mode >= ENC_M3)
+			picture_control_set_ptr->cdef_filter_mode = 1;
+		else  if (picture_control_set_ptr->enc_mode == ENC_M2)
+			picture_control_set_ptr->cdef_filter_mode = 2;
+		else  if (picture_control_set_ptr->enc_mode <= ENC_M1)
+			picture_control_set_ptr->cdef_filter_mode = 3;
+	}
+	else {
+		picture_control_set_ptr->cdef_filter_mode = 0;
+	}
+
 
     // Loop filter Level                            Settings
     // 0                                            LIGHT: disable_z2_prediction && disable_angle_refinement

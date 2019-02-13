@@ -197,7 +197,7 @@ void* dlf_kernel(void *input_ptr)
             }
 
 #if CDEF_M
-            if (sequence_control_set_ptr->enable_cdef)
+            if (sequence_control_set_ptr->enable_cdef && picture_control_set_ptr->parent_pcs_ptr->cdef_filter_mode)
             {
 #endif
                 if (is16bit)

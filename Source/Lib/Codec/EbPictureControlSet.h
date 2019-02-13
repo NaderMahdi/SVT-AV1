@@ -14271,10 +14271,12 @@ extern "C" {
         RestUnitSearchInfo                   *rusi_picture[3];//for 3 planes
 #endif
 #if FAST_CDEF
+		int8_t                                cdef_filter_mode;
 		int32_t                               cdef_frame_strength;
 		int32_t                               cdf_ref_frame_strenght;
 		int32_t                               use_ref_frame_cdef_strength;
 #endif
+
     } PictureParentControlSet_t;
 
 

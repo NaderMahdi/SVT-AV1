@@ -1927,15 +1927,7 @@ void av1_cdef_search(
                     stride[pli], ysize, xsize);
 #endif
 #if FAST_CDEF
-#if CDEF_STEP_4
-				gi_step = 4;
-#elif CDEF_STEP_8
-				gi_step = 8;
-#elif CDEF_STEP_16
-				gi_step = 16;
-#else
-				gi_step = 64;
-#endif
+				gi_step = pPcs->cdef_filter_mode == 1 ? 4 : pPcs->cdef_filter_mode == 2 ? 8 : pPcs->cdef_filter_mode == 3 ? 16 : 64;
 				mid_gi = pPcs->cdf_ref_frame_strenght;
 				start_gi = 0;
 				end_gi = pPcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step) : total_strengths;
@@ -2332,15 +2324,7 @@ void av1_cdef_search16bit(
                 for (i = 0; i < CDEF_INBUF_SIZE; i++)
                     inbuf[i] = CDEF_VERY_LARGE;
 #if FAST_CDEF
-#if CDEF_STEP_4
-				gi_step = 4;
-#elif CDEF_STEP_8
-				gi_step = 8;
-#elif CDEF_STEP_16
-				gi_step = 16;
-#else
-				gi_step = 64;
-#endif
+				gi_step = pPcs->cdef_filter_mode == 1 ? 4 : pPcs->cdef_filter_mode == 2 ? 8 : pPcs->cdef_filter_mode == 3 ? 16 : 64;
 				mid_gi = pPcs->cdf_ref_frame_strenght;
 				start_gi = 0;
 				end_gi = pPcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step) : total_strengths;
