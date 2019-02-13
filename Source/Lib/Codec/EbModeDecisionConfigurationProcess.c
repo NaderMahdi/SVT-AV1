@@ -595,33 +595,33 @@ void SetSliceAndPictureChromaQpOffsets(
 /******************************************************
 * Set the reference sg ep for a given picture
 ******************************************************/
-set_reference_sg_ep(
+void set_reference_sg_ep(
 	PictureControlSet_t                    *picture_control_set_ptr)
 {
 
 	Av1Common* cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
-
+	EbReferenceObject_t  * refObjL0, *refObjL1;
 	memset(cm->sg_frame_ep_cnt, 0, SGRPROJ_PARAMS * sizeof(int32_t));
 	cm->sg_frame_ep = 0;
 
 	// NADER: set cm->sg_ref_frame_ep[0] = cm->sg_ref_frame_ep[1] = -1 to perform all iterations
-	if (picture_control_set_ptr->slice_type == I_SLICE) {
+	switch(picture_control_set_ptr->slice_type){
+	case I_SLICE:
 		cm->sg_ref_frame_ep[0] = cm->sg_ref_frame_ep[1] = -1;
-	}
-	else if (picture_control_set_ptr->slice_type == B_SLICE) {
-		EbReferenceObject_t  * refObjL0, *refObjL1;
+		break;
+	case B_SLICE:
 		refObjL0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->objectPtr;
 		refObjL1 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->objectPtr;
 		cm->sg_ref_frame_ep[0] = refObjL0->sg_frame_ep;
 		cm->sg_ref_frame_ep[1] = refObjL1->sg_frame_ep;
-	}
-	else if (picture_control_set_ptr->slice_type == P_SLICE) {
-		EbReferenceObject_t  * refObjL0;
+		break;
+	case P_SLICE:
 		refObjL0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->objectPtr;
 		cm->sg_ref_frame_ep[0] = refObjL0->sg_frame_ep;
-	}
-	else {
-		printf("Not supported picture type");
+		break;
+	default:
+		printf("SG: Not supported picture type");
+		break;
 	}
 }
 #endif
@@ -629,34 +629,34 @@ set_reference_sg_ep(
 /******************************************************
 * Set the reference cdef strength for a given picture
 ******************************************************/
-set_reference_cdef_strength(
+void set_reference_cdef_strength(
 	PictureControlSet_t                    *picture_control_set_ptr)
 {
-
-	if (picture_control_set_ptr->slice_type == I_SLICE) {
+	EbReferenceObject_t  * refObjL0, *refObjL1;
+	int32_t strength;
+	// NADER: set picture_control_set_ptr->parent_pcs_ptr->use_ref_frame_cdef_strength 0 to test all strengths
+	switch (picture_control_set_ptr->slice_type) {
+	case I_SLICE:
 		picture_control_set_ptr->parent_pcs_ptr->use_ref_frame_cdef_strength = 0;
 		picture_control_set_ptr->parent_pcs_ptr->cdf_ref_frame_strenght = 0;
-	}
-	else if (picture_control_set_ptr->slice_type == B_SLICE) {
-		EbReferenceObject_t  * refObjL0, *refObjL1;
+		break;
+	case B_SLICE:
 		refObjL0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->objectPtr;
 		refObjL1 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->objectPtr;
-
-		int32_t strength = (refObjL0->cdef_frame_strength + refObjL1->cdef_frame_strength) / 2;
+		strength = (refObjL0->cdef_frame_strength + refObjL1->cdef_frame_strength) / 2;
 		picture_control_set_ptr->parent_pcs_ptr->use_ref_frame_cdef_strength = 1;
 		picture_control_set_ptr->parent_pcs_ptr->cdf_ref_frame_strenght = strength;
-	}
-	else if (picture_control_set_ptr->slice_type == P_SLICE) {
-		EbReferenceObject_t  * refObjL0;
+		break;
+	case P_SLICE:
 		refObjL0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->objectPtr;
-		int32_t strength = refObjL0->cdef_frame_strength;
+		strength = refObjL0->cdef_frame_strength;
 		picture_control_set_ptr->parent_pcs_ptr->use_ref_frame_cdef_strength = 1;
 		picture_control_set_ptr->parent_pcs_ptr->cdf_ref_frame_strenght = strength;
+		break;
+	default:
+		printf("CDEF: Not supported picture type");
+		break;
 	}
-	else {
-		printf("Not supported picture type");
-	}
-
 }
 #endif
 /******************************************************
