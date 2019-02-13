@@ -13621,6 +13621,9 @@ extern "C" {
 		int32_t sg_frame_ep;
 		int8_t  sg_ref_frame_ep[2];
 #endif
+#if FAST_SG
+		int8_t  wn_filter_mode;
+#endif
     } Av1Common;
 
     /**************************************

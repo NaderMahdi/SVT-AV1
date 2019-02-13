@@ -440,7 +440,18 @@ EbErrorType signal_derivation_multi_processes_oq(
 		cm->sg_filter_mode = 3;
 #endif
 
-    // Loop filter Level                            Settings
+#if FAST_WN
+	// WN Level                                     Settings
+    // 1                                            5-Tap luma/ 5-Tap chroma
+	// 2                                            7-Tap luma/ 5-Tap chroma
+
+	if (picture_control_set_ptr->enc_mode >= ENC_M1)
+		cm->wn_filter_mode = 1;
+	else 
+		cm->wn_filter_mode = 2;
+#endif
+
+    // Intra pred Level                             Settings
     // 0                                            LIGHT: disable_z2_prediction && disable_angle_refinement
     // 1                                            FULL
     if (picture_control_set_ptr->temporal_layer_index == 0)

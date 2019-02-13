@@ -139,7 +139,7 @@ extern "C" {
 
 #define	FAST_CDEF                                       1
 #define	FAST_SG                                         1
-#define WN_5TAP                                         0
+#define FAST_WN                                         1
 
 /********************************************************/
 /****************** Pre-defined Values ******************/

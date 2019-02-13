@@ -1422,9 +1422,11 @@ static void search_wiener(const RestorationTileLimits *limits,
     void *priv) {
     RestSearchCtxt *rsc = (RestSearchCtxt *)priv;
     RestUnitSearchInfo *rusi = &rsc->rusi[rest_unit_idx];
-#if WN_5TAP
+	const Av1Common *const cm = rsc->cm;
+#if FAST_WN
+	int32_t wn_luma = cm->wn_filter_mode == 1 ? WIENER_WIN_CHROMA : WIENER_WIN;
 	const int32_t wiener_win =
-		(rsc->plane == AOM_PLANE_Y) ? WIENER_WIN_CHROMA : WIENER_WIN_CHROMA;
+		(rsc->plane == AOM_PLANE_Y) ? wn_luma : WIENER_WIN_CHROMA;
 #else
     const int32_t wiener_win =
         (rsc->plane == AOM_PLANE_Y) ? WIENER_WIN : WIENER_WIN_CHROMA;
@@ -1433,7 +1435,7 @@ static void search_wiener(const RestorationTileLimits *limits,
     int64_t H[WIENER_WIN2 * WIENER_WIN2];
     int32_t vfilterd[WIENER_WIN], hfilterd[WIENER_WIN];
 
-    const Av1Common *const cm = rsc->cm;
+
     if (cm->use_highbitdepth)
     {
         if (rsc->plane == AOM_PLANE_Y) {
@@ -1811,9 +1813,11 @@ static void search_wiener_seg(const RestorationTileLimits *limits,
     void *priv) {
     RestSearchCtxt *rsc = (RestSearchCtxt *)priv;
     RestUnitSearchInfo *rusi = &rsc->rusi[rest_unit_idx];
-#if WN_5TAP
+	const Av1Common *const cm = rsc->cm;
+#if FAST_WN
+	int32_t wn_luma = cm->wn_filter_mode == 1 ? WIENER_WIN_CHROMA : WIENER_WIN;
 	const int32_t wiener_win =
-		(rsc->plane == AOM_PLANE_Y) ? WIENER_WIN_CHROMA : WIENER_WIN_CHROMA;
+		(rsc->plane == AOM_PLANE_Y) ? wn_luma : WIENER_WIN_CHROMA;
 #else
     const int32_t wiener_win =
         (rsc->plane == AOM_PLANE_Y) ? WIENER_WIN : WIENER_WIN_CHROMA;
@@ -1822,7 +1826,7 @@ static void search_wiener_seg(const RestorationTileLimits *limits,
     int64_t H[WIENER_WIN2 * WIENER_WIN2];
     int32_t vfilterd[WIENER_WIN], hfilterd[WIENER_WIN];
 
-    const Av1Common *const cm = rsc->cm;
+    
     if (cm->use_highbitdepth)
     {
         if (rsc->plane == AOM_PLANE_Y) {
@@ -1900,7 +1904,9 @@ static void search_wiener_finish(const RestorationTileLimits *limits,
     (void)tile_rect;
     RestSearchCtxt *rsc = (RestSearchCtxt *)priv;
     RestUnitSearchInfo *rusi = &rsc->rusi[rest_unit_idx];
-#if WN_5TAP
+#if FAST_WN
+	const Av1Common *const cm = rsc->cm;
+	int32_t wn_luma = cm->wn_filter_mode == 1 ? WIENER_WIN_CHROMA : WIENER_WIN;
 	const int32_t wiener_win =
 		(rsc->plane == AOM_PLANE_Y) ? WIENER_WIN_CHROMA : WIENER_WIN_CHROMA;
 #else
