@@ -13616,13 +13616,13 @@ extern "C" {
         int32_t tile_width, tile_height;               // In MI units
         struct PictureParentControlSet_s               *p_pcs_ptr;
 #if FAST_SG
-		int8_t  sg_filter_mode;
-		int32_t sg_frame_ep_cnt[SGRPROJ_PARAMS];
-		int32_t sg_frame_ep;
-		int8_t  sg_ref_frame_ep[2];
+        int8_t  sg_filter_mode;
+        int32_t sg_frame_ep_cnt[SGRPROJ_PARAMS];
+        int32_t sg_frame_ep;
+        int8_t  sg_ref_frame_ep[2];
 #endif
 #if FAST_SG
-		int8_t  wn_filter_mode;
+        int8_t  wn_filter_mode;
 #endif
     } Av1Common;
 
@@ -14275,10 +14275,10 @@ extern "C" {
         RestUnitSearchInfo                   *rusi_picture[3];//for 3 planes
 #endif
 #if FAST_CDEF
-		int8_t                                cdef_filter_mode;
-		int32_t                               cdef_frame_strength;
-		int32_t                               cdf_ref_frame_strenght;
-		int32_t                               use_ref_frame_cdef_strength;
+        int8_t                                cdef_filter_mode;
+        int32_t                               cdef_frame_strength;
+        int32_t                               cdf_ref_frame_strenght;
+        int32_t                               use_ref_frame_cdef_strength;
 #endif
 
     } PictureParentControlSet_t;

@@ -35,10 +35,10 @@ typedef struct EbReferenceObject_s {
     uint8_t                         average_intensity;
     aom_film_grain_t                film_grain_params; //Film grain parameters for a reference frame
 #if FAST_CDEF
-	uint32_t                        cdef_frame_strength;
+    uint32_t                        cdef_frame_strength;
 #endif
 #if FAST_SG
-	int8_t                          sg_frame_ep;
+    int8_t                          sg_frame_ep;
 #endif
 } EbReferenceObject_t;
 

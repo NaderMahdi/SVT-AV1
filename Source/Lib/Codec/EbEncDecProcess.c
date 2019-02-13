@@ -1259,11 +1259,11 @@ void CopyStatisticsToRefObject(
     ((EbReferenceObject_t*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->objectPtr)->isSceneChange = picture_control_set_ptr->parent_pcs_ptr->scene_change_flag;
 
 #if FAST_CDEF
-	((EbReferenceObject_t*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->objectPtr)->cdef_frame_strength = picture_control_set_ptr->parent_pcs_ptr->cdef_frame_strength;
+    ((EbReferenceObject_t*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->objectPtr)->cdef_frame_strength = picture_control_set_ptr->parent_pcs_ptr->cdef_frame_strength;
 #endif
 #if FAST_SG
-	Av1Common* cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
-	((EbReferenceObject_t*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->objectPtr)->sg_frame_ep = cm->sg_frame_ep;
+    Av1Common* cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
+    ((EbReferenceObject_t*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->objectPtr)->sg_frame_ep = cm->sg_frame_ep;
 #endif
 }
 
@@ -1839,15 +1839,15 @@ void* EncDecKernel(void *input_ptr)
 #endif
 #if !FILT_PROC
 #if FAST_SG
-			uint8_t best_ep_cnt = 0;
-			uint8_t best_ep = 0;
-			for (uint8_t i = 0; i < 16; i++) {
-				if (cm->sg_frame_ep_cnt[i] > best_ep_cnt) {
-					best_ep = i;
-					best_ep_cnt = picture_control_set_ptr->parent_pcs_ptr->sg_frame_ep_cnt[i];
-				}
-			}
-			cm->sg_frame_ep = best_ep;
+            uint8_t best_ep_cnt = 0;
+            uint8_t best_ep = 0;
+            for (uint8_t i = 0; i < 16; i++) {
+                if (cm->sg_frame_ep_cnt[i] > best_ep_cnt) {
+                    best_ep = i;
+                    best_ep_cnt = picture_control_set_ptr->parent_pcs_ptr->sg_frame_ep_cnt[i];
+                }
+            }
+            cm->sg_frame_ep = best_ep;
 #endif
             if (picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr != NULL) {
                 // copy stat to ref object (intra_coded_area, Luminance, Scene change detection flags)

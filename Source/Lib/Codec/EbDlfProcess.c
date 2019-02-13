@@ -138,15 +138,15 @@ void* dlf_kernel(void *input_ptr)
 
             av1_loop_filter_init(picture_control_set_ptr);
 
-			if (picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode == 2) {
+            if (picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode == 2) {
 
-				av1_pick_filter_level(
-					context_ptr,
-					(EbPictureBufferDesc_t*)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr,
-					picture_control_set_ptr,
-					LPF_PICK_FROM_Q);
+                av1_pick_filter_level(
+                    context_ptr,
+                    (EbPictureBufferDesc_t*)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr,
+                    picture_control_set_ptr,
+                    LPF_PICK_FROM_Q);
 
-			}
+            }
 
             av1_pick_filter_level(
                 context_ptr,

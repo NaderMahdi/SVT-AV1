@@ -1880,108 +1880,108 @@ static int32_t search_filter_level(
     filt_best = filt_mid;
     ss_err[filt_mid] = best_err;
 
-	if (pcsPtr->parent_pcs_ptr->loop_filter_mode <= 2) {
-		filter_step = 2;
-		const int32_t filt_high = AOMMIN(filt_mid + filter_step, max_filter_level);
-		const int32_t filt_low = AOMMAX(filt_mid - filter_step, min_filter_level);
+    if (pcsPtr->parent_pcs_ptr->loop_filter_mode <= 2) {
+        filter_step = 2;
+        const int32_t filt_high = AOMMIN(filt_mid + filter_step, max_filter_level);
+        const int32_t filt_low = AOMMAX(filt_mid - filter_step, min_filter_level);
 
-		// Bias against raising loop filter in favor of lowering it.
-		int64_t bias = (best_err >> (15 - (filt_mid / 8))) * filter_step;
+        // Bias against raising loop filter in favor of lowering it.
+        int64_t bias = (best_err >> (15 - (filt_mid / 8))) * filter_step;
 
-		//if ((cpi->oxcf.pass == 2) && (cpi->twopass.section_intra_rating < 20))
-		//    bias = (bias * cpi->twopass.section_intra_rating) / 20;
+        //if ((cpi->oxcf.pass == 2) && (cpi->twopass.section_intra_rating < 20))
+        //    bias = (bias * cpi->twopass.section_intra_rating) / 20;
 
-		// yx, bias less for large block size
-		if (pcsPtr->parent_pcs_ptr->tx_mode != ONLY_4X4) bias >>= 1;
+        // yx, bias less for large block size
+        if (pcsPtr->parent_pcs_ptr->tx_mode != ONLY_4X4) bias >>= 1;
 
-		if (filt_direction <= 0 && filt_low != filt_mid) {
-			// Get Low filter error score
-			if (ss_err[filt_low] < 0) {
-				ss_err[filt_low] =
-					try_filter_frame(sd, tempLfReconBuffer, pcsPtr, filt_low, partial_frame, plane, dir);
-			}
-			// If value is close to the best so far then bias towards a lower loop
-			// filter value.
-			if (ss_err[filt_low] < (best_err + bias)) {
-				// Was it actually better than the previous best?
-				if (ss_err[filt_low] < best_err) {
-					best_err = ss_err[filt_low];
-				}
-				filt_best = filt_low;
-			}
-		}
+        if (filt_direction <= 0 && filt_low != filt_mid) {
+            // Get Low filter error score
+            if (ss_err[filt_low] < 0) {
+                ss_err[filt_low] =
+                    try_filter_frame(sd, tempLfReconBuffer, pcsPtr, filt_low, partial_frame, plane, dir);
+            }
+            // If value is close to the best so far then bias towards a lower loop
+            // filter value.
+            if (ss_err[filt_low] < (best_err + bias)) {
+                // Was it actually better than the previous best?
+                if (ss_err[filt_low] < best_err) {
+                    best_err = ss_err[filt_low];
+                }
+                filt_best = filt_low;
+            }
+        }
 
-		// Now look at filt_high
-		if (filt_direction >= 0 && filt_high != filt_mid) {
-			if (ss_err[filt_high] < 0) {
-				ss_err[filt_high] =
-					try_filter_frame(sd, tempLfReconBuffer, pcsPtr, filt_high, partial_frame, plane, dir);
-			}
-			// If value is significantly better than previous best, bias added against
-			// raising filter value
-			if (ss_err[filt_high] < (best_err - bias)) {
-				best_err = ss_err[filt_high];
-				filt_best = filt_high;
-			}
-		}
-	}
-	else {
+        // Now look at filt_high
+        if (filt_direction >= 0 && filt_high != filt_mid) {
+            if (ss_err[filt_high] < 0) {
+                ss_err[filt_high] =
+                    try_filter_frame(sd, tempLfReconBuffer, pcsPtr, filt_high, partial_frame, plane, dir);
+            }
+            // If value is significantly better than previous best, bias added against
+            // raising filter value
+            if (ss_err[filt_high] < (best_err - bias)) {
+                best_err = ss_err[filt_high];
+                filt_best = filt_high;
+            }
+        }
+    }
+    else {
 
-		while (filter_step > 0) {
-			const int32_t filt_high = AOMMIN(filt_mid + filter_step, max_filter_level);
-			const int32_t filt_low = AOMMAX(filt_mid - filter_step, min_filter_level);
+        while (filter_step > 0) {
+            const int32_t filt_high = AOMMIN(filt_mid + filter_step, max_filter_level);
+            const int32_t filt_low = AOMMAX(filt_mid - filter_step, min_filter_level);
 
-			// Bias against raising loop filter in favor of lowering it.
-			int64_t bias = (best_err >> (15 - (filt_mid / 8))) * filter_step;
+            // Bias against raising loop filter in favor of lowering it.
+            int64_t bias = (best_err >> (15 - (filt_mid / 8))) * filter_step;
 
-			//if ((cpi->oxcf.pass == 2) && (cpi->twopass.section_intra_rating < 20))
-			//    bias = (bias * cpi->twopass.section_intra_rating) / 20;
+            //if ((cpi->oxcf.pass == 2) && (cpi->twopass.section_intra_rating < 20))
+            //    bias = (bias * cpi->twopass.section_intra_rating) / 20;
 
-			// yx, bias less for large block size
-			if (pcsPtr->parent_pcs_ptr->tx_mode != ONLY_4X4) bias >>= 1;
+            // yx, bias less for large block size
+            if (pcsPtr->parent_pcs_ptr->tx_mode != ONLY_4X4) bias >>= 1;
 
-			if (filt_direction <= 0 && filt_low != filt_mid) {
-				// Get Low filter error score
-				if (ss_err[filt_low] < 0) {
-					ss_err[filt_low] =
-						try_filter_frame(sd, tempLfReconBuffer, pcsPtr, filt_low, partial_frame, plane, dir);
-				}
-				// If value is close to the best so far then bias towards a lower loop
-				// filter value.
-				if (ss_err[filt_low] < (best_err + bias)) {
-					// Was it actually better than the previous best?
-					if (ss_err[filt_low] < best_err) {
-						best_err = ss_err[filt_low];
-					}
-					filt_best = filt_low;
-				}
-			}
+            if (filt_direction <= 0 && filt_low != filt_mid) {
+                // Get Low filter error score
+                if (ss_err[filt_low] < 0) {
+                    ss_err[filt_low] =
+                        try_filter_frame(sd, tempLfReconBuffer, pcsPtr, filt_low, partial_frame, plane, dir);
+                }
+                // If value is close to the best so far then bias towards a lower loop
+                // filter value.
+                if (ss_err[filt_low] < (best_err + bias)) {
+                    // Was it actually better than the previous best?
+                    if (ss_err[filt_low] < best_err) {
+                        best_err = ss_err[filt_low];
+                    }
+                    filt_best = filt_low;
+                }
+            }
 
-			// Now look at filt_high
-			if (filt_direction >= 0 && filt_high != filt_mid) {
-				if (ss_err[filt_high] < 0) {
-					ss_err[filt_high] =
-						try_filter_frame(sd, tempLfReconBuffer, pcsPtr, filt_high, partial_frame, plane, dir);
-				}
-				// If value is significantly better than previous best, bias added against
-				// raising filter value
-				if (ss_err[filt_high] < (best_err - bias)) {
-					best_err = ss_err[filt_high];
-					filt_best = filt_high;
-				}
-			}
+            // Now look at filt_high
+            if (filt_direction >= 0 && filt_high != filt_mid) {
+                if (ss_err[filt_high] < 0) {
+                    ss_err[filt_high] =
+                        try_filter_frame(sd, tempLfReconBuffer, pcsPtr, filt_high, partial_frame, plane, dir);
+                }
+                // If value is significantly better than previous best, bias added against
+                // raising filter value
+                if (ss_err[filt_high] < (best_err - bias)) {
+                    best_err = ss_err[filt_high];
+                    filt_best = filt_high;
+                }
+            }
 
-			// Half the step distance if the best filter value was the same as last time
-			if (filt_best == filt_mid) {
-				filter_step /= 2;
-				filt_direction = 0;
-			}
-			else {
-				filt_direction = (filt_best < filt_mid) ? -1 : 1;
-				filt_mid = filt_best;
-			}
-		}
-	}
+            // Half the step distance if the best filter value was the same as last time
+            if (filt_best == filt_mid) {
+                filter_step /= 2;
+                filt_direction = 0;
+            }
+            else {
+                filt_direction = (filt_best < filt_mid) ? -1 : 1;
+                filt_mid = filt_best;
+            }
+        }
+    }
     // Update best error
     best_err = ss_err[filt_best];
 

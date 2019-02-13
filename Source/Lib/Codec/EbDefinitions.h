@@ -40,7 +40,7 @@ extern "C" {
     ////
 #define MEM_RED4                                        0 //  Reduce mem allocation when DISABLE_128X128_SB is ON
 
-#define FILT_PROC	  1	// New Filtering processes.
+#define FILT_PROC      1    // New Filtering processes.
 #define CDEF_M        1 // multi-threaded cdef
 #define REST_M        1 // multi-threaded restoration
 #define REST_NEED_B   1 // use boundary update in restoration
@@ -137,8 +137,8 @@ extern "C" {
 #define REST_REF_ONLY                                   0 //REST for ref frame only
 #define REDUCE_COPY_CDEF                                1
 
-#define	FAST_CDEF                                       1
-#define	FAST_SG                                         1
+#define    FAST_CDEF                                       1
+#define    FAST_SG                                         1
 #define FAST_WN                                         1
 
 /********************************************************/

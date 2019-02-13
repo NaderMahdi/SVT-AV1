@@ -390,65 +390,65 @@ EbErrorType signal_derivation_multi_processes_oq(
     // Loop filter Level                            Settings
     // 0                                            OFF
     // 1                                            CU-BASED
-	// 2                                            LIGHT FRAME-BASED
+    // 2                                            LIGHT FRAME-BASED
     // 3                                            FULL FRAME-BASED
     if (!picture_control_set_ptr->sequence_control_set_ptr->static_config.disable_dlf_flag){
         if (picture_control_set_ptr->enc_mode >= ENC_M2)
             picture_control_set_ptr->loop_filter_mode = 1;
         else  if (picture_control_set_ptr->enc_mode == ENC_M1)
             picture_control_set_ptr->loop_filter_mode = 2;
-		else  if (picture_control_set_ptr->enc_mode == ENC_M0)
-			picture_control_set_ptr->loop_filter_mode = 3;
+        else  if (picture_control_set_ptr->enc_mode == ENC_M0)
+            picture_control_set_ptr->loop_filter_mode = 3;
     }
     else {
         picture_control_set_ptr->loop_filter_mode = 0;
     } 
 #if FAST_CDEF
-	// CDEF Level                                   Settings
-	// 0                                            OFF
-	// 1                                            4 step refinement
-	// 2                                            8 step refinement
-	// 3                                            16 step refinement
-	SequenceControlSet_t                    *sequence_control_set_ptr;
-	sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->objectPtr;
-	if (sequence_control_set_ptr->enable_cdef) {
-		if (picture_control_set_ptr->enc_mode >= ENC_M3)
-			picture_control_set_ptr->cdef_filter_mode = 1;
-		else  if (picture_control_set_ptr->enc_mode == ENC_M2)
-			picture_control_set_ptr->cdef_filter_mode = 2;
-		else  if (picture_control_set_ptr->enc_mode <= ENC_M1)
-			picture_control_set_ptr->cdef_filter_mode = 3;
-	}
-	else {
-		picture_control_set_ptr->cdef_filter_mode = 0;
-	}
+    // CDEF Level                                   Settings
+    // 0                                            OFF
+    // 1                                            4 step refinement
+    // 2                                            8 step refinement
+    // 3                                            16 step refinement
+    SequenceControlSet_t                    *sequence_control_set_ptr;
+    sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->objectPtr;
+    if (sequence_control_set_ptr->enable_cdef) {
+        if (picture_control_set_ptr->enc_mode >= ENC_M3)
+            picture_control_set_ptr->cdef_filter_mode = 1;
+        else  if (picture_control_set_ptr->enc_mode == ENC_M2)
+            picture_control_set_ptr->cdef_filter_mode = 2;
+        else  if (picture_control_set_ptr->enc_mode <= ENC_M1)
+            picture_control_set_ptr->cdef_filter_mode = 3;
+    }
+    else {
+        picture_control_set_ptr->cdef_filter_mode = 0;
+    }
 #endif
 #if FAST_SG
-	// SG Level                                    Settings
+    // SG Level                                    Settings
     // 0                                            OFF
     // 1                                            0 step refinement
     // 2                                            1 step refinement
     // 3                                            4 step refinement
 
-	Av1Common* cm = picture_control_set_ptr->av1_cm;
+    Av1Common* cm = picture_control_set_ptr->av1_cm;
 
-	if (picture_control_set_ptr->enc_mode >= ENC_M3)
-		cm->sg_filter_mode = 1;
-	else  if (picture_control_set_ptr->enc_mode == ENC_M2)
-		cm->sg_filter_mode = 2;
-	else  if (picture_control_set_ptr->enc_mode <= ENC_M1)
-		cm->sg_filter_mode = 3;
+    if (picture_control_set_ptr->enc_mode >= ENC_M3)
+        cm->sg_filter_mode = 1;
+    else  if (picture_control_set_ptr->enc_mode == ENC_M2)
+        cm->sg_filter_mode = 2;
+    else  if (picture_control_set_ptr->enc_mode <= ENC_M1)
+        cm->sg_filter_mode = 3;
 #endif
 
 #if FAST_WN
-	// WN Level                                     Settings
+    // WN Level                                     Settings
     // 1                                            5-Tap luma/ 5-Tap chroma
-	// 2                                            7-Tap luma/ 5-Tap chroma
+    // 2                                            7-Tap luma/ 5-Tap chroma
 
-	if (picture_control_set_ptr->enc_mode >= ENC_M1)
-		cm->wn_filter_mode = 1;
-	else 
-		cm->wn_filter_mode = 2;
+    if (picture_control_set_ptr->enc_mode >= ENC_M1)
+        cm->wn_filter_mode = 1;
+    else 
+        cm->wn_filter_mode = 2;
 #endif
 
     // Intra pred Level                             Settings

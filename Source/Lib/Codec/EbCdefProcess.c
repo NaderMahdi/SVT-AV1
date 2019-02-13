@@ -46,7 +46,7 @@ void finish_cdef_search(
     SequenceControlSet_t           *sequence_control_set_ptr,
     PictureControlSet_t            *picture_control_set_ptr
 #if FAST_CDEF
-	,int32_t                         selected_strength_cnt[64]
+    ,int32_t                         selected_strength_cnt[64]
 #endif
    );
 void av1_cdef_frame16bit(
@@ -94,7 +94,7 @@ void cdef_seg_search(
     PictureControlSet_t            *picture_control_set_ptr,
     SequenceControlSet_t           *sequence_control_set_ptr,
 #if FAST_CDEF
-	int32_t                        selected_strength_cnt[64],
+    int32_t                        selected_strength_cnt[64],
 #endif
     uint32_t                        segment_index)
 {
@@ -142,10 +142,10 @@ void cdef_seg_search(
     DECLARE_ALIGNED(32, uint16_t, tmp_dst[1 << (MAX_SB_SIZE_LOG2 * 2)]);
 
 #if FAST_CDEF
-	int32_t gi_step;
-	int32_t mid_gi;
-	int32_t start_gi;
-	int32_t end_gi;
+    int32_t gi_step;
+    int32_t mid_gi;
+    int32_t start_gi;
+    int32_t end_gi;
 #endif
 
     for (pli = 0; pli < num_planes; pli++) {
@@ -223,12 +223,12 @@ void cdef_seg_search(
                     (fbc * MI_SIZE_64X64 << mi_wide_l2[pli]) - xoff,
                     stride[pli], ysize, xsize);
 #if FAST_CDEF
-				gi_step = pPcs->cdef_filter_mode == 1 ? 4 : pPcs->cdef_filter_mode == 2 ? 8 : pPcs->cdef_filter_mode == 3 ? 16 : 64;
-				mid_gi = pPcs->cdf_ref_frame_strenght;
-				start_gi = 0;
-				end_gi = pPcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step) : total_strengths;
+                gi_step = pPcs->cdef_filter_mode == 1 ? 4 : pPcs->cdef_filter_mode == 2 ? 8 : pPcs->cdef_filter_mode == 3 ? 16 : 64;
+                mid_gi = pPcs->cdf_ref_frame_strenght;
+                start_gi = 0;
+                end_gi = pPcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step) : total_strengths;
 
-				for (gi = start_gi; gi < end_gi; gi++) {
+                for (gi = start_gi; gi < end_gi; gi++) {
 #else
                 for (gi = 0; gi < total_strengths; gi++) {
 #endif
@@ -272,7 +272,7 @@ void cdef_seg_search16bit(
     PictureControlSet_t            *picture_control_set_ptr,
     SequenceControlSet_t           *sequence_control_set_ptr,
 #if FAST_CDEF
-	int32_t                        selected_strength_cnt[64],
+    int32_t                        selected_strength_cnt[64],
 #endif
     uint32_t                        segment_index)
 {
@@ -325,10 +325,10 @@ void cdef_seg_search16bit(
     uint16_t *in;
     DECLARE_ALIGNED(32, uint16_t, tmp_dst[1 << (MAX_SB_SIZE_LOG2 * 2)]);
 #if FAST_CDEF
-	int32_t gi_step;
-	int32_t mid_gi;
-	int32_t start_gi;
-	int32_t end_gi;
+    int32_t gi_step;
+    int32_t mid_gi;
+    int32_t start_gi;
+    int32_t end_gi;
 #endif
 
     for (pli = 0; pli < num_planes; pli++) {
@@ -406,12 +406,12 @@ void cdef_seg_search16bit(
                     (fbc * MI_SIZE_64X64 << mi_wide_l2[pli]) - xoff,
                     stride_src[pli], ysize, xsize);
 #if FAST_CDEF
-				gi_step = pPcs->cdef_filter_mode == 1 ? 4 : pPcs->cdef_filter_mode == 2 ? 8 : pPcs->cdef_filter_mode == 3 ? 16 : 64;
-				mid_gi = pPcs->cdf_ref_frame_strenght;
-				start_gi = 0;
-				end_gi = pPcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step) : total_strengths;
+                gi_step = pPcs->cdef_filter_mode == 1 ? 4 : pPcs->cdef_filter_mode == 2 ? 8 : pPcs->cdef_filter_mode == 3 ? 16 : 64;
+                mid_gi = pPcs->cdf_ref_frame_strenght;
+                start_gi = 0;
+                end_gi = pPcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step) : total_strengths;
 
-				for (gi = start_gi; gi < end_gi; gi++) {
+                for (gi = start_gi; gi < end_gi; gi++) {
 #else
                 for (gi = 0; gi < total_strengths; gi++) {
 #endif
@@ -485,7 +485,7 @@ void* cdef_kernel(void *input_ptr)
         Av1Common* cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
 
 #if FAST_CDEF
-		int32_t selected_strength_cnt[64] = { 0 };
+        int32_t selected_strength_cnt[64] = { 0 };
 #endif
 
 #if CDEF_M
@@ -498,7 +498,7 @@ void* cdef_kernel(void *input_ptr)
                     picture_control_set_ptr,
                     sequence_control_set_ptr,
 #if FAST_CDEF
-					selected_strength_cnt,
+                    selected_strength_cnt,
 #endif
                     dlf_results_ptr->segment_index);
             else
@@ -506,7 +506,7 @@ void* cdef_kernel(void *input_ptr)
                     picture_control_set_ptr,
                     sequence_control_set_ptr,
 #if FAST_CDEF
-					selected_strength_cnt,
+                    selected_strength_cnt,
 #endif
                     dlf_results_ptr->segment_index);
 #if CDEF_M
@@ -559,9 +559,9 @@ void* cdef_kernel(void *input_ptr)
                     sequence_control_set_ptr,
                     picture_control_set_ptr
 #if FAST_CDEF
-					,selected_strength_cnt
+                    ,selected_strength_cnt
 #endif
-				);
+                );
 
                 if (is16bit)
                     av1_cdef_frame16bit(
