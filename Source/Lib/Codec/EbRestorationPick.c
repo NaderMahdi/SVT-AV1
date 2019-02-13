@@ -631,7 +631,8 @@ static SgrprojInfo search_selfguided_restoration(
 #if FAST_SG
 	, 
 	int8_t sg_ref_frame_ep[2],
-	int32_t sg_frame_ep_cnt[SGRPROJ_PARAMS]
+	int32_t sg_frame_ep_cnt[SGRPROJ_PARAMS],
+	int8_t step
 #endif
 )
 {
@@ -646,17 +647,6 @@ static SgrprojInfo search_selfguided_restoration(
     assert(pu_height == (RESTORATION_PROC_UNIT_SIZE >> 1) ||
         pu_height == RESTORATION_PROC_UNIT_SIZE);
 #if FAST_SG
-	// NADER: change the step to play with the number of iterations 
-#if	SG_TEST2_STEP0
-	int8_t step = 0;
-#elif SG_TEST2_STEP1
-	int8_t step = 1;
-#elif SG_TEST2_STEP4
-	int8_t step = 4;
-#else 
-	int8_t step = 0;//SGRPROJ_PARAMS;
-#endif
-
 	int8_t mid_ep = sg_ref_frame_ep[0] < 0 && sg_ref_frame_ep[1] < 0 ? 0 :
 		sg_ref_frame_ep[1] < 0 ? sg_ref_frame_ep[0] :
 		sg_ref_frame_ep[0] < 0 ? sg_ref_frame_ep[1] :
@@ -761,6 +751,10 @@ static void search_sgrproj(const RestorationTileLimits *limits,
     const int32_t procunit_width = RESTORATION_PROC_UNIT_SIZE >> ss_x;
     const int32_t procunit_height = RESTORATION_PROC_UNIT_SIZE >> ss_y;
 
+#if FAST_SG
+	int8_t step = cm->sg_filter_mode == 1 ? 0 : cm->sg_filter_mode == 2 ? 1 : cm->sg_filter_mode == 3 ? 4 : 16;
+#endif
+
     rusi->sgrproj = search_selfguided_restoration(
         dgd_start, limits->h_end - limits->h_start,
         limits->v_end - limits->v_start, rsc->dgd_stride, src_start,
@@ -768,7 +762,8 @@ static void search_sgrproj(const RestorationTileLimits *limits,
         cm->rst_tmpbuf
 #if FAST_SG
 		, cm->sg_ref_frame_ep,
-		cm->sg_frame_ep_cnt
+		cm->sg_frame_ep_cnt,
+		step
 #endif
 	);
 
@@ -1752,7 +1747,9 @@ static void search_sgrproj_seg(const RestorationTileLimits *limits,
     const int32_t ss_y = is_uv && cm->subsampling_y;
     const int32_t procunit_width = RESTORATION_PROC_UNIT_SIZE >> ss_x;
     const int32_t procunit_height = RESTORATION_PROC_UNIT_SIZE >> ss_y;
-
+#if FAST_SG
+	int8_t step = cm->sg_filter_mode == 1 ? 0 : cm->sg_filter_mode == 2 ? 1 : cm->sg_filter_mode == 3 ? 4 : 16;
+#endif
     rusi->sgrproj = search_selfguided_restoration(
         dgd_start, limits->h_end - limits->h_start,
         limits->v_end - limits->v_start, rsc->dgd_stride, src_start,
@@ -1760,7 +1757,8 @@ static void search_sgrproj_seg(const RestorationTileLimits *limits,
         rsc->tmpbuf
 #if FAST_SG
 		, cm->sg_ref_frame_ep,
-		cm->sg_frame_ep_cnt
+		cm->sg_frame_ep_cnt,
+		step
 #endif
 	);
 

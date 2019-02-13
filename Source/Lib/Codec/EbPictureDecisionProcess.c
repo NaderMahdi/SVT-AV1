@@ -403,6 +403,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     else {
         picture_control_set_ptr->loop_filter_mode = 0;
     } 
+#if FAST_CDEF
 	// CDEF Level                                   Settings
 	// 0                                            OFF
 	// 1                                            4 step refinement
@@ -421,7 +422,23 @@ EbErrorType signal_derivation_multi_processes_oq(
 	else {
 		picture_control_set_ptr->cdef_filter_mode = 0;
 	}
+#endif
+#if FAST_SG
+	// SG Level                                    Settings
+    // 0                                            OFF
+    // 1                                            0 step refinement
+    // 2                                            1 step refinement
+    // 3                                            4 step refinement
 
+	Av1Common* cm = picture_control_set_ptr->av1_cm;
+
+	if (picture_control_set_ptr->enc_mode >= ENC_M3)
+		cm->sg_filter_mode = 1;
+	else  if (picture_control_set_ptr->enc_mode == ENC_M2)
+		cm->sg_filter_mode = 2;
+	else  if (picture_control_set_ptr->enc_mode <= ENC_M1)
+		cm->sg_filter_mode = 3;
+#endif
 
     // Loop filter Level                            Settings
     // 0                                            LIGHT: disable_z2_prediction && disable_angle_refinement

@@ -138,7 +138,7 @@ extern "C" {
 #define REDUCE_COPY_CDEF                                1
 
 #define	FAST_CDEF                                       1
-#define	FAST_SG                                         0
+#define	FAST_SG                                         1
 #define WN_5TAP                                         0
 
 /********************************************************/
