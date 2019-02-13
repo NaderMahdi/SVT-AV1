@@ -1427,9 +1427,13 @@ static void search_wiener(const RestorationTileLimits *limits,
     void *priv) {
     RestSearchCtxt *rsc = (RestSearchCtxt *)priv;
     RestUnitSearchInfo *rusi = &rsc->rusi[rest_unit_idx];
-
+#if WN_5TAP
+	const int32_t wiener_win =
+		(rsc->plane == AOM_PLANE_Y) ? WIENER_WIN_CHROMA : WIENER_WIN_CHROMA;
+#else
     const int32_t wiener_win =
         (rsc->plane == AOM_PLANE_Y) ? WIENER_WIN : WIENER_WIN_CHROMA;
+#endif
     int64_t M[WIENER_WIN2];
     int64_t H[WIENER_WIN2 * WIENER_WIN2];
     int32_t vfilterd[WIENER_WIN], hfilterd[WIENER_WIN];
@@ -1809,9 +1813,13 @@ static void search_wiener_seg(const RestorationTileLimits *limits,
     void *priv) {
     RestSearchCtxt *rsc = (RestSearchCtxt *)priv;
     RestUnitSearchInfo *rusi = &rsc->rusi[rest_unit_idx];
-
+#if WN_5TAP
+	const int32_t wiener_win =
+		(rsc->plane == AOM_PLANE_Y) ? WIENER_WIN_CHROMA : WIENER_WIN_CHROMA;
+#else
     const int32_t wiener_win =
         (rsc->plane == AOM_PLANE_Y) ? WIENER_WIN : WIENER_WIN_CHROMA;
+#endif
     int64_t M[WIENER_WIN2];
     int64_t H[WIENER_WIN2 * WIENER_WIN2];
     int32_t vfilterd[WIENER_WIN], hfilterd[WIENER_WIN];
@@ -1894,10 +1902,13 @@ static void search_wiener_finish(const RestorationTileLimits *limits,
     (void)tile_rect;
     RestSearchCtxt *rsc = (RestSearchCtxt *)priv;
     RestUnitSearchInfo *rusi = &rsc->rusi[rest_unit_idx];
-
+#if WN_5TAP
+	const int32_t wiener_win =
+		(rsc->plane == AOM_PLANE_Y) ? WIENER_WIN_CHROMA : WIENER_WIN_CHROMA;
+#else
     const int32_t wiener_win =
         (rsc->plane == AOM_PLANE_Y) ? WIENER_WIN : WIENER_WIN_CHROMA;
-  
+#endif
     
    
     const Macroblock *const x = rsc->x;
