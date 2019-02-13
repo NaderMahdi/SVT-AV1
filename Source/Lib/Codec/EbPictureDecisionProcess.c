@@ -392,6 +392,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 1                                            CU-BASED
     // 2                                            LIGHT FRAME-BASED
     // 3                                            FULL FRAME-BASED
+
     if (!picture_control_set_ptr->sequence_control_set_ptr->static_config.disable_dlf_flag){
         if (picture_control_set_ptr->enc_mode >= ENC_M2)
             picture_control_set_ptr->loop_filter_mode = 1;
@@ -451,16 +452,17 @@ EbErrorType signal_derivation_multi_processes_oq(
         cm->wn_filter_mode = 2;
 #endif
 
-    // Intra pred Level                             Settings
-    // 0                                            LIGHT: disable_z2_prediction && disable_angle_refinement
-    // 1                                            FULL
+    // Intra prediction Level                       Settings
+    // 0                                            OFF : disable_angle_prediction
+    // 1                                            OFF per block : disable_angle_prediction for 64/32/4
+    // 2                                            LIGHT: disable_z2_prediction && disable_angle_refinement
+    // 3                                            LIGHT per block : disable_z2_prediction && disable_angle_refinement  for 64/32/4
+    // 4                                            FULL   
+  
     if (picture_control_set_ptr->temporal_layer_index == 0)
-        picture_control_set_ptr->intra_pred_mode = 1;
+        picture_control_set_ptr->intra_pred_mode = 3;
     else
         picture_control_set_ptr->intra_pred_mode = 0;
-
-
-
 
     return return_error;
 }
