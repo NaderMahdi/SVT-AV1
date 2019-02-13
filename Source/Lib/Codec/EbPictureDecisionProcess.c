@@ -389,13 +389,16 @@ EbErrorType signal_derivation_multi_processes_oq(
 
     // Loop filter Level                            Settings
     // 0                                            OFF
-    // 1                                            LIGHT
-    // 1                                            FULL
+    // 1                                            CU-BASED
+	// 2                                            LIGHT FRAME-BASED
+    // 3                                            FULL FRAME-BASED
     if (!picture_control_set_ptr->sequence_control_set_ptr->static_config.disable_dlf_flag){
-        if (picture_control_set_ptr->enc_mode <= ENC_M2)
-            picture_control_set_ptr->loop_filter_mode = 2;
-        else
+        if (picture_control_set_ptr->enc_mode >= ENC_M2)
             picture_control_set_ptr->loop_filter_mode = 1;
+        else  if (picture_control_set_ptr->enc_mode == ENC_M1)
+            picture_control_set_ptr->loop_filter_mode = 2;
+		else  if (picture_control_set_ptr->enc_mode == ENC_M0)
+			picture_control_set_ptr->loop_filter_mode = 3;
     }
     else {
         picture_control_set_ptr->loop_filter_mode = 0;

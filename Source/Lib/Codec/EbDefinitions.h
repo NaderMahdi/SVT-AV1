@@ -45,11 +45,6 @@ extern "C" {
 #define REST_M        1 // multi-threaded restoration
 #define REST_NEED_B   1 // use boundary update in restoration
 
-#define    DLF_TEST2                                       1
-#define    DLF_TEST3                                       0
-#define    DLF_TEST4                                       0
-
-
 #define INTRA_CORE_OPT                                  1
 
 #define ENCODER_MODE_CLEANUP                            1                                          
@@ -281,11 +276,6 @@ one more than the minimum. */
 // AV1 Loop Filter
 #define AV1_LF                                    1  // AV1 Loop Filter
 #if AV1_LF 
-#if DLF_TEST2
-#define AV1_LF_FULL_IMAGE_SELECTION               0
-#else
-#define AV1_LF_FULL_IMAGE_SELECTION               1  // 0 uses LPF_PICK_FROM_Q, 1 uses LPF_PICK_FROM_FULL_IMAGE
-#endif
 #define LF_SHARPNESS 0
 #endif
 
