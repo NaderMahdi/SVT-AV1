@@ -137,8 +137,8 @@ extern "C" {
 #define REST_REF_ONLY                                   0 //REST for ref frame only
 #define REDUCE_COPY_CDEF                                1
 
-#define    FAST_CDEF                                       1
-#define    FAST_SG                                         1
+#define FAST_CDEF                                       1
+#define FAST_SG                                         1
 #define FAST_WN                                         1
 
 /********************************************************/

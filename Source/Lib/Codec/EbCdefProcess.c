@@ -223,7 +223,7 @@ void cdef_seg_search(
                     (fbc * MI_SIZE_64X64 << mi_wide_l2[pli]) - xoff,
                     stride[pli], ysize, xsize);
 #if FAST_CDEF
-                gi_step = pPcs->cdef_filter_mode == 1 ? 4 : pPcs->cdef_filter_mode == 2 ? 8 : pPcs->cdef_filter_mode == 3 ? 16 : 64;
+                gi_step = get_cdef_gi_step(pPcs->cdef_filter_mode);
                 mid_gi = pPcs->cdf_ref_frame_strenght;
                 start_gi = 0;
                 end_gi = pPcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step) : total_strengths;
@@ -406,7 +406,7 @@ void cdef_seg_search16bit(
                     (fbc * MI_SIZE_64X64 << mi_wide_l2[pli]) - xoff,
                     stride_src[pli], ysize, xsize);
 #if FAST_CDEF
-                gi_step = pPcs->cdef_filter_mode == 1 ? 4 : pPcs->cdef_filter_mode == 2 ? 8 : pPcs->cdef_filter_mode == 3 ? 16 : 64;
+                gi_step = get_cdef_gi_step(pPcs->cdef_filter_mode);
                 mid_gi = pPcs->cdf_ref_frame_strenght;
                 start_gi = 0;
                 end_gi = pPcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step) : total_strengths;

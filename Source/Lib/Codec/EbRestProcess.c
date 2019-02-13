@@ -334,7 +334,7 @@ void* rest_kernel(void *input_ptr)
 #if FAST_SG
             uint8_t best_ep_cnt = 0;
             uint8_t best_ep = 0;
-            for (uint8_t i = 0; i < 16; i++) {
+            for (uint8_t i = 0; i < SGRPROJ_PARAMS; i++) {
                 if (cm->sg_frame_ep_cnt[i] > best_ep_cnt) {
                     best_ep = i;
                     best_ep_cnt = cm->sg_frame_ep_cnt[i];
