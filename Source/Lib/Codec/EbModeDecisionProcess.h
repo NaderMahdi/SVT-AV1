@@ -39,7 +39,9 @@ extern "C" {
 #define DEPTH_ONE_STEP   21
 #define DEPTH_TWO_STEP    5
 #define DEPTH_THREE_STEP  1
-
+#if NSQ_SEARCH_LEVELS
+#define MAX_PARENT_SQ     6
+#endif
      /**************************************
       * Macros
       **************************************/
@@ -211,6 +213,12 @@ extern "C" {
         uint8_t                           nfl_level;
 #if INTERPOLATION_SEARCH_LEVELS
         uint8_t                           skip_interpolation_search;
+#endif
+
+#if NSQ_SEARCH_LEVELS
+        uint8_t                           parent_sq_type[MAX_PARENT_SQ];
+        uint8_t                           parent_sq_has_coeff[MAX_PARENT_SQ];
+        uint8_t                           parent_sq_pred_mode[MAX_PARENT_SQ];
 #endif
 
     } ModeDecisionContext_t;
