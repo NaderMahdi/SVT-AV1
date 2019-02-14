@@ -2008,8 +2008,7 @@ uint8_t get_skip_tx_search_flag(
     int32_t                  sq_size,
     uint64_t                 ref_fast_cost,
     uint64_t                 cu_cost,
-    uint64_t                 weight
-) 
+    uint64_t                 weight) 
 {
 
     uint8_t  tx_search_skip_fag = cu_cost >= ((ref_fast_cost * weight) / 100) ? 1 : 0;
@@ -2641,8 +2640,9 @@ void inter_depth_tx_search(
         context_ptr->md_local_cu_unit[cu_ptr->mds_idx].cost = *(candidateBuffer->full_cost_ptr);
         context_ptr->md_local_cu_unit[cu_ptr->mds_idx].cost = (context_ptr->md_local_cu_unit[cu_ptr->mds_idx].cost - candidateBuffer->candidate_ptr->chroma_distortion) + candidateBuffer->candidate_ptr->chroma_distortion_inter_depth;
 
-        if (candidate_ptr->type == INTRA_MODE)
+        if (candidate_ptr->type == INTRA_MODE) {
             context_ptr->md_local_cu_unit[cu_ptr->mds_idx].cost_luma = candidateBuffer->full_cost_luma;
+        }
 
 
         context_ptr->md_ep_pipe_sb[cu_ptr->mds_idx].merge_cost = *candidateBuffer->full_cost_merge_ptr;
