@@ -34,6 +34,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
      //Mode definition : Only one mode should be ON at a time
 #define MR_MODE                                         0
 #define SHUT_FILTERING                                  0 // CDEF RESTORATION DLF
@@ -44,6 +45,7 @@ extern "C" {
 #define CDEF_M        1 // multi-threaded cdef
 #define REST_M        1 // multi-threaded restoration
 #define REST_NEED_B   1 // use boundary update in restoration
+#define NEW_PRED_STRUCT                                 1 // Ability to run 5-layer prediction structure. By Default 5L is used
 
 #define INTRA_CORE_OPT                                  1
 
@@ -69,8 +71,6 @@ extern "C" {
 #define SHUT_CBF_FL_SKIP                                1 // F2 Lossless
 #define V2_HME_ME_SR                                    1 // F3
 #define ME_64x64                                        1 // F4
-#define V2_QP_SCALING                                   1 // F5 to keep for vmaff only
-#define NEW_QP_SCALING                                  1 // F6
 #define M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH           1 // F7
 #define M0_64x64_32x32_HALF_QUARTER_PEL                 1 // F8
 #define IMPROVED_UNIPRED_INJECTION                      1 // F11
@@ -160,6 +160,7 @@ extern "C" {
 #endif
 #define MAX_TXB_COUNT                             4 // Maximum number of transform blocks.
 #define MAX_NFL                                   12
+#define MAX_LAD                                   120 // max lookahead-distance 2x60fps
 #define ROUND_UV(x) (((x)>>3)<<3)
 #define AV1_PROB_COST_SHIFT 9
 #define AOMINNERBORDERINPIXELS 160
@@ -631,6 +632,10 @@ static const int32_t tx_size_wide[TX_SIZES_ALL] = {
 static const int32_t tx_size_high[TX_SIZES_ALL] = {
     4, 8, 16, 32, 64, 8, 4, 16, 8, 32, 16, 64, 32, 16, 4, 32, 8, 64, 16,
 };
+
+ // tran_low_t  is the datatype used for final transform coefficients.
+typedef int32_t tran_low_t;
+typedef uint8_t qm_val_t;
 
 typedef enum TX_CLASS {
     TX_CLASS_2D = 0,
@@ -2826,6 +2831,14 @@ static const uint8_t INTRA_AREA_TH_CLASS_1[MAX_HIERARCHICAL_LEVEL][MAX_TEMPORAL_
     { 50, 40, 30, 20, 10, 10 }
 };
 
+
+#if NEW_PRED_STRUCT
+#define NON_MOVING_SCORE_0     0
+#define NON_MOVING_SCORE_1    10
+#define NON_MOVING_SCORE_2    20
+#define NON_MOVING_SCORE_3    30
+#define INVALID_NON_MOVING_SCORE (uint8_t) ~0
+#endif
 // Picture split into regions for analysis (SCD, Dynamic GOP)
 #define CLASS_SUB_0_REGION_SPLIT_PER_WIDTH    1
 #define CLASS_SUB_0_REGION_SPLIT_PER_HEIGHT    1

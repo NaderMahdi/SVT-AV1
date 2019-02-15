@@ -58,8 +58,6 @@ extern "C" {
 #define AOM_QM_BITS                            5
 #define QM_TOTAL_SIZE                          3344
 
-    typedef uint8_t qm_val_t;
-
     static const int32_t tx_size_2d[TX_SIZES_ALL + 1] = {
         16, 64, 256, 1024, 4096, 32, 32, 128, 128, 512,
         512, 2048, 2048, 64, 64, 256, 256, 1024, 1024,
@@ -13466,8 +13464,6 @@ extern "C" {
     },
     };
 
-    typedef int32_t tran_low_t;
-
     struct Buf2d {
         uint8_t *buf;
         uint8_t *buf0;
@@ -14003,6 +13999,9 @@ extern "C" {
         uint8_t                              *zz_cost_array;
         // Non moving index array
         uint8_t                              *non_moving_index_array;
+#if NEW_PRED_STRUCT
+        int                                   kf_zeromotion_pct; // percent of zero motion blocks
+#endif
         uint8_t                               fade_out_from_black;
         uint8_t                               fade_in_to_black;
         EbBool                                is_pan;
@@ -14088,7 +14087,10 @@ extern "C" {
         EbPred                                pred_structure;
         uint8_t                               hierarchical_levels;
         uint16_t                              full_sb_count;
-        
+#if NEW_PRED_STRUCT
+        EbBool                                init_pred_struct_position_flag;
+        int8_t                                hierarchical_layers_diff;
+#endif        
         // ME Tools
         EbBool                                use_subpel_flag;
         EbBool                                enable_hme_flag;
