@@ -2482,6 +2482,26 @@ EbBool allowed_ns_cu(
 }
 
 #if TX_SEARCH_LEVELS
+void init_candidate_buffer(
+    ModeDecisionCandidate_t        *candidate_ptr,
+    uint32_t                        count_non_zero_coeffs[3][MAX_NUM_OF_TU_PER_CU])
+{
+    candidate_ptr->y_has_coeff = 0;
+    candidate_ptr->u_has_coeff = 0;
+    candidate_ptr->v_has_coeff = 0;
+
+    candidate_ptr->full_distortion = 0;
+
+    memset(candidate_ptr->eob[0], 0, sizeof(uint16_t)*MAX_TXB_COUNT);
+    memset(count_non_zero_coeffs[0], 0, sizeof(uint32_t)*MAX_NUM_OF_TU_PER_CU);
+
+    candidate_ptr->chroma_distortion = 0;
+    candidate_ptr->chroma_distortion_inter_depth = 0;
+    memset(candidate_ptr->eob[1], 0, sizeof(uint16_t)*MAX_TXB_COUNT);
+    memset(count_non_zero_coeffs[1], 0, sizeof(uint32_t)*MAX_NUM_OF_TU_PER_CU);
+    memset(candidate_ptr->eob[2], 0, sizeof(uint16_t)*MAX_TXB_COUNT);
+    memset(count_non_zero_coeffs[2], 0, sizeof(uint32_t)*MAX_NUM_OF_TU_PER_CU);
+}
 void inter_depth_tx_search(
     PictureControlSet_t                      *picture_control_set_ptr,
     ModeDecisionCandidateBuffer_t            *candidateBuffer,
@@ -2499,7 +2519,7 @@ void inter_depth_tx_search(
         picture_control_set_ptr->parent_pcs_ptr->tx_weight) : 1;
 
     if (!tx_search_skip_fag) {
- 
+
         uint64_t      y_full_distortion[DIST_CALC_TOTAL] = { 0 };
         uint32_t      count_non_zero_coeffs[3][MAX_NUM_OF_TU_PER_CU];
 
@@ -2511,21 +2531,10 @@ void inter_depth_tx_search(
         uint64_t      cr_coeff_bits = 0;
 
         ModeDecisionCandidate_t                *candidate_ptr = candidateBuffer->candidate_ptr;
-        candidate_ptr->y_has_coeff = 0;
-        candidate_ptr->u_has_coeff = 0;
-        candidate_ptr->v_has_coeff = 0;
 
-        candidate_ptr->full_distortion = 0;
-
-        memset(candidate_ptr->eob[0], 0, sizeof(uint16_t)*MAX_TXB_COUNT);
-        memset(count_non_zero_coeffs[0], 0, sizeof(uint32_t)*MAX_NUM_OF_TU_PER_CU);
-
-        candidate_ptr->chroma_distortion = 0;
-        candidate_ptr->chroma_distortion_inter_depth = 0;
-        memset(candidate_ptr->eob[1], 0, sizeof(uint16_t)*MAX_TXB_COUNT);
-        memset(count_non_zero_coeffs[1], 0, sizeof(uint32_t)*MAX_NUM_OF_TU_PER_CU);
-        memset(candidate_ptr->eob[2], 0, sizeof(uint16_t)*MAX_TXB_COUNT);
-        memset(count_non_zero_coeffs[2], 0, sizeof(uint32_t)*MAX_NUM_OF_TU_PER_CU);
+        init_candidate_buffer(
+            candidate_ptr,
+            count_non_zero_coeffs);
 
 
         ProductFullLoopTxSearch(
@@ -2640,9 +2649,8 @@ void inter_depth_tx_search(
         context_ptr->md_local_cu_unit[cu_ptr->mds_idx].cost = *(candidateBuffer->full_cost_ptr);
         context_ptr->md_local_cu_unit[cu_ptr->mds_idx].cost = (context_ptr->md_local_cu_unit[cu_ptr->mds_idx].cost - candidateBuffer->candidate_ptr->chroma_distortion) + candidateBuffer->candidate_ptr->chroma_distortion_inter_depth;
 
-        if (candidate_ptr->type == INTRA_MODE) {
+        if (candidate_ptr->type == INTRA_MODE)
             context_ptr->md_local_cu_unit[cu_ptr->mds_idx].cost_luma = candidateBuffer->full_cost_luma;
-        }
 
 
         context_ptr->md_ep_pipe_sb[cu_ptr->mds_idx].merge_cost = *candidateBuffer->full_cost_merge_ptr;
@@ -6762,7 +6770,7 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
     const uint32_t start_idx_128x64 = 849 * number_of_sb_quad;
 
 #if M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH
-    context_ptr->fractionalSearchMethod = SSD_SEARCH;
+    context_ptr->fractionalSearchMethod = (picture_control_set_ptr->enc_mode >= ENC_M3) ? FULL_SAD_SEARCH : SSD_SEARCH;
 #else
     context_ptr->fractionalSearchMethod = SUB_SAD_SEARCH;
 #endif
