@@ -724,7 +724,31 @@ static int32_t count_sgrproj_bits(SgrprojInfo *sgrproj_info,
             (uint16_t)(sgrproj_info->xqd[1] - SGRPROJ_PRJ_MIN1));
     return bits;
 }
+#if FAST_SG
 
+static int8_t get_sg_step(const uint8_t sg_filter_mode) {
+    int8_t step;
+    switch (sg_filter_mode) {
+    case 1:
+        step = 0;
+        break;
+    case 2:
+        step = 1;
+        break;
+    case 3:
+        step = 4;
+        break;
+    case 4:
+        step = 16;
+        break;
+    default:
+        step = 64; // Max value
+        break;
+    }
+
+    return step;
+}
+#endif
 static void search_sgrproj(const RestorationTileLimits *limits,
     const AV1PixelRect *tile, int32_t rest_unit_idx,
     void *priv) {
@@ -752,7 +776,7 @@ static void search_sgrproj(const RestorationTileLimits *limits,
     const int32_t procunit_height = RESTORATION_PROC_UNIT_SIZE >> ss_y;
 
 #if FAST_SG
-    int8_t step = cm->sg_filter_mode == 1 ? 0 : cm->sg_filter_mode == 2 ? 1 : cm->sg_filter_mode == 3 ? 4 : 16;
+    int8_t step = get_sg_step(cm->sg_filter_mode);
 #endif
 
     rusi->sgrproj = search_selfguided_restoration(
@@ -1750,7 +1774,7 @@ static void search_sgrproj_seg(const RestorationTileLimits *limits,
     const int32_t procunit_width = RESTORATION_PROC_UNIT_SIZE >> ss_x;
     const int32_t procunit_height = RESTORATION_PROC_UNIT_SIZE >> ss_y;
 #if FAST_SG
-    int8_t step = cm->sg_filter_mode == 1 ? 0 : cm->sg_filter_mode == 2 ? 1 : cm->sg_filter_mode == 3 ? 4 : 16;
+    int8_t step = get_sg_step(cm->sg_filter_mode);
 #endif
     rusi->sgrproj = search_selfguided_restoration(
         dgd_start, limits->h_end - limits->h_start,

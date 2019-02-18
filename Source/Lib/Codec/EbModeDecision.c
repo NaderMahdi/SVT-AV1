@@ -2125,9 +2125,9 @@ uint8_t product_full_mode_decision(
     context_ptr->md_ep_pipe_sb[cu_ptr->mds_idx].skip_cost = *buffer_ptr_array[lowestCostIndex]->full_cost_skip_ptr;
 
 
-    if (candidate_ptr->type == INTER_MODE && candidate_ptr->merge_flag == EB_TRUE) {
+    if (candidate_ptr->type == INTER_MODE && candidate_ptr->merge_flag == EB_TRUE) 
         context_ptr->md_ep_pipe_sb[cu_ptr->mds_idx].chroma_distortion = buffer_ptr_array[lowestCostIndex]->candidate_ptr->chroma_distortion;
-    }
+    
 
     context_ptr->md_local_cu_unit[cu_ptr->mds_idx].full_distortion = buffer_ptr_array[lowestCostIndex]->candidate_ptr->full_distortion;
     context_ptr->md_local_cu_unit[cu_ptr->mds_idx].chroma_distortion = (uint32_t)buffer_ptr_array[lowestCostIndex]->candidate_ptr->chroma_distortion;

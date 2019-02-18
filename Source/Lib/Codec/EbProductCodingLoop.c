@@ -2011,10 +2011,12 @@ uint8_t get_skip_tx_search_flag(
     uint64_t                 weight) 
 {
 
-    uint8_t  tx_search_skip_fag = cu_cost >= ((ref_fast_cost * weight) / 100) ? 1 : 0;
-    tx_search_skip_fag = sq_size >= 128 ? 1 : tx_search_skip_fag;
 
-    return tx_search_skip_fag;
+    //NM: Skip tx search when the fast_cost of the current candidate is substantially larger that thye best fast_cost.
+    uint8_t  tx_search_skip_flag = cu_cost >= ((ref_fast_cost * weight) / 100) ? 1 : 0;
+    tx_search_skip_flag = sq_size >= 128 ? 1 : tx_search_skip_flag;
+
+    return tx_search_skip_flag;
 }
 #endif
 void AV1PerformFullLoop(
@@ -2031,8 +2033,7 @@ void AV1PerformFullLoop(
 #if TX_SEARCH_LEVELS
     uint64_t                 ref_fast_cost,
 #endif
-    EbAsm                    asm_type)
-{
+    EbAsm                    asm_type){
 
     //uint32_t      prevRootCbf;
     uint64_t      bestfullCost;
@@ -2156,13 +2157,13 @@ void AV1PerformFullLoop(
 
 #if TX_SEARCH_LEVELS
 
-        uint8_t  tx_search_skip_fag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? get_skip_tx_search_flag(
+        uint8_t  tx_search_skip_flag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? get_skip_tx_search_flag(
             context_ptr->blk_geom->sq_size,
             ref_fast_cost,
             *candidateBuffer->fast_cost_ptr,
             picture_control_set_ptr->parent_pcs_ptr->tx_weight) : 1;
 
-        if (!tx_search_skip_fag){
+        if (!tx_search_skip_flag){
 #else
 
 #if TURN_OFF_TX_TYPE_SEARCH
@@ -2509,16 +2510,15 @@ void inter_depth_tx_search(
     ModeDecisionContext_t                    *context_ptr,
     EbPictureBufferDesc_t                    *inputPicturePtr,
     uint64_t                                  ref_fast_cost,
-    EbAsm                                     asm_type)
-{
+    EbAsm                                     asm_type){
 
-    uint8_t  tx_search_skip_fag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_INTER_DEPTH ? get_skip_tx_search_flag(
+    uint8_t  tx_search_skip_flag = picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_INTER_DEPTH ? get_skip_tx_search_flag(
         context_ptr->blk_geom->sq_size,
         ref_fast_cost,
         *candidateBuffer->fast_cost_ptr,
         picture_control_set_ptr->parent_pcs_ptr->tx_weight) : 1;
 
-    if (!tx_search_skip_fag) {
+    if (!tx_search_skip_flag) {
 
         uint64_t      y_full_distortion[DIST_CALC_TOTAL] = { 0 };
         uint32_t      count_non_zero_coeffs[3][MAX_NUM_OF_TU_PER_CU];
@@ -2637,8 +2637,7 @@ void inter_depth_tx_search(
 
         candidateBuffer->y_coeff_bits = y_coeff_bits;
 
-        if (picture_control_set_ptr->parent_pcs_ptr->chroma_mode == CHROMA_MODE_BEST)
-        {
+        if (picture_control_set_ptr->parent_pcs_ptr->chroma_mode == CHROMA_MODE_BEST){
             candidateBuffer->y_coeff_bits = y_coeff_bits;
             candidateBuffer->y_full_distortion[DIST_CALC_RESIDUAL] = y_full_distortion[DIST_CALC_RESIDUAL];
             candidateBuffer->y_full_distortion[DIST_CALC_PREDICTION] = y_full_distortion[DIST_CALC_PREDICTION];
@@ -2657,9 +2656,9 @@ void inter_depth_tx_search(
         context_ptr->md_ep_pipe_sb[cu_ptr->mds_idx].skip_cost = *candidateBuffer->full_cost_skip_ptr;
 
 
-        if (candidate_ptr->type == INTER_MODE && candidate_ptr->merge_flag == EB_TRUE) {
+        if (candidate_ptr->type == INTER_MODE && candidate_ptr->merge_flag == EB_TRUE) 
             context_ptr->md_ep_pipe_sb[cu_ptr->leaf_index].chroma_distortion = candidateBuffer->candidate_ptr->chroma_distortion;
-        }
+        
 
 
         context_ptr->md_local_cu_unit[cu_ptr->mds_idx].full_distortion = candidateBuffer->candidate_ptr->full_distortion;
@@ -2754,12 +2753,10 @@ void inter_depth_tx_search(
                 uint32_t j;
 
                 for (j = 0; j < bheight; j++)
-                {
                     memcpy(dstPtr + j * bwidth, srcPtr + j * bwidth, bwidth * sizeof(int32_t));
-                }
+                
 
-                if (context_ptr->blk_geom->has_uv)
-                {
+                if (context_ptr->blk_geom->has_uv){
                     // Cb
                     bwidth = context_ptr->blk_geom->tx_width_uv[txb_itr];
                     bheight = context_ptr->blk_geom->tx_height_uv[txb_itr];
@@ -2768,17 +2765,15 @@ void inter_depth_tx_search(
                     dstPtr = &(((int32_t*)context_ptr->cu_ptr->coeff_tmp->bufferCb)[txb_1d_offset_uv]);
 
                     for (j = 0; j < bheight; j++)
-                    {
                         memcpy(dstPtr + j * bwidth, srcPtr + j * bwidth, bwidth * sizeof(int32_t));
-                    }
+                    
 
                     srcPtr = &(((int32_t*)buffer_ptr_array[lowestCostIndex]->residualQuantCoeffPtr->bufferCr)[txb_1d_offset_uv]);
                     dstPtr = &(((int32_t*)context_ptr->cu_ptr->coeff_tmp->bufferCr)[txb_1d_offset_uv]);
 
                     for (j = 0; j < bheight; j++)
-                    {
                         memcpy(dstPtr + j * bwidth, srcPtr + j * bwidth, bwidth * sizeof(int32_t));
-                    }
+                    
                 }
 
                 txb_1d_offset += context_ptr->blk_geom->tx_width[txb_itr] * context_ptr->blk_geom->tx_height[txb_itr];

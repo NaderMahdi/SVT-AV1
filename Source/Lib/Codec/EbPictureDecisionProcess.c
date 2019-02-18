@@ -726,6 +726,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 1                                            4 step refinement
     // 2                                            8 step refinement
     // 3                                            16 step refinement
+    // 4                                            Full search
     SequenceControlSet_t                    *sequence_control_set_ptr;
     sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->objectPtr;
     if (sequence_control_set_ptr->enable_cdef) {
@@ -746,6 +747,8 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 1                                            0 step refinement
     // 2                                            1 step refinement
     // 3                                            4 step refinement
+    // 4                                            16 step refinement
+    // 5                                            Full search
 
     Av1Common* cm = picture_control_set_ptr->av1_cm;
 

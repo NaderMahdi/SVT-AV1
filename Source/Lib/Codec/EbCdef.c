@@ -259,7 +259,21 @@ void cdef_filter_block_c(uint8_t *dst8, uint16_t *dst16, int32_t dstride,
 #if FAST_CDEF
 int32_t get_cdef_gi_step(
     int8_t   cdef_filter_mode) {
-    int32_t gi_step = cdef_filter_mode == 1 ? 4 : cdef_filter_mode == 2 ? 8 : cdef_filter_mode == 3 ? 16 : 64;
+    int32_t gi_step;
+    switch (cdef_filter_mode) {
+    case 1:
+        gi_step = 4;
+        break;
+    case 2:
+        gi_step = 8;
+        break;
+    case 3:
+        gi_step = 16;
+        break;
+    default:
+        gi_step = 64;
+        break;
+    }
     return gi_step;
 }
 #endif
