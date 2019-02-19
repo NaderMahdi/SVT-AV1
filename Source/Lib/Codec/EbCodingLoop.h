@@ -56,9 +56,9 @@ extern "C" {
         PictureControlSet_t                 *picture_control_set_ptr,
         const MdcLcuData_t * const           mdcResultTbPtr,
         LargestCodingUnit_t                 *sb_ptr,
-        uint32_t                               sb_origin_x,
-        uint32_t                               sb_origin_y,
-        uint32_t                               lcuAddr,
+        uint16_t                             sb_origin_x,
+        uint16_t                             sb_origin_y,
+        uint32_t                             lcuAddr,
         SsMeContext_t                       *ss_mecontext,
         ModeDecisionContext_t               *context_ptr);
 

@@ -1173,6 +1173,7 @@ static uint64_t search_one(int32_t *lev, int32_t nb_strengths,
 #endif
     uint64_t tot_mse[TOTAL_STRENGTHS];
 #if FAST_CDEF
+    (void)fast;
     const int32_t total_strengths = end_gi;
 #else
     const int32_t total_strengths = fast ? REDUCED_TOTAL_STRENGTHS : TOTAL_STRENGTHS;
@@ -1193,7 +1194,7 @@ static uint64_t search_one(int32_t *lev, int32_t nb_strengths,
         /* Find best mse when adding each possible new option. */
         
 #if FAST_CDEF
-        for (j = start_gi; j < end_gi; j++) {
+        for (j = start_gi; j < total_strengths; j++) {
 #else
         for (j = 0; j < total_strengths; j++) {
 #endif
@@ -1203,7 +1204,7 @@ static uint64_t search_one(int32_t *lev, int32_t nb_strengths,
         }
     }
 #if FAST_CDEF
-    for (j = start_gi; j < end_gi; j++) {
+    for (j = start_gi; j < total_strengths; j++) {
 #else
     for (j = 0; j < total_strengths; j++) {
 #endif

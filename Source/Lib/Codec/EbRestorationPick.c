@@ -1933,7 +1933,7 @@ static void search_wiener_finish(const RestorationTileLimits *limits,
     const Av1Common *const cm = rsc->cm;
     int32_t wn_luma = cm->wn_filter_mode == 1 ? WIENER_WIN_CHROMA : WIENER_WIN;
     const int32_t wiener_win =
-        (rsc->plane == AOM_PLANE_Y) ? WIENER_WIN_CHROMA : WIENER_WIN_CHROMA;
+        (rsc->plane == AOM_PLANE_Y) ? wn_luma : WIENER_WIN_CHROMA;
 #else
     const int32_t wiener_win =
         (rsc->plane == AOM_PLANE_Y) ? WIENER_WIN : WIENER_WIN_CHROMA;
