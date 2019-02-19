@@ -2010,7 +2010,8 @@ uint8_t get_skip_tx_search_flag(
     uint64_t                 cu_cost,
     uint64_t                 weight) 
 {
-
+    //NM: Skip tx search when the fast cost of the current mode candidate is substansially 
+    // Larger than the best fast_cost (
     uint8_t  tx_search_skip_fag = cu_cost >= ((ref_fast_cost * weight) / 100) ? 1 : 0;
     tx_search_skip_fag = sq_size >= 128 ? 1 : tx_search_skip_fag;
 
@@ -2980,6 +2981,20 @@ void md_encode_block(
             inputPicturePtr,
             ref_fast_cost,
             asm_type);
+#endif
+
+#if NSQ_SEARCH_LEVELS
+        uint8_t sq_index = LOG2F(context_ptr->blk_geom->sq_size) - 2;
+        if (context_ptr->blk_geom->shape == PART_N) {
+
+            context_ptr->parent_sq_type[sq_index] = candidateBuffer->candidate_ptr->type;
+
+            context_ptr->parent_sq_has_coeff[sq_index] = (candidateBuffer->candidate_ptr->y_has_coeff ||
+                candidateBuffer->candidate_ptr->u_has_coeff ||
+                candidateBuffer->candidate_ptr->v_has_coeff) ? 1 : 0;
+
+            context_ptr->parent_sq_pred_mode[sq_index] = candidateBuffer->candidate_ptr->pred_mode;
+        }
 #endif
 
         AV1PerformInverseTransformRecon(
