@@ -727,6 +727,7 @@ static int32_t count_sgrproj_bits(SgrprojInfo *sgrproj_info,
 
 #if FAST_SG
 int8_t get_sg_step(int8_t  sg_filter_mode) {
+
     int8_t step;
     switch (sg_filter_mode) {
     case 1:
@@ -744,7 +745,6 @@ int8_t get_sg_step(int8_t  sg_filter_mode) {
     default:
         step = 16;
         break;
-
     }
     return step;
 }
