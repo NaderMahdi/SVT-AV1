@@ -1256,6 +1256,13 @@ void  inject_inter_candidates(
             context_ptr->parent_sq_has_coeff[sq_index] != 0 ? inject_newmv_candidate : 0;
     }
 #endif
+
+#if MOTION_REFINEMNET
+    //uint8_t sq_index = LOG2F(context_ptr->blk_geom->sq_size) - 2;
+    uint8_t inject_refine_mv = 1;
+    inject_refine_mv = context_ptr->previous_shape_has_coeff[sq_index] != 0 ? inject_refine_mv : 0;
+#endif
+
     generate_av1_mvp_table(
         context_ptr,
         context_ptr->cu_ptr,
@@ -1612,62 +1619,67 @@ void  inject_inter_candidates(
         candidateArray[canTotalCnt].transform_type[PLANE_TYPE_UV] = DCT_DCT;
         ++canTotalCnt;
     }
-#if NSQ_SEARCH_LEVELS
-    if (inject_newmv_candidate) {
+#if MOTION_REFINEMNET
+    if (inject_refine_mv) {
 #endif
-        if (allow_bipred) {
+#if NSQ_SEARCH_LEVELS
+        if (inject_newmv_candidate) {
+#endif
+            if (allow_bipred) {
 
 #if IMPROVED_BIPRED_INJECTION
-            //----------------------
-            // Bipred2Nx2N
-            //----------------------
+                //----------------------
+                // Bipred2Nx2N
+                //----------------------
 #if ENCODER_MODE_CLEANUP
-            if (picture_control_set_ptr->enc_mode <= ENC_M0)
+                if (picture_control_set_ptr->enc_mode <= ENC_M0)
 
 #else
-            if (picture_control_set_ptr->enc_mode <= ENC_M1 /*&& sequence_control_set_ptr->static_config.tune != TUNE_VQ*/)
+                if (picture_control_set_ptr->enc_mode <= ENC_M1 /*&& sequence_control_set_ptr->static_config.tune != TUNE_VQ*/)
 #endif
-                if (picture_control_set_ptr->slice_type == B_SLICE)
-                    Bipred3x3CandidatesInjection(
-                        picture_control_set_ptr,
-                        context_ptr,
-                        sb_ptr,
-                        me_sb_addr,
-                        ss_mecontext,
-                        use_close_loop_me,
-                        close_loop_me_index,
-                        me2Nx2NTableOffset,
-                        &canTotalCnt);
+                    if (picture_control_set_ptr->slice_type == B_SLICE)
+                        Bipred3x3CandidatesInjection(
+                            picture_control_set_ptr,
+                            context_ptr,
+                            sb_ptr,
+                            me_sb_addr,
+                            ss_mecontext,
+                            use_close_loop_me,
+                            close_loop_me_index,
+                            me2Nx2NTableOffset,
+                            &canTotalCnt);
 #endif
 
 #if IMPROVED_UNIPRED_INJECTION
-            //----------------------
-            // Unipred2Nx2N
-            //----------------------
+                //----------------------
+                // Unipred2Nx2N
+                //----------------------
 #if ENCODER_MODE_CLEANUP
-            if (picture_control_set_ptr->enc_mode <= ENC_M0)
+                if (picture_control_set_ptr->enc_mode <= ENC_M0)
 
 #else
-            if (picture_control_set_ptr->enc_mode <= ENC_M1 /*&& sequence_control_set_ptr->static_config.tune != TUNE_VQ*/)
+                if (picture_control_set_ptr->enc_mode <= ENC_M1 /*&& sequence_control_set_ptr->static_config.tune != TUNE_VQ*/)
 #endif
-                if (picture_control_set_ptr->slice_type != I_SLICE)
-                    Unipred3x3CandidatesInjection(
-                        picture_control_set_ptr,
-                        context_ptr,
-                        sb_ptr,
-                        me_sb_addr,
-                        ss_mecontext,
-                        use_close_loop_me,
-                        close_loop_me_index,
-                        me2Nx2NTableOffset,
-                        &canTotalCnt);
+                    if (picture_control_set_ptr->slice_type != I_SLICE)
+                        Unipred3x3CandidatesInjection(
+                            picture_control_set_ptr,
+                            context_ptr,
+                            sb_ptr,
+                            me_sb_addr,
+                            ss_mecontext,
+                            use_close_loop_me,
+                            close_loop_me_index,
+                            me2Nx2NTableOffset,
+                            &canTotalCnt);
 #endif
 
-        }
+            }
 #if NSQ_SEARCH_LEVELS
+        }
+#endif
+#if MOTION_REFINEMNET
     }
 #endif
-
     // update the total number of candidates injected
     (*candidateTotalCnt) = canTotalCnt;
 

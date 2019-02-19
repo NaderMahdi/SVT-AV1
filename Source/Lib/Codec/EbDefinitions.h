@@ -144,6 +144,9 @@ extern "C" {
 #define INTERPOLATION_SEARCH_LEVELS                     1 
 #define NSQ_SEARCH_LEVELS                               1
 #define INTERPOLATION_BASED_ON_THE_FAST_COST            1
+#define MOTION_REFINEMNET                               0
+#define IT_SEARCH_2                                     0
+#define TX_SEARCH_2                                     0
 /********************************************************/
 /****************** Pre-defined Values ******************/
 /********************************************************/

@@ -219,6 +219,9 @@ extern "C" {
         uint8_t                           parent_sq_type[MAX_PARENT_SQ];
         uint8_t                           parent_sq_has_coeff[MAX_PARENT_SQ];
         uint8_t                           parent_sq_pred_mode[MAX_PARENT_SQ];
+#if MOTION_REFINEMNET || IT_SEARCH_2 || TX_SEARCH_2
+        uint8_t                           previous_shape_has_coeff[MAX_PARENT_SQ];
+#endif
 #endif
 
     } ModeDecisionContext_t;

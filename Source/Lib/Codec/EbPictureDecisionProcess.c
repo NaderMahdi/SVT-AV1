@@ -694,7 +694,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 
 #if INTERPOLATION_BASED_ON_THE_FAST_COST
     // Set tx search skip weights (MAX_MODE_COST: no skipping; 0: always skipping)
-    picture_control_set_ptr->ip_weight = MAX_MODE_COST; 
+    picture_control_set_ptr->ip_weight = 110;// MAX_MODE_COST;
 #endif
 
 #else

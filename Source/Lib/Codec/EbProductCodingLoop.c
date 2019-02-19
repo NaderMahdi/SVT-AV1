@@ -2114,6 +2114,14 @@ void AV1PerformFullLoop(
                 *candidateBuffer->fast_cost_ptr,
                 picture_control_set_ptr->parent_pcs_ptr->ip_weight);
 
+#if IT_SEARCH_2
+            uint8_t sq_index = LOG2F(context_ptr->blk_geom->sq_size) - 2;
+            uint8_t inject_refine_mv = 1;
+            inject_refine_mv = context_ptr->previous_shape_has_coeff[sq_index] != 0 ? inject_refine_mv : 0;
+
+            it_search_skip_flag = inject_refine_mv ? 1 : it_search_skip_flag;
+#endif
+
             if (!it_search_skip_flag) {
 
 #endif
@@ -2190,6 +2198,14 @@ void AV1PerformFullLoop(
             ref_fast_cost,
             *candidateBuffer->fast_cost_ptr,
             picture_control_set_ptr->parent_pcs_ptr->tx_weight) : 1;
+
+#if TX_SEARCH_2
+        uint8_t sq_index = LOG2F(context_ptr->blk_geom->sq_size) - 2;
+        uint8_t inject_refine_mv = 1;
+        inject_refine_mv = context_ptr->previous_shape_has_coeff[sq_index] != 0 ? inject_refine_mv : 0;
+
+        tx_search_skip_flag = inject_refine_mv ? 1 : tx_search_skip_flag;
+#endif
 
         if (!tx_search_skip_flag){
 #else
@@ -3017,6 +3033,14 @@ void md_encode_block(
  
             context_ptr->parent_sq_pred_mode[sq_index] = candidateBuffer->candidate_ptr->pred_mode;
         }
+
+#if MOTION_REFINEMNET || IT_SEARCH_2 || TX_SEARCH_2
+        
+        context_ptr->previous_shape_has_coeff[sq_index] = (candidateBuffer->candidate_ptr->y_has_coeff ||
+            candidateBuffer->candidate_ptr->u_has_coeff ||
+            candidateBuffer->candidate_ptr->v_has_coeff) ? 1 : 0;
+#endif
+
 #endif
         AV1PerformInverseTransformRecon(
             picture_control_set_ptr,
@@ -3238,6 +3262,11 @@ EB_EXTERN EbErrorType mode_decision_sb(
                 blk_idx_mds,
                 sb_origin_x,
                 sb_origin_y);
+#endif
+
+#if MOTION_REFINEMNET || IT_SEARCH_2 || TX_SEARCH_2
+        uint8_t sq_index = LOG2F(context_ptr->blk_geom->sq_size) - 2;
+        context_ptr->previous_shape_has_coeff[sq_index] = 1;
 #endif
 
         md_encode_block(
