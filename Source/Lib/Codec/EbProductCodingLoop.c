@@ -2003,6 +2003,20 @@ static void CflPrediction(
     }
 }
 
+#if INTERPOLATION_BASED_ON_THE_FAST_COST
+uint8_t  get_skip_it_search_flag(
+    int32_t                  sq_size,
+    uint64_t                 ref_fast_cost,
+    uint64_t                 cu_cost,
+    uint64_t                 weight)
+{
+
+    //NM: Skip interpolation search when the fast_cost of the current candidate is substantially larger that thye best fast_cost.
+    uint8_t  tx_search_it_flag = cu_cost >= ((ref_fast_cost * weight) / 100) ? 1 : 0;
+    tx_search_it_flag = sq_size >= 128 ? 1 : tx_search_it_flag;
+    return tx_search_it_flag;
+}
+#endif
 #if TX_SEARCH_LEVELS
 uint8_t get_skip_tx_search_flag(
     int32_t                  sq_size,
@@ -2092,10 +2106,21 @@ void AV1PerformFullLoop(
         candidate_ptr->skip_flag = EB_FALSE;
 #if INTERPOLATION_SEARCH_LEVELS
         if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_FULL_LOOP) {
-            context_ptr->skip_interpolation_search = 0;
+
+#if INTERPOLATION_BASED_ON_THE_FAST_COST
+            uint8_t  it_search_skip_flag = get_skip_it_search_flag(
+                context_ptr->blk_geom->sq_size,
+                ref_fast_cost,
+                *candidateBuffer->fast_cost_ptr,
+                picture_control_set_ptr->parent_pcs_ptr->ip_weight);
+
+            if (!it_search_skip_flag) {
+
+#endif
+                context_ptr->skip_interpolation_search = 0;
 
 
-            if (candidate_ptr->type != INTRA_MODE || candidate_ptr->motion_mode == WARPED_CAUSAL) {
+                if (candidate_ptr->type != INTRA_MODE || candidate_ptr->motion_mode == WARPED_CAUSAL) {
 #else
         if (candidate_ptr->prediction_is_ready_luma == EB_FALSE || candidate_ptr->motion_mode == WARPED_CAUSAL) {
 #endif
@@ -2105,7 +2130,10 @@ void AV1PerformFullLoop(
                 picture_control_set_ptr,
                 candidateBuffer,
                 asm_type);
+                }
+#if INTERPOLATION_BASED_ON_THE_FAST_COST
             }
+#endif
 #if INTERPOLATION_SEARCH_LEVELS
         }
 #endif

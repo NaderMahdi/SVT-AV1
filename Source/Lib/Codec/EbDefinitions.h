@@ -143,6 +143,7 @@ extern "C" {
 #define TX_SEARCH_LEVELS                                1 
 #define INTERPOLATION_SEARCH_LEVELS                     1 
 #define NSQ_SEARCH_LEVELS                               1
+#define INTERPOLATION_BASED_ON_THE_FAST_COST            1
 /********************************************************/
 /****************** Pre-defined Values ******************/
 /********************************************************/

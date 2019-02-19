@@ -14291,6 +14291,9 @@ extern "C" {
 #endif
 #if INTERPOLATION_SEARCH_LEVELS
         uint8_t                               interpolation_search_level;
+#if INTERPOLATION_BASED_ON_THE_FAST_COST
+        uint64_t                              ip_weight;
+#endif
 #endif
 #if NSQ_SEARCH_LEVELS
         uint8_t                               nsq_search_level;

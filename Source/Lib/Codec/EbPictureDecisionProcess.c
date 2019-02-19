@@ -691,6 +691,12 @@ EbErrorType signal_derivation_multi_processes_oq(
     else {
         picture_control_set_ptr->interpolation_search_level = IT_SEARCH_OFF;
     }
+
+#if INTERPOLATION_BASED_ON_THE_FAST_COST
+    // Set tx search skip weights (MAX_MODE_COST: no skipping; 0: always skipping)
+    picture_control_set_ptr->ip_weight = MAX_MODE_COST; 
+#endif
+
 #else
     // Interpolation filter search Level MD         Settings
     // 0                                            OFF
