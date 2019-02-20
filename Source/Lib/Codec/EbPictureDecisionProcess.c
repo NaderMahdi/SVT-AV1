@@ -669,7 +669,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 4                                              Allow only NSQ Inter-FULL and Intra-Z3 if parent SQ is intra-coded
     // 5                                              Allow NSQ Intra-FULL and Inter-FULL
 #if TUNED_SETTINGS_FOR_M0
-    if (picture_control_set_ptr->enc_mode >= ENC_M0)
+    if (!MR_MODE)
     picture_control_set_ptr->nsq_search_level        = NSQ_SEARCH_BASE_ON_SQ_COEFF;
     else
 #endif
@@ -797,7 +797,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 
     // Set tx search skip weights (MAX_MODE_COST: no skipping; 0: always skipping)
 #if TUNED_SETTINGS_FOR_M0
-    if (picture_control_set_ptr->enc_mode >= ENC_M0)
+    if (!MR_MODE)
         picture_control_set_ptr->tx_weight = FC_SKIP_TX_SR_TH;
     else
 #endif
