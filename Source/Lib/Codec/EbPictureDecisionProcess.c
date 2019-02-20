@@ -690,7 +690,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 2                                              Interpolation search at full loop
     // 3                                              Interpolation search at fast loop
     if (picture_control_set_ptr->enc_mode == ENC_M0) {
-        picture_control_set_ptr->interpolation_search_level = IT_SEARCH_FULL_LOOP;
+        picture_control_set_ptr->interpolation_search_level = IT_SEARCH_FAST_LOOP;
     }
     else {
         picture_control_set_ptr->interpolation_search_level = IT_SEARCH_OFF;
@@ -803,7 +803,6 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
         picture_control_set_ptr->tx_weight = MAX_MODE_COST;
 
-
     // Set tx search reduced set falg (0: full tx set; 1: reduced tx set)
     if (picture_control_set_ptr->enc_mode == ENC_M1) {
         picture_control_set_ptr->tx_search_reduced_set = 1;
@@ -813,29 +812,62 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
 #endif
 
-    // Intra prediction Level                       Settings
+    // Intra prediction mode                       Settings
     // 0                                            OFF : disable_angle_prediction
     // 1                                            OFF per block : disable_angle_prediction for 64/32/4
     // 2                                            LIGHT: disable_z2_prediction && disable_angle_refinement
     // 3                                            LIGHT per block : disable_z2_prediction && disable_angle_refinement  for 64/32/4
-    // 4                                            FULL   
+    // 4                                            FULL  
 
-#if TUNED_SETTINGS_FOR_M0
-    if (picture_control_set_ptr->enc_mode == ENC_M0) {
+    // The intra prediction level is a combination of the intra prediction modes.
+
+    // Intra prediction levels                      Settings
+    // 0                                            OFF : disable_angle_prediction
+    // 1                                            Disable_angle_prediction for 64/32/4 (mode 1) @ BASE AND OFF (mode 0) Otherwise
+    // 2                                            Disable_z2_prediction && disable_angle_refinement for 64/32/4 (mode 3) @ BASE AND OFF (mode 0) Otherwise
+    // 3                                            Full (mode 4) @ BASE AND Disable_z2_prediction && disable_angle_refinement (mode 2) Otherwise
+    // 4                                            FULL 
+
+    uint8_t intra_pred_level = 4;
+
+    switch (picture_control_set_ptr->enc_mode) {
+    case 0:
+        intra_pred_level = 3; //ENC_M0
+        break;
+    case 1:
+        intra_pred_level = 2; //ENC_M1
+        break;
+    case 2:
+        intra_pred_level = 2; //ENC_M2
+        break;
+    case 3:
+        intra_pred_level = 2; //ENC_M3
+        break;
+    default:
+        intra_pred_level = 4; //MR_MODE
+        break;
+    }
+
+    if (intra_pred_level == 4) {
+        picture_control_set_ptr->intra_pred_mode = 4;
+
+    }else if (intra_pred_level == 3) { 
         if (picture_control_set_ptr->temporal_layer_index == 0)
             picture_control_set_ptr->intra_pred_mode = 4;
         else
             picture_control_set_ptr->intra_pred_mode = 2;
-    }
-    else {
-#endif
+    }else if (intra_pred_level == 2) {  
         if (picture_control_set_ptr->temporal_layer_index == 0)
             picture_control_set_ptr->intra_pred_mode = 3;
         else
             picture_control_set_ptr->intra_pred_mode = 0;
-#if TUNED_SETTINGS_FOR_M0
     }
-#endif
+    else if (intra_pred_level == 1) { 
+        if (picture_control_set_ptr->temporal_layer_index == 0)
+            picture_control_set_ptr->intra_pred_mode = 1;
+        else
+            picture_control_set_ptr->intra_pred_mode = 0;
+    }
 
     return return_error;
 }
