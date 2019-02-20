@@ -35,7 +35,7 @@
 #define WTH 64
 #define OTH 64
 #if TUNED_SETTINGS_FOR_M0
-#define FC_SKIP_TX_SR_TH                     125 // Fast cost skip tx search threshold.
+#define FC_SKIP_TX_SR_TH                       125 // Fast cost skip tx search threshold.
 #endif
  /************************************************
   * Picture Analysis Context Constructor
