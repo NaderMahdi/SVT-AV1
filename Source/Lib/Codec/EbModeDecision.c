@@ -396,6 +396,9 @@ EbErrorType PreModeDecision(
     ModeDecisionCandidateBuffer_t **buffer_ptr_array,
     uint32_t                         *full_candidate_total_count_ptr,
     uint8_t                          *best_candidate_index_array,
+#if USED_NFL_FEATURE_BASED
+    uint8_t                          *sorted_candidate_index_array,
+#endif
     uint8_t                          *disable_merge_index,
 #if TX_SEARCH_LEVELS
     uint64_t                         *ref_fast_cost,
@@ -419,6 +422,7 @@ EbErrorType PreModeDecision(
         fullReconCandidateCount = MAX(1, (*full_candidate_total_count_ptr));
     else
         fullReconCandidateCount = MAX(1, (*full_candidate_total_count_ptr) - 1);
+
 
     //With N buffers, we get here with the best N-1, plus the last candidate. We need to exclude the worst, and keep the best N-1.
     highestCost = *(buffer_ptr_array[0]->fast_cost_ptr);
@@ -449,6 +453,7 @@ EbErrorType PreModeDecision(
     }
     else
         best_candidate_index_array[0] = 0;
+
     for (i = 0; i < fullReconCandidateCount - 1; ++i) {
         for (j = i + 1; j < fullReconCandidateCount; ++j) {
             if ((buffer_ptr_array[best_candidate_index_array[i]]->candidate_ptr->type == INTRA_MODE) &&
@@ -465,6 +470,23 @@ EbErrorType PreModeDecision(
             *ref_fast_cost = *(buffer_ptr_array[i]->fast_cost_ptr);
         }
     }
+#endif
+
+#if USED_NFL_FEATURE_BASED
+    for (i = 0; i < MAX_NFL; ++i) {
+        sorted_candidate_index_array[i] = best_candidate_index_array[i];
+    }
+
+    for (i = 0; i < fullReconCandidateCount - 1; ++i) {
+        for (j = i + 1; j < fullReconCandidateCount; ++j) {
+            if (*(buffer_ptr_array[j]->fast_cost_ptr) < *(buffer_ptr_array[i]->fast_cost_ptr)) {
+                index = sorted_candidate_index_array[i];
+                sorted_candidate_index_array[i] = (uint8_t)sorted_candidate_index_array[j];
+                sorted_candidate_index_array[j] = (uint8_t)index;
+            }
+        }
+    }
+
 #endif
     // Set (*full_candidate_total_count_ptr) to fullReconCandidateCount
     (*full_candidate_total_count_ptr) = fullReconCandidateCount;

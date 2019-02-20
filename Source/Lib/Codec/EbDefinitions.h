@@ -144,6 +144,13 @@ extern "C" {
 #define INTERPOLATION_SEARCH_LEVELS                     1 
 #define NSQ_SEARCH_LEVELS                               1
 #define TUNED_SETTINGS_FOR_M0                           1
+#define USED_NFL_FEATURE_BASED                          1
+
+#if USED_NFL_FEATURE_BASED
+#define NFL_TX_TH                                       12 // To be tuned
+#define NFL_IT_TH                                       12 // To be tuned
+#endif
+
 /********************************************************/
 /****************** Pre-defined Values ******************/
 /********************************************************/
