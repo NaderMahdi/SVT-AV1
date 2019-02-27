@@ -147,6 +147,8 @@ extern "C" {
 #define TUNED_SETTINGS_FOR_M0                           1
 #define TUNED_SETTINGS_FOR_M1                           1
 
+#define ENABLE_EOB_ZERO_CHECK                           1
+
 /********************************************************/
 /****************** Pre-defined Values ******************/
 /********************************************************/
