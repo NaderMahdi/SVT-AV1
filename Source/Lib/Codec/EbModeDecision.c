@@ -2049,7 +2049,9 @@ void  inject_intra_candidates(
             context_ptr->parent_sq_type[sq_index] == INTRA_MODE ? disable_z2_prediction : 0;
     }
 #endif
-
+#if !DIS_EDGE_FIL
+    const int32_t disable_ang_uv = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) && context_ptr->blk_geom->has_uv ? 1 : 0;
+#endif
     for (openLoopIntraCandidate = intra_mode_start; openLoopIntraCandidate < intra_mode_end + 1; ++openLoopIntraCandidate) {
 
         if (av1_is_directional_mode((PredictionMode)openLoopIntraCandidate)) {
@@ -2073,6 +2075,10 @@ void  inject_intra_candidates(
                                 UV_DC_PRED;
 #else
                         candidateArray[canTotalCnt].intra_chroma_mode = disable_cfl_flag ? intra_luma_to_chroma[openLoopIntraCandidate] : UV_CFL_PRED;
+#endif
+#if !DIS_EDGE_FIL
+                        candidateArray[canTotalCnt].intra_chroma_mode = disable_ang_uv && av1_is_directional_mode(candidateArray[canTotalCnt].intra_chroma_mode) ?
+                            UV_DC_PRED : candidateArray[canTotalCnt].intra_chroma_mode;
 #endif
                         candidateArray[canTotalCnt].cfl_alpha_signs = 0;
                         candidateArray[canTotalCnt].cfl_alpha_idx = 0;
@@ -2125,6 +2131,10 @@ void  inject_intra_candidates(
 #else
             candidateArray[canTotalCnt].intra_chroma_mode = disable_cfl_flag ? intra_luma_to_chroma[openLoopIntraCandidate] : UV_CFL_PRED;
 #endif
+#endif
+#if !DIS_EDGE_FIL
+            candidateArray[canTotalCnt].intra_chroma_mode = disable_ang_uv && av1_is_directional_mode(candidateArray[canTotalCnt].intra_chroma_mode) ?
+                UV_DC_PRED : candidateArray[canTotalCnt].intra_chroma_mode;
 #endif
             candidateArray[canTotalCnt].cfl_alpha_signs = 0;
             candidateArray[canTotalCnt].cfl_alpha_idx = 0;
