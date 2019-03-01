@@ -225,6 +225,9 @@ extern "C" {
 #if CHROMA_BLIND
         uint8_t                           chroma_level;
 #endif
+#if INTERPOLATION_SEARCH_LEVELS
+        int32_t                            inter_filter_type_region[3][BlockSizeS_ALL][IT_REG_NUM];
+#endif
 
     } ModeDecisionContext_t;
 

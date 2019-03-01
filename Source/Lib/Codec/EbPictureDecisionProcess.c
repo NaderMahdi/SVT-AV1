@@ -696,12 +696,14 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 1                                              Interpolation search at inter-depth
     // 2                                              Interpolation search at full loop
     // 3                                              Interpolation search at fast loop
+    // 3                                              Interpolation search at fast loop
     if (picture_control_set_ptr->enc_mode == ENC_M0) {
-        picture_control_set_ptr->interpolation_search_level = IT_SEARCH_FAST_LOOP;
+        picture_control_set_ptr->interpolation_search_level = IT_SEARCH_FAST_LOOP;// IT_SEARCH_PER_REGION;
     }
     else {
         picture_control_set_ptr->interpolation_search_level = IT_SEARCH_OFF;
     }
+
 #else
     // Interpolation filter search Level MD         Settings
     // 0                                            OFF

@@ -1207,7 +1207,9 @@ void ProductMdFastPuPrediction(
 #endif
     // Prediction
 #if INTERPOLATION_SEARCH_LEVELS
-    context_ptr->skip_interpolation_search = picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_FAST_LOOP ? 0 : 1;
+    context_ptr->skip_interpolation_search = (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_FAST_LOOP || 
+        picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_PER_REGION) ?
+        0 : 1;
 #endif
     candidateBuffer->candidate_ptr->prediction_is_ready_luma = EB_TRUE;
     candidateBuffer->candidate_ptr->interp_filters = 0;
@@ -3201,6 +3203,16 @@ EB_EXTERN EbErrorType mode_decision_sb(
     UNUSED(sb_height);
     UNUSED(asm_type);
     UNUSED(lastCuIndex);
+
+#if INTERPOLATION_SEARCH_LEVELS
+    for (int i = 0; i < IT_REG_NUM; i++) {
+        for (int j = 0; j < BlockSizeS_ALL; j++) {
+            context_ptr->inter_filter_type_region[0][j][i] = -1;
+            context_ptr->inter_filter_type_region[1][j][i] = -1;
+            context_ptr->inter_filter_type_region[2][j][i] = -1;
+        }
+    }
+#endif
 
     context_ptr->sb_ptr = sb_ptr;
     context_ptr->group_of8x8_blocks_count = 0;

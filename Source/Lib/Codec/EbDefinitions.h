@@ -146,6 +146,7 @@ extern "C" {
 #define TUNED_SETTINGS_FOR_M0                           1
 #define TUNED_SETTINGS_FOR_M1                           1
 #define CONTENT_BASED_QPS                               1 // Adaptive QP Scaling (active for I only)
+#define PERFORM_IT_REFINEMENT                           0
 
 /********************************************************/
 /****************** Pre-defined Values ******************/
@@ -155,7 +156,9 @@ extern "C" {
 #else
 #define PAD_VALUE                                (128+32)
 #endif
-
+#if INTERPOLATION_SEARCH_LEVELS
+#define IT_REG_NUM                               50
+#endif
 //  Delta QP support
 #define ADD_DELTA_QP_SUPPORT                      0  // Add delta QP support - Please enable this flag and iproveSharpness (config) to test the QPM
 #if DISABLE_128X128_SB
@@ -497,6 +500,7 @@ typedef enum INTERPOLATION_SEARCH_LEVEL {
     IT_SEARCH_INTER_DEPTH,
     IT_SEARCH_FULL_LOOP,
     IT_SEARCH_FAST_LOOP,
+    IT_SEARCH_PER_REGION,
 } INTERPOLATION_SEARCH_LEVEL;
 #endif
 #if NSQ_SEARCH_LEVELS

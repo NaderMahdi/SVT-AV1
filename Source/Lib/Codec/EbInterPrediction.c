@@ -3515,6 +3515,179 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
   { 1, 2 }, { 2, 0 }, { 2, 1 }, { 2, 2 },
 };
 
+#if INTERPOLATION_SEARCH_LEVELS
+/*static*/ void interpolation_filter_searchre_geon(
+    PictureControlSet_t *picture_control_set_ptr,
+    EbPictureBufferDesc_t *prediction_ptr,
+    ModeDecisionContext_t *md_context_ptr,
+    ModeDecisionCandidateBuffer_t *candidate_buffer_ptr,
+    MvUnit_t mv_unit,
+    EbPictureBufferDesc_t  *ref_pic_list0,
+    EbPictureBufferDesc_t  *ref_pic_list1,
+    EbAsm asm_type,
+    int64_t *const rd,
+    int32_t *const switchable_rate,
+    int32_t *const skip_txfm_sb,
+    int64_t *const skip_sse_sb,
+    InterpFilter input_interpolation_filter) {
+
+
+    const Av1Common *cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
+
+    const int32_t num_planes = MAX_MB_PLANE;
+
+    int32_t i;
+    int32_t tmp_rate;
+    int64_t tmp_dist;
+
+
+    InterpFilter assign_filter = SWITCHABLE;
+
+    if (cm->interp_filter != SWITCHABLE)
+        assign_filter = cm->interp_filter;
+
+    //set_default_interp_filters(mbmi, assign_filter);
+    candidate_buffer_ptr->candidate_ptr->interp_filters =//EIGHTTAP_REGULAR ;
+        av1_broadcast_interp_filter(av1_unswitchable_filter(assign_filter));
+
+#if PERFORM_IT_REFINEMENT
+
+    *switchable_rate = av1_get_switchable_rate(
+        candidate_buffer_ptr,
+        cm,
+        md_context_ptr//,
+        //x,
+        //xd
+    );
+
+    av1_inter_prediction(
+        picture_control_set_ptr,
+        candidate_buffer_ptr->candidate_ptr->interp_filters,
+        md_context_ptr->cu_ptr,
+        candidate_buffer_ptr->candidate_ptr->ref_frame_type,
+        &mv_unit,
+        md_context_ptr->cu_origin_x,
+        md_context_ptr->cu_origin_y,
+        md_context_ptr->blk_geom->bwidth,
+        md_context_ptr->blk_geom->bheight,
+        ref_pic_list0,
+        ref_pic_list1,
+        prediction_ptr,
+        md_context_ptr->blk_geom->origin_x,
+        md_context_ptr->blk_geom->origin_y,
+#if CHROMA_BLIND
+        md_context_ptr->chroma_level == CHROMA_MODE_0,
+#endif
+        asm_type);
+
+
+    model_rd_for_sb(
+        picture_control_set_ptr,
+        prediction_ptr,
+        md_context_ptr,
+        0,
+        num_planes - 1,
+        &tmp_rate,
+        &tmp_dist,
+        skip_txfm_sb,
+        skip_sse_sb,
+        NULL, NULL, NULL);
+
+    *rd = RDCOST(md_context_ptr->full_lambda, *switchable_rate + tmp_rate, tmp_dist);
+#else
+    *rd = INT64_MAX;
+#endif
+
+    if (assign_filter == SWITCHABLE) {
+        // do interp_filter search
+        if (av1_is_interp_needed(candidate_buffer_ptr, picture_control_set_ptr, md_context_ptr->blk_geom->bsize)) {
+
+            const int32_t filter_set_size = DUAL_FILTER_SET_SIZE;
+            int32_t best_in_temp = 0;
+            uint32_t best_filters = 0;
+
+#if INTERPOLATION_SEARCH_LEVELS
+            if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level &&
+#else
+            if (picture_control_set_ptr->parent_pcs_ptr->interpolation_filter_search_mode == 1 &&
+#endif
+                picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->enable_dual_filter) {
+                int32_t tmp_skip_sb = 0;
+                    int64_t tmp_skip_sse = INT64_MAX;
+                    int32_t tmp_rs;
+                    int64_t tmp_rd;
+                    int32_t best_dual_mode = 0;
+
+                //for (i = 1; i < SWITCHABLE_FILTERS; ++i)
+                {
+                    tmp_skip_sb = 0;
+                    tmp_skip_sse = INT64_MAX;
+
+                    candidate_buffer_ptr->candidate_ptr->interp_filters = (InterpFilter)input_interpolation_filter;
+
+#if PERFORM_IT_REFINEMENT
+                    tmp_rs = av1_get_switchable_rate(
+                        candidate_buffer_ptr,
+                        cm,
+                        md_context_ptr
+                    );
+
+                    av1_inter_prediction(
+                        picture_control_set_ptr,
+                        candidate_buffer_ptr->candidate_ptr->interp_filters,
+                        md_context_ptr->cu_ptr,
+                        candidate_buffer_ptr->candidate_ptr->ref_frame_type,
+                        &mv_unit,
+                        md_context_ptr->cu_origin_x,
+                        md_context_ptr->cu_origin_y,
+                        md_context_ptr->blk_geom->bwidth,
+                        md_context_ptr->blk_geom->bheight,
+                        ref_pic_list0,
+                        ref_pic_list1,
+                        prediction_ptr,
+                        md_context_ptr->blk_geom->origin_x,
+                        md_context_ptr->blk_geom->origin_y,
+#if CHROMA_BLIND
+                        md_context_ptr->chroma_level == CHROMA_MODE_0,
+#endif
+                        asm_type);
+
+                    model_rd_for_sb(
+                        picture_control_set_ptr,
+                        prediction_ptr,
+                        md_context_ptr,
+                        0,
+                        num_planes - 1,
+                        &tmp_rate,
+                        &tmp_dist,
+                        &tmp_skip_sb,
+                        &tmp_skip_sse,
+                        NULL, NULL, NULL);
+                    tmp_rd = RDCOST(md_context_ptr->full_lambda, tmp_rs + tmp_rate, tmp_dist);
+#else
+                    tmp_rd = 0;
+#endif
+
+                    if (tmp_rd < *rd) {
+                        *rd = tmp_rd;
+                        *switchable_rate = tmp_rs;
+                        best_filters = candidate_buffer_ptr->candidate_ptr->interp_filters;
+                        *skip_txfm_sb = tmp_skip_sb;
+                        *skip_sse_sb = tmp_skip_sse;
+                        best_in_temp = !best_in_temp;
+                    }
+                }
+            }
+
+            candidate_buffer_ptr->candidate_ptr->interp_filters = best_filters;
+        }
+        else {
+            candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
+        }
+    }
+    //  return 0;
+}
+#endif
 /*static*/ void interpolation_filter_search(
     PictureControlSet_t *picture_control_set_ptr,
     EbPictureBufferDesc_t *prediction_ptr,
@@ -4243,6 +4416,54 @@ EbErrorType inter_pu_prediction_av1(
     mv_unit.mv[0].y = candidate_buffer_ptr->candidate_ptr->motionVector_y_L0;
     mv_unit.mv[1].x = candidate_buffer_ptr->candidate_ptr->motionVector_x_L1;
     mv_unit.mv[1].y = candidate_buffer_ptr->candidate_ptr->motionVector_y_L1;
+#if INTERPOLATION_SEARCH_LEVELS
+    int32_t region_interpolatio_type = -1;
+    int8_t region_index_l0 = -1;
+    int8_t region_index_l1 = -1;
+    int8_t region_index_compound = -1;
+    block_size bsize = md_context_ptr->blk_geom->bsize;
+    if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_PER_REGION) {
+
+        for (int reg = 1; reg <= IT_REG_NUM; reg++) {
+
+            int th = reg * 8;
+            if (mv_unit.predDirection == 0) {
+                if (abs(mv_unit.mv[0].x) < th && abs(mv_unit.mv[0].y) < th) {
+                    region_index_l0 = reg - 1;
+                    break;
+                }
+            }
+            else if (mv_unit.predDirection == 1) {
+                if (abs(mv_unit.mv[1].x) < th && abs(mv_unit.mv[1].y) < th) {
+                    region_index_l1 = reg - 1;
+                    break;
+                }
+            }
+            else if (mv_unit.predDirection == 2) {
+                uint32_t avg_abs_x = (abs(mv_unit.mv[0].x) + abs(mv_unit.mv[1].x)) / 2;
+                uint32_t avg_abs_y = (abs(mv_unit.mv[0].y) + abs(mv_unit.mv[1].y)) / 2;
+                if (avg_abs_x < th && avg_abs_y < th) {
+                    region_index_compound = reg - 1;
+                    break;
+                }
+            }
+        }
+
+        if (mv_unit.predDirection == 0) {
+            region_index_l0 = region_index_l0 == -1 ? IT_REG_NUM - 1 : region_index_l0;
+            region_interpolatio_type = md_context_ptr->inter_filter_type_region[0][bsize][region_index_l0];
+        }
+        else if (mv_unit.predDirection == 1) {
+            region_index_l1 = region_index_l1 == -1 ? IT_REG_NUM - 1 : region_index_l1;
+            region_interpolatio_type = md_context_ptr->inter_filter_type_region[1][bsize][region_index_l1];
+        }
+        else if (mv_unit.predDirection == 2) {
+            region_index_compound = region_index_compound == -1 ? IT_REG_NUM - 1 : region_index_compound;
+            region_interpolatio_type = md_context_ptr->inter_filter_type_region[2][bsize][region_index_compound];
+        }
+    }
+    uint8_t use_region_interpolatio_type = region_interpolatio_type >= 0 ? 1 : 0;
+#endif
 
     SequenceControlSet_t* sequence_control_set_ptr = ((SequenceControlSet_t*)(picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr));
     EbBool  is16bit = (EbBool)(sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
@@ -4311,13 +4532,14 @@ EbErrorType inter_pu_prediction_av1(
 
     if (is16bit) {
 #if INTERPOL_FILTER_SEARCH_10BIT_SUPPORT
-        candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
+
 #if INTERPOLATION_SEARCH_LEVELS
-        if (!md_context_ptr->skip_interpolation_search) {
+        if (!md_context_ptr->skip_interpolation_search && !use_region_interpolatio_type) {
 #else
         if (picture_control_set_ptr->parent_pcs_ptr->interpolation_filter_search_mode > 0) {
 #endif
-            if (md_context_ptr->blk_geom->bwidth > 4 && md_context_ptr->blk_geom->bheight > 4)
+            if (md_context_ptr->blk_geom->bwidth > 4 && md_context_ptr->blk_geom->bheight > 4) {
+                candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
                 interpolation_filter_search_HBD(
                     picture_control_set_ptr,
                     candidate_buffer_ptr->predictionPtrTemp,
@@ -4331,9 +4553,35 @@ EbErrorType inter_pu_prediction_av1(
                     &rs,
                     &skip_txfm_sb,
                     &skip_sse_sb);
+
+#if INTERPOLATION_SEARCH_LEVELS
+                if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_PER_REGION) {
+
+                    if (mv_unit.predDirection == 0) {
+                        md_context_ptr->inter_filter_type_region[0][bsize][region_index_l0] = candidate_buffer_ptr->candidate_ptr->interp_filters;
+                    }
+                    else if (mv_unit.predDirection == 1) {
+                        md_context_ptr->inter_filter_type_region[1][bsize][region_index_l1] = candidate_buffer_ptr->candidate_ptr->interp_filters;
+                    }
+                    else if (mv_unit.predDirection == 2) {
+                        md_context_ptr->inter_filter_type_region[2][bsize][region_index_compound] = candidate_buffer_ptr->candidate_ptr->interp_filters;
+                    }
+                }
+#endif
+            }
+        }
+#endif
+
+        if (use_region_interpolatio_type) {
+            candidate_buffer_ptr->candidate_ptr->interp_filters = region_interpolatio_type;
+        }
+        if (md_context_ptr->blk_geom->bwidth == 4 || md_context_ptr->blk_geom->bheight == 4) {
+            candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
+        }
+        if (av1_is_interp_needed(candidate_buffer_ptr, picture_control_set_ptr, md_context_ptr->blk_geom->bsize)) {
+            candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
         }
 
-#endif
 #if INTERPOL_FILTER_SEARCH_10BIT_SUPPORT
         AV1InterPrediction10BitMD(
             candidate_buffer_ptr->candidate_ptr->interp_filters,
@@ -4359,13 +4607,14 @@ EbErrorType inter_pu_prediction_av1(
 #endif
             asm_type);
     } else {
-        candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
+       
 #if INTERPOLATION_SEARCH_LEVELS
-        if (!md_context_ptr->skip_interpolation_search) {
+        if (!md_context_ptr->skip_interpolation_search && !use_region_interpolatio_type) {
 #else
         if (picture_control_set_ptr->parent_pcs_ptr->interpolation_filter_search_mode > 0) {
 #endif
-            if (md_context_ptr->blk_geom->bwidth > 4 && md_context_ptr->blk_geom->bheight > 4)
+            if (md_context_ptr->blk_geom->bwidth > 4 && md_context_ptr->blk_geom->bheight > 4) {
+                candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
                 interpolation_filter_search(
                     picture_control_set_ptr,
                     candidate_buffer_ptr->predictionPtrTemp,
@@ -4379,8 +4628,51 @@ EbErrorType inter_pu_prediction_av1(
                     &rs,
                     &skip_txfm_sb,
                     &skip_sse_sb);
+
+#if INTERPOLATION_SEARCH_LEVELS
+                if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_PER_REGION) {
+                    if (mv_unit.predDirection == 0) {
+                        md_context_ptr->inter_filter_type_region[0][bsize][region_index_l0] = candidate_buffer_ptr->candidate_ptr->interp_filters;
+                    }
+                    else if (mv_unit.predDirection == 1) {
+                        md_context_ptr->inter_filter_type_region[1][bsize][region_index_l1] = candidate_buffer_ptr->candidate_ptr->interp_filters;
+                    }
+                    else if (mv_unit.predDirection == 2) {
+                        md_context_ptr->inter_filter_type_region[2][bsize][region_index_compound] = candidate_buffer_ptr->candidate_ptr->interp_filters;
+                    }
+                }
+#endif
+            }
         }
 
+
+        if (use_region_interpolatio_type ) {
+            interpolation_filter_searchre_geon(
+                picture_control_set_ptr,
+                candidate_buffer_ptr->predictionPtrTemp,
+                md_context_ptr,
+                candidate_buffer_ptr,
+                mv_unit,
+                ref_pic_list0,
+                ref_pic_list1,
+                asm_type,
+                &rd,
+                &rs,
+                &skip_txfm_sb,
+                &skip_sse_sb,
+                region_interpolatio_type);
+           
+        }
+        if (md_context_ptr->blk_geom->bwidth == 4 || md_context_ptr->blk_geom->bheight == 4){
+            candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
+        }
+
+        if (md_context_ptr->skip_interpolation_search) {
+                if (candidate_buffer_ptr->candidate_ptr->interp_filters != 0)
+                    printf("OOOOOOOO\n");
+        }
+
+     
         av1_inter_prediction(
             picture_control_set_ptr,
             candidate_buffer_ptr->candidate_ptr->interp_filters,
