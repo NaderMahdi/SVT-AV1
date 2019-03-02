@@ -2533,8 +2533,12 @@ void move_cu_data(
 * ModeDecision LCU
 *   performs CL (LCU)
 *******************************************/
+
 EbBool allowed_ns_cu(
-    ModeDecisionContext_t             *context_ptr,
+#if NSQ_OPTIMASATION
+    PictureControlSet_t                *picture_control_set_ptr,
+#endif
+    ModeDecisionContext_t              *context_ptr,
     uint8_t                            is_complete_sb){
   
     EbBool  ret = 1;
@@ -2544,6 +2548,19 @@ EbBool allowed_ns_cu(
             ret = 0;
         }
     }
+
+#if NSQ_OPTIMASATION
+    if (picture_control_set_ptr->slice_type == !I_SLICE) {
+        if (context_ptr->blk_geom->shape != PART_N) {
+            ret = 0;
+            for (int i = 0; i < NSQ_IDX_TH; i++) {
+                if (context_ptr->blk_geom->shape == context_ptr->nsq_table[i]) {
+                    ret = 1;
+                }
+            }
+        }
+    }
+#endif
     return ret;
 }
 
@@ -2862,6 +2879,121 @@ void inter_depth_tx_search(
     }
 }
 #endif
+
+#if NSQ_OPTIMASATION
+void  order_nsq_table(
+    PictureControlSet_t            *picture_control_set_ptr,
+    ModeDecisionContext_t          *context_ptr,
+    const SequenceControlSet_t     *sequence_control_set_ptr,
+    LargestCodingUnit_t            *sb_ptr) {
+
+    const uint32_t             lcuAddr = sb_ptr->index;
+
+    EbBool isCompoundEnabled = (picture_control_set_ptr->parent_pcs_ptr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
+    uint32_t me_sb_addr;
+    uint32_t geom_offset_x = 0;
+    uint32_t geom_offset_y = 0;
+
+    if (sequence_control_set_ptr->sb_size == BLOCK_128X128) {
+
+        uint32_t me_sb_size = sequence_control_set_ptr->sb_sz;
+        uint32_t me_pic_width_in_sb = (sequence_control_set_ptr->luma_width + sequence_control_set_ptr->sb_sz - 1) / me_sb_size;
+        uint32_t me_sb_x = (context_ptr->cu_origin_x / me_sb_size);
+        uint32_t me_sb_y = (context_ptr->cu_origin_y / me_sb_size);
+
+        me_sb_addr = me_sb_x + me_sb_y * me_pic_width_in_sb;
+
+        geom_offset_x = (me_sb_x & 0x1) * me_sb_size;
+        geom_offset_y = (me_sb_y & 0x1) * me_sb_size;
+
+    }
+    else {
+        me_sb_addr = lcuAddr;
+    }
+
+    uint32_t me2Nx2NTableOffset;
+    uint32_t max_number_of_pus_per_sb;
+
+    max_number_of_pus_per_sb = picture_control_set_ptr->parent_pcs_ptr->max_number_of_pus_per_sb;
+
+    me2Nx2NTableOffset = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4 || context_ptr->blk_geom->bwidth == 128 || context_ptr->blk_geom->bheight == 128) ? 0 :
+        get_me_info_index(max_number_of_pus_per_sb, context_ptr->blk_geom, geom_offset_x, geom_offset_y);
+
+    MeCuResults_t * mePuResult = &picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr][me2Nx2NTableOffset];
+
+    uint8_t nsq0 = mePuResult->me_nsq[0];
+    uint8_t nsq1 = mePuResult->me_nsq[1];
+
+    uint8_t me_part_0 = nsq0 == 0 ? PART_N : nsq0 == 1 ? PART_H : nsq0 == 2 ? PART_V : nsq0 == 3 ? PART_H4 : nsq0 == 4 ? PART_V4 : nsq0 == 5 ? PART_S : 0;
+    uint8_t me_part_1 = nsq1 == 0 ? PART_N : nsq1 == 1 ? PART_H : nsq1 == 2 ? PART_V : nsq1 == 3 ? PART_H4 : nsq1 == 4 ? PART_V4 : nsq1 == 5 ? PART_S : 0;
+
+    if (isCompoundEnabled == 0) me_part_1 = me_part_0;
+
+    if (me_part_0 != me_part_1) {
+        context_ptr->nsq_table[0] = me_part_0;
+        context_ptr->nsq_table[1] = me_part_1;
+
+        if (me_part_0 == PART_H) {
+            context_ptr->nsq_table[2] = PART_HA;
+            context_ptr->nsq_table[3] = PART_HB;
+            context_ptr->nsq_table[4] = me_part_1 != PART_H4 ? PART_H4 : PART_V;
+        }
+        else if (me_part_0 == PART_V) {
+            context_ptr->nsq_table[2] = PART_VA;
+            context_ptr->nsq_table[3] = PART_VB;
+            context_ptr->nsq_table[4] = me_part_1 != PART_V4 ? PART_V4 : PART_H;
+        }
+        else if (me_part_0 == PART_H4) {
+            context_ptr->nsq_table[2] = PART_HA;
+            context_ptr->nsq_table[3] = PART_HB;
+            context_ptr->nsq_table[4] = me_part_1 != PART_H ? PART_H : PART_V;
+        }
+        else if (me_part_0 == PART_V4) {
+            context_ptr->nsq_table[2] = PART_VA;
+            context_ptr->nsq_table[3] = PART_VB;
+            context_ptr->nsq_table[4] = me_part_1 != PART_V ? PART_V : PART_H;
+        }
+        else if (me_part_0 == PART_S) {
+            context_ptr->nsq_table[2] = PART_VA;
+            context_ptr->nsq_table[3] = PART_HB;
+            context_ptr->nsq_table[4] = me_part_1 != PART_V ? PART_V : PART_H;
+        }
+    }
+    else {
+        context_ptr->nsq_table[0] = me_part_0;
+        if (me_part_0 == PART_H) {
+            context_ptr->nsq_table[1] = PART_HA;
+            context_ptr->nsq_table[2] = PART_HB;
+            context_ptr->nsq_table[3] = PART_H4;
+            context_ptr->nsq_table[4] = PART_V;
+        }
+        else if (me_part_0 == PART_V) {
+            context_ptr->nsq_table[1] = PART_VA;
+            context_ptr->nsq_table[2] = PART_VB;
+            context_ptr->nsq_table[3] = PART_V4;
+            context_ptr->nsq_table[4] = PART_H;
+        }
+        else if (me_part_0 == PART_H4) {
+            context_ptr->nsq_table[1] = PART_H;
+            context_ptr->nsq_table[2] = PART_HA;
+            context_ptr->nsq_table[3] = PART_HB;
+            context_ptr->nsq_table[4] = PART_V;
+        }
+        else if (me_part_0 == PART_V4) {
+            context_ptr->nsq_table[1] = PART_V;
+            context_ptr->nsq_table[2] = PART_VA;
+            context_ptr->nsq_table[3] = PART_VB;
+            context_ptr->nsq_table[4] = PART_H;
+        }
+        else if (me_part_0 == PART_S) {
+            context_ptr->nsq_table[1] = PART_HA;
+            context_ptr->nsq_table[2] = PART_VA;
+            context_ptr->nsq_table[3] = PART_HB;
+            context_ptr->nsq_table[4] = PART_VB;
+        }
+    }
+}
+#endif
 void md_encode_block(
     SequenceControlSet_t             *sequence_control_set_ptr,
     PictureControlSet_t              *picture_control_set_ptr,
@@ -2896,7 +3028,23 @@ void md_encode_block(
     CodingUnit_t *  cu_ptr = context_ptr->cu_ptr;
     candidate_buffer_ptr_array = &(candidateBufferPtrArrayBase[context_ptr->buffer_depth_index_start[0]]);
 
+
+#if NSQ_OPTIMASATION
+    if (picture_control_set_ptr->slice_type == !I_SLICE) {
+        if (context_ptr->blk_geom->shape == PART_N) {
+            order_nsq_table(
+                picture_control_set_ptr,
+                context_ptr,
+                sequence_control_set_ptr,
+                context_ptr->sb_ptr);
+        }
+    }
+#endif
+
     if (allowed_ns_cu(
+#if NSQ_OPTIMASATION
+        picture_control_set_ptr,context_ptr, sequence_control_set_ptr->sb_geom[lcuAddr].is_complete_sb))
+#else
 #if DISABLE_NSQ_FOR_NON_REF || DISABLE_NSQ
 #if ENCODER_MODE_CLEANUP
         context_ptr, sequence_control_set_ptr->sb_geom[lcuAddr].is_complete_sb))
@@ -2905,6 +3053,7 @@ void md_encode_block(
 #endif
 #else
         context_ptr, sequence_control_set_ptr->sb_geom[lcuAddr].is_complete_sb))
+#endif
 #endif
     {
         // Set PF Mode - should be done per TU (and not per CU) to avoid the correction

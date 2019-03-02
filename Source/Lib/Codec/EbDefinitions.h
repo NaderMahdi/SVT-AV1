@@ -147,6 +147,11 @@ extern "C" {
 #define TUNED_SETTINGS_FOR_M1                           1
 #define CONTENT_BASED_QPS                               1 // Adaptive QP Scaling (active for I only)
 #define PERFORM_IT_REFINEMENT                           0
+#define NSQ_OPTIMASATION                                0
+
+#if NSQ_OPTIMASATION
+#define NSQ_IDX_TH                                      5 // from 1 up to 5
+#endif
 
 /********************************************************/
 /****************** Pre-defined Values ******************/

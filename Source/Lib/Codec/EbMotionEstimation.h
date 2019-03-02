@@ -171,9 +171,6 @@ extern "C" {
     };
 
 
-
-
-
     static const uint32_t partitionWidth[MAX_ME_PU_COUNT] = {
         64,                                                                          // (1)
         32, 32, 32, 32,                                                              // (4)
@@ -205,8 +202,6 @@ extern "C" {
          16,16,16,16
 
     };
-
-
 
     static const uint32_t partitionHeight[MAX_ME_PU_COUNT] = {
         64,                                                                          // (1)

@@ -3551,13 +3551,10 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
         av1_broadcast_interp_filter(av1_unswitchable_filter(assign_filter));
 
 #if PERFORM_IT_REFINEMENT
-
     *switchable_rate = av1_get_switchable_rate(
         candidate_buffer_ptr,
         cm,
-        md_context_ptr//,
-        //x,
-        //xd
+        md_context_ptr
     );
 
     av1_inter_prediction(
@@ -3602,7 +3599,7 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
         // do interp_filter search
         if (av1_is_interp_needed(candidate_buffer_ptr, picture_control_set_ptr, md_context_ptr->blk_geom->bsize)) {
 
-            const int32_t filter_set_size = DUAL_FILTER_SET_SIZE;
+            int32_t filter_set_size = DUAL_FILTER_SET_SIZE;
             int32_t best_in_temp = 0;
             uint32_t best_filters = 0;
 
@@ -3613,17 +3610,25 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
 #endif
                 picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->enable_dual_filter) {
                 int32_t tmp_skip_sb = 0;
-                    int64_t tmp_skip_sse = INT64_MAX;
-                    int32_t tmp_rs;
-                    int64_t tmp_rd;
-                    int32_t best_dual_mode = 0;
+                int64_t tmp_skip_sse = INT64_MAX;
+                int32_t tmp_rs;
+                int64_t tmp_rd;
+                int32_t best_dual_mode = 0;
 
-                //for (i = 1; i < SWITCHABLE_FILTERS; ++i)
+                //input_interpolation_filter = input_interpolation_filter == 0 ? input_interpolation_filter : input_interpolation_filter;
+
+                //for (i = 1; i < filter_set_size; ++i)
                 {
                     tmp_skip_sb = 0;
                     tmp_skip_sse = INT64_MAX;
 
                     candidate_buffer_ptr->candidate_ptr->interp_filters = (InterpFilter)input_interpolation_filter;
+                    candidate_buffer_ptr->candidate_ptr->interp_filters = (InterpFilter)
+                        av1_make_interp_filters((InterpFilter)filter_sets[i][0], (InterpFilter)filter_sets[i][1]);
+                   /* if (filter_x != filter_sets[i][1])
+                        continue;
+                    if (filter_y != filter_sets[i][0])
+                        continue;*/
 
 #if PERFORM_IT_REFINEMENT
                     tmp_rs = av1_get_switchable_rate(
@@ -3663,6 +3668,7 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
                         &tmp_skip_sb,
                         &tmp_skip_sse,
                         NULL, NULL, NULL);
+
                     tmp_rd = RDCOST(md_context_ptr->full_lambda, tmp_rs + tmp_rate, tmp_dist);
 #else
                     tmp_rd = 0;
@@ -4667,12 +4673,6 @@ EbErrorType inter_pu_prediction_av1(
             candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
         }
 
-        if (md_context_ptr->skip_interpolation_search) {
-                if (candidate_buffer_ptr->candidate_ptr->interp_filters != 0)
-                    printf("OOOOOOOO\n");
-        }
-
-     
         av1_inter_prediction(
             picture_control_set_ptr,
             candidate_buffer_ptr->candidate_ptr->interp_filters,

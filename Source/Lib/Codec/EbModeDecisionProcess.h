@@ -228,6 +228,9 @@ extern "C" {
 #if INTERPOLATION_SEARCH_LEVELS
         int32_t                            inter_filter_type_region[3][BlockSizeS_ALL][IT_REG_NUM];
 #endif
+#if NSQ_OPTIMASATION
+        PART                               nsq_table[5];
+#endif
 
     } ModeDecisionContext_t;
 
