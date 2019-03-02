@@ -3777,7 +3777,11 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
         skip_sse_sb,
         NULL, NULL, NULL);
 
+#if DISABLE_IT_RATE
+    *rd = RDCOST(md_context_ptr->full_lambda/*x->rdmult*/, 0, tmp_dist);
+#else
     *rd = RDCOST(md_context_ptr->full_lambda/*x->rdmult*/, *switchable_rate + tmp_rate, tmp_dist);
+#endif
 
     if (assign_filter == SWITCHABLE) {
         // do interp_filter search
@@ -3856,7 +3860,11 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
                         &tmp_skip_sb,
                         &tmp_skip_sse,
                         NULL, NULL, NULL);
+#if DISABLE_IT_RATE
+                    tmp_rd = RDCOST(md_context_ptr->full_lambda/*x->rdmult*/,0, tmp_dist);
+#else
                     tmp_rd = RDCOST(md_context_ptr->full_lambda/*x->rdmult*/, tmp_rs + tmp_rate, tmp_dist);
+#endif
 
                     if (tmp_rd < *rd) {
                         best_dual_mode = i;
@@ -3931,7 +3939,11 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
                         &tmp_skip_sb,
                         &tmp_skip_sse,
                         NULL, NULL, NULL);
+#if DISABLE_IT_RATE
+                    tmp_rd = RDCOST(md_context_ptr->full_lambda/*x->rdmult*/, 0, tmp_dist);
+#else
                     tmp_rd = RDCOST(md_context_ptr->full_lambda/*x->rdmult*/, tmp_rs + tmp_rate, tmp_dist);
+#endif
 
                     if (tmp_rd < *rd) {
                         *rd = tmp_rd;
@@ -4007,7 +4019,11 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
                         &tmp_skip_sb,
                         &tmp_skip_sse,
                         NULL, NULL, NULL);
+#if DISABLE_IT_RATE
+                    tmp_rd = RDCOST(md_context_ptr->full_lambda/*x->rdmult*/, 0, tmp_dist);
+#else
                     tmp_rd = RDCOST(md_context_ptr->full_lambda/*x->rdmult*/, tmp_rs + tmp_rate, tmp_dist);
+#endif
 
                     if (tmp_rd < *rd) {
                         *rd = tmp_rd;
