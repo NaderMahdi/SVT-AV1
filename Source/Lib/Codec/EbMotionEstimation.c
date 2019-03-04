@@ -280,7 +280,7 @@ void nsq_me_analysis(
     uint8_t   *p_nsq_16x16,
     uint8_t   *p_nsq_8x8)
 {
-    #define BLK_NUM 6
+    #define BLK_NUM 5
 
     uint32_t sad[BLK_NUM];// sad_N, sad_H, sad_V, sad_H4, sad_V4, sad_S;
 
@@ -298,7 +298,7 @@ void nsq_me_analysis(
     sad[2] = p_sad32x64[0] + p_sad32x64[1];
     sad[3] = p_sad64x16[0] + p_sad64x16[1] + p_sad64x16[2] + p_sad64x16[3];
     sad[4] = p_sad16x64[0] + p_sad16x64[1] + p_sad16x64[2] + p_sad16x64[3];
-    sad[5] = p_sad32x32[0] + p_sad32x32[1] + p_sad32x32[2] + p_sad32x32[3];
+    //sad[5] = p_sad32x32[0] + p_sad32x32[1] + p_sad32x32[2] + p_sad32x32[3];
 
     best_nsq_sad = MAX_SAD_VALUE;
     for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
@@ -315,7 +315,7 @@ void nsq_me_analysis(
     sad[2] = p_sad16x32[0] + p_sad16x32[1];
     sad[3] = p_sad32x8 [0] + p_sad32x8 [1] + p_sad32x8 [2] + p_sad32x8 [3];
     sad[4] = p_sad8x32 [0] + p_sad8x32 [1] + p_sad8x32 [2] + p_sad8x32 [3];
-    sad[5] = p_sad16x16[0] + p_sad16x16[1] + p_sad16x16[2] + p_sad16x16[3];
+    //sad[5] = p_sad16x16[0] + p_sad16x16[1] + p_sad16x16[2] + p_sad16x16[3];
 
     best_nsq_sad = MAX_SAD_VALUE;
     for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
@@ -330,7 +330,7 @@ void nsq_me_analysis(
     sad[2] = p_sad16x32[2] + p_sad16x32[3];
     sad[3] = p_sad32x8 [4] + p_sad32x8 [5] + p_sad32x8 [6] + p_sad32x8 [7];
     sad[4] = p_sad8x32 [4] + p_sad8x32 [5] + p_sad8x32 [6] + p_sad8x32 [7];
-    sad[5] = p_sad16x16[4] + p_sad16x16[5] + p_sad16x16[6] + p_sad16x16[7];
+    //sad[5] = p_sad16x16[4] + p_sad16x16[5] + p_sad16x16[6] + p_sad16x16[7];
 
     best_nsq_sad = MAX_SAD_VALUE;
     for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
@@ -345,7 +345,7 @@ void nsq_me_analysis(
     sad[2] = p_sad16x32[4] + p_sad16x32[5];
     sad[3] = p_sad32x8 [8] + p_sad32x8 [9] + p_sad32x8 [10] + p_sad32x8 [11];
     sad[4] = p_sad8x32 [8] + p_sad8x32 [9] + p_sad8x32 [10] + p_sad8x32 [11];
-    sad[5] = p_sad16x16[8] + p_sad16x16[9] + p_sad16x16[10] + p_sad16x16[11];
+    //sad[5] = p_sad16x16[8] + p_sad16x16[9] + p_sad16x16[10] + p_sad16x16[11];
 
     best_nsq_sad = MAX_SAD_VALUE;
     for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
@@ -360,7 +360,7 @@ void nsq_me_analysis(
     sad[2] = p_sad16x32[6]  + p_sad16x32[7];
     sad[3] = p_sad32x8 [12] + p_sad32x8 [13] + p_sad32x8 [14] + p_sad32x8 [15];
     sad[4] = p_sad8x32 [12] + p_sad8x32 [13] + p_sad8x32 [14] + p_sad8x32 [15];
-    sad[5] = p_sad16x16[12] + p_sad16x16[13] + p_sad16x16[14] + p_sad16x16[15];
+    //sad[5] = p_sad16x16[12] + p_sad16x16[13] + p_sad16x16[14] + p_sad16x16[15];
 
     best_nsq_sad = MAX_SAD_VALUE;
     for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
@@ -377,7 +377,7 @@ void nsq_me_analysis(
     sad[2] = p_sad8x16 [0] + p_sad8x16[1];
     sad[3] = MAX_SAD_VALUE;
     sad[4] = MAX_SAD_VALUE;
-    sad[5] = p_sad8x8[0] + p_sad8x8[1] + p_sad8x8[2] + p_sad8x8[3];
+    //sad[5] = p_sad8x8[0] + p_sad8x8[1] + p_sad8x8[2] + p_sad8x8[3];
 
     best_nsq_sad = MAX_SAD_VALUE;
     for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
@@ -393,7 +393,7 @@ void nsq_me_analysis(
     sad[2] = p_sad8x16 [2] + p_sad8x16[3];
     sad[3] = MAX_SAD_VALUE;
     sad[4] = MAX_SAD_VALUE;
-    sad[5] = p_sad8x8[4] + p_sad8x8[5] + p_sad8x8[6] + p_sad8x8[7];
+    //sad[5] = p_sad8x8[4] + p_sad8x8[5] + p_sad8x8[6] + p_sad8x8[7];
 
     best_nsq_sad = MAX_SAD_VALUE;
     for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
@@ -409,7 +409,7 @@ void nsq_me_analysis(
     sad[2] = p_sad8x16 [4] + p_sad8x16[5];
     sad[3] = MAX_SAD_VALUE;
     sad[4] = MAX_SAD_VALUE;
-    sad[5] = p_sad8x8[8] + p_sad8x8[9] + p_sad8x8[10] + p_sad8x8[11];
+    //sad[5] = p_sad8x8[8] + p_sad8x8[9] + p_sad8x8[10] + p_sad8x8[11];
 
     best_nsq_sad = MAX_SAD_VALUE;
     for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
@@ -425,7 +425,7 @@ void nsq_me_analysis(
     sad[2] = p_sad8x16 [6] + p_sad8x16[7];
     sad[3] = MAX_SAD_VALUE;
     sad[4] = MAX_SAD_VALUE;
-    sad[5] = p_sad8x8[12] + p_sad8x8[13] + p_sad8x8[14] + p_sad8x8[15];
+   // sad[5] = p_sad8x8[12] + p_sad8x8[13] + p_sad8x8[14] + p_sad8x8[15];
 
     best_nsq_sad = MAX_SAD_VALUE;
     for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
@@ -441,7 +441,7 @@ void nsq_me_analysis(
     sad[2] = p_sad8x16 [8] + p_sad8x16[9];
     sad[3] = MAX_SAD_VALUE;
     sad[4] = MAX_SAD_VALUE;
-    sad[5] = p_sad8x8[16] + p_sad8x8[17] + p_sad8x8[18] + p_sad8x8[19];
+   // sad[5] = p_sad8x8[16] + p_sad8x8[17] + p_sad8x8[18] + p_sad8x8[19];
 
     best_nsq_sad = MAX_SAD_VALUE;
     for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
@@ -457,7 +457,7 @@ void nsq_me_analysis(
     sad[2] = p_sad8x16 [10] + p_sad8x16[11];
     sad[3] = MAX_SAD_VALUE;
     sad[4] = MAX_SAD_VALUE;
-    sad[5] = p_sad8x8[20] + p_sad8x8[21] + p_sad8x8[22] + p_sad8x8[23];
+   // sad[5] = p_sad8x8[20] + p_sad8x8[21] + p_sad8x8[22] + p_sad8x8[23];
 
     best_nsq_sad = MAX_SAD_VALUE;
     for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
@@ -473,7 +473,7 @@ void nsq_me_analysis(
     sad[2] = p_sad8x16 [12] + p_sad8x16[13];
     sad[3] = MAX_SAD_VALUE;
     sad[4] = MAX_SAD_VALUE;
-    sad[5] = p_sad8x8[24] + p_sad8x8[25] + p_sad8x8[26] + p_sad8x8[27];
+    //sad[5] = p_sad8x8[24] + p_sad8x8[25] + p_sad8x8[26] + p_sad8x8[27];
 
     best_nsq_sad = MAX_SAD_VALUE;
     for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
@@ -489,7 +489,7 @@ void nsq_me_analysis(
     sad[2] = p_sad8x16 [14] + p_sad8x16[15];
     sad[3] = MAX_SAD_VALUE;
     sad[4] = MAX_SAD_VALUE;
-    sad[5] = p_sad8x8[28] + p_sad8x8[29] + p_sad8x8[30] + p_sad8x8[31];
+    //sad[5] = p_sad8x8[28] + p_sad8x8[29] + p_sad8x8[30] + p_sad8x8[31];
 
     best_nsq_sad = MAX_SAD_VALUE;
     for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
@@ -505,7 +505,7 @@ void nsq_me_analysis(
     sad[2] = p_sad8x16 [16] + p_sad8x16[17];
     sad[3] = MAX_SAD_VALUE;
     sad[4] = MAX_SAD_VALUE;
-    sad[5] = p_sad8x8[32] + p_sad8x8[33] + p_sad8x8[34] + p_sad8x8[35];
+    //sad[5] = p_sad8x8[32] + p_sad8x8[33] + p_sad8x8[34] + p_sad8x8[35];
 
     best_nsq_sad = MAX_SAD_VALUE;
     for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
@@ -521,7 +521,7 @@ void nsq_me_analysis(
     sad[2] = p_sad8x16[18] + p_sad8x16[19];
     sad[3] = MAX_SAD_VALUE;
     sad[4] = MAX_SAD_VALUE;
-    sad[5] = p_sad8x8[36] + p_sad8x8[37] + p_sad8x8[38] + p_sad8x8[39];
+    //sad[5] = p_sad8x8[36] + p_sad8x8[37] + p_sad8x8[38] + p_sad8x8[39];
 
     best_nsq_sad = MAX_SAD_VALUE;
     for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
@@ -537,7 +537,7 @@ void nsq_me_analysis(
     sad[2] = p_sad8x16[20] + p_sad8x16[21];
     sad[3] = MAX_SAD_VALUE;
     sad[4] = MAX_SAD_VALUE;
-    sad[5] = p_sad8x8[40] + p_sad8x8[41] + p_sad8x8[42] + p_sad8x8[43];
+    //sad[5] = p_sad8x8[40] + p_sad8x8[41] + p_sad8x8[42] + p_sad8x8[43];
 
     best_nsq_sad = MAX_SAD_VALUE;
     for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
@@ -553,7 +553,7 @@ void nsq_me_analysis(
     sad[2] = p_sad8x16[22] + p_sad8x16[23];
     sad[3] = MAX_SAD_VALUE;
     sad[4] = MAX_SAD_VALUE;
-    sad[5] = p_sad8x8[44] + p_sad8x8[45] + p_sad8x8[46] + p_sad8x8[47];
+    //sad[5] = p_sad8x8[44] + p_sad8x8[45] + p_sad8x8[46] + p_sad8x8[47];
 
     best_nsq_sad = MAX_SAD_VALUE;
     for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
@@ -569,7 +569,7 @@ void nsq_me_analysis(
     sad[2] = p_sad8x16[24] + p_sad8x16[25];
     sad[3] = MAX_SAD_VALUE;
     sad[4] = MAX_SAD_VALUE;
-    sad[5] = p_sad8x8[48] + p_sad8x8[49] + p_sad8x8[50] + p_sad8x8[51];
+    //sad[5] = p_sad8x8[48] + p_sad8x8[49] + p_sad8x8[50] + p_sad8x8[51];
 
     best_nsq_sad = MAX_SAD_VALUE;
     for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
@@ -585,7 +585,7 @@ void nsq_me_analysis(
     sad[2] = p_sad8x16[26] + p_sad8x16[27];
     sad[3] = MAX_SAD_VALUE;
     sad[4] = MAX_SAD_VALUE;
-    sad[5] = p_sad8x8[52] + p_sad8x8[53] + p_sad8x8[54] + p_sad8x8[55];
+    //sad[5] = p_sad8x8[52] + p_sad8x8[53] + p_sad8x8[54] + p_sad8x8[55];
 
     best_nsq_sad = MAX_SAD_VALUE;
     for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
@@ -601,7 +601,7 @@ void nsq_me_analysis(
     sad[2] = p_sad8x16[28] + p_sad8x16[29];
     sad[3] = MAX_SAD_VALUE;
     sad[4] = MAX_SAD_VALUE;
-    sad[5] = p_sad8x8[56] + p_sad8x8[57] + p_sad8x8[58] + p_sad8x8[59];
+    //sad[5] = p_sad8x8[56] + p_sad8x8[57] + p_sad8x8[58] + p_sad8x8[59];
 
     best_nsq_sad = MAX_SAD_VALUE;
     for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {
@@ -617,7 +617,7 @@ void nsq_me_analysis(
     sad[2] = p_sad8x16[30] + p_sad8x16[31];
     sad[3] = MAX_SAD_VALUE;
     sad[4] = MAX_SAD_VALUE;
-    sad[5] = p_sad8x8[60] + p_sad8x8[61] + p_sad8x8[62] + p_sad8x8[63];
+    //sad[5] = p_sad8x8[60] + p_sad8x8[61] + p_sad8x8[62] + p_sad8x8[63];
 
     best_nsq_sad = MAX_SAD_VALUE;
     for (nsq_index = 1; nsq_index < BLK_NUM; nsq_index++) {

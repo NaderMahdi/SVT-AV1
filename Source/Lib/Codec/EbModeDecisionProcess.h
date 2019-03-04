@@ -229,7 +229,7 @@ extern "C" {
         int32_t                            inter_filter_type_region[3][BlockSizeS_ALL][IT_REG_NUM];
 #endif
 #if NSQ_OPTIMASATION
-        PART                               nsq_table[6];
+        PART                               nsq_table[NSQ_TAB_SIZE];
 #endif
 
     } ModeDecisionContext_t;

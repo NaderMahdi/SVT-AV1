@@ -3030,6 +3030,9 @@ void  order_nsq_table(
     uint8_t me_part_0 = nsq0 == 0 ? PART_N : nsq0 == 1 ? PART_H : nsq0 == 2 ? PART_V : nsq0 == 3 ? PART_H4 : nsq0 == 4 ? PART_V4 : nsq0 == 5 ? PART_S : 0;
     uint8_t me_part_1 = nsq1 == 0 ? PART_N : nsq1 == 1 ? PART_H : nsq1 == 2 ? PART_V : nsq1 == 3 ? PART_H4 : nsq1 == 4 ? PART_V4 : nsq1 == 5 ? PART_S : 0;
 
+#if REMOVE_DUPLICATE
+    uint8_t cnt[PART_S + 1] = { 0 };
+#endif
 #if NSQ_ADD_NEIGH_INFO
     // Generate Partition context
     uint32_t partition_left_neighbor_index = get_neighbor_array_unit_left_index(
@@ -3133,7 +3136,33 @@ void  order_nsq_table(
             context_ptr->nsq_table[0] = neighbor_part;
         }
         else {
-            context_ptr->nsq_table[5] = neighbor_part;
+            context_ptr->nsq_table[5] = neighbor_part != PART_N && neighbor_part != PART_S ? neighbor_part : me_part_0;
+        }
+    }
+#endif
+#if REMOVE_DUPLICATE
+    for (int pidx = 0; pidx < NSQ_TAB_SIZE; pidx++) {
+        cnt[context_ptr->nsq_table[pidx]]++;
+    }
+
+    cnt[context_ptr->nsq_table[0]] = 1;
+    for (int iter = 0; iter < NSQ_TAB_SIZE - 1; iter++) {
+        for (int idx = 1 + iter; idx < NSQ_TAB_SIZE; idx++) {
+            if (context_ptr->nsq_table[iter] != context_ptr->nsq_table[idx]) {
+                continue;
+            }
+            else {
+                for (int i = idx; i < NSQ_TAB_SIZE; i++) {
+                    if (idx < NSQ_TAB_SIZE - 1) {
+                        context_ptr->nsq_table[idx] = context_ptr->nsq_table[idx + 1];
+                    }else if (idx == NSQ_TAB_SIZE - 1) {
+                        for (int pidx = 1; pidx < PART_S; pidx++) {
+                            if (cnt[pidx] == 0)
+                                context_ptr->nsq_table[idx] = (PART)pidx;
+                        }
+                    }
+                }
+            }
         }
     }
 #endif
