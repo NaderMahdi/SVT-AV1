@@ -150,7 +150,8 @@ extern "C" {
 #define NSQ_OPTIMASATION                                0
 
 #if NSQ_OPTIMASATION
-#define NSQ_IDX_TH                                      5 // from 1 up to 5
+#define NSQ_IDX_TH                                      5 // from 1 up to 6
+#define NSQ_ADD_NEIGH_INFO                              1
 #endif
 
 #define DISABLE_IT_RATE                                 0

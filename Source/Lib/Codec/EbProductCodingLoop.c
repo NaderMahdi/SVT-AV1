@@ -2881,11 +2881,114 @@ void inter_depth_tx_search(
 #endif
 
 #if NSQ_OPTIMASATION
+#if NSQ_ADD_NEIGH_INFO
+uint8_t get_part_side(
+    PARTITION_CONTEXT part) {
+    switch (part) {
+    case 31:
+        return 4;
+        break;
+    case 30:
+        return 8;
+        break;
+    case 28:
+        return 16;
+        break;
+    case 24:
+        return 32;
+        break;
+    case 16:
+        return 64;
+        break;
+    case 0:
+        return 128;
+        break;
+    default:
+        printf("error: non supported partition!!\n");
+
+    }
+}
+PART get_partition_shape(
+    PARTITION_CONTEXT above,
+    PARTITION_CONTEXT left,
+    uint8_t           width,
+    uint8_t           height) {
+
+    uint8_t above_size = get_part_side(above);
+    uint8_t left_size = get_part_side(left);
+
+    PART part = PART_N;
+
+    if (above_size == width && left_size == height) {
+        part = PART_N;
+    }
+    else if (above_size > width && left_size > height) {
+        part = PART_N;
+    }
+    else if (above_size > width) {
+        if (left_size == height)
+            part = PART_N;
+        else if (left_size < (height / 2))
+            part = PART_H4;
+        else if (left_size < height)
+            part = PART_H;
+        else
+            printf("error: unsupported left_size\n");
+    }
+    else if (left_size > height) {
+        if (above_size == width)
+            part = PART_N;
+        else if (above_size < (width / 2))
+            part = PART_V4;
+        else if (above_size < width)
+            part = PART_V;
+        else
+            printf("error: unsupported above_size\n");
+    }
+    else if (above_size < width) {
+        if (left_size == height)
+            part = PART_VA;
+        else if (left_size < height)
+            part = PART_S;
+        else
+            printf("error: unsupported left_size\n");
+    }
+    else if (left_size < height) {
+        if (above_size == width)
+            part = PART_HA;
+        else if (above_size < width)
+            part = PART_S;
+        else
+            printf("error: unsupported above_size\n");
+    }
+    else if (above_size == width) {
+        if (left_size < height)
+            part = PART_HB;
+        else
+            printf("error: unsupported left_size\n");
+    }
+    else if (left_size == height) {
+        if (above_size == width)
+            part = PART_HB;
+        else
+            printf("error: unsupported above_size\n");
+    }
+    else {
+        printf("error: unsupported above_size && left_size\n");
+    }
+    return part;
+};
+#endif
 void  order_nsq_table(
     PictureControlSet_t            *picture_control_set_ptr,
     ModeDecisionContext_t          *context_ptr,
     const SequenceControlSet_t     *sequence_control_set_ptr,
-    LargestCodingUnit_t            *sb_ptr) {
+    LargestCodingUnit_t            *sb_ptr
+#if NSQ_ADD_NEIGH_INFO
+    , NeighborArrayUnit_t        *leaf_partition_neighbor_array
+#endif
+
+   ) {
 
     const uint32_t             lcuAddr = sb_ptr->index;
 
@@ -2927,6 +3030,26 @@ void  order_nsq_table(
     uint8_t me_part_0 = nsq0 == 0 ? PART_N : nsq0 == 1 ? PART_H : nsq0 == 2 ? PART_V : nsq0 == 3 ? PART_H4 : nsq0 == 4 ? PART_V4 : nsq0 == 5 ? PART_S : 0;
     uint8_t me_part_1 = nsq1 == 0 ? PART_N : nsq1 == 1 ? PART_H : nsq1 == 2 ? PART_V : nsq1 == 3 ? PART_H4 : nsq1 == 4 ? PART_V4 : nsq1 == 5 ? PART_S : 0;
 
+#if NSQ_ADD_NEIGH_INFO
+    // Generate Partition context
+    uint32_t partition_left_neighbor_index = get_neighbor_array_unit_left_index(
+        leaf_partition_neighbor_array,
+        context_ptr->cu_origin_y);
+    uint32_t partition_above_neighbor_index = get_neighbor_array_unit_top_index(
+        leaf_partition_neighbor_array,
+        context_ptr->cu_origin_x);
+    const PARTITION_CONTEXT above_ctx = (((PartitionContext*)leaf_partition_neighbor_array->topArray)[partition_above_neighbor_index].above == (int8_t)INVALID_NEIGHBOR_DATA) ?
+        0 : ((PartitionContext*)leaf_partition_neighbor_array->topArray)[partition_above_neighbor_index].above;
+
+    const PARTITION_CONTEXT left_ctx = (((PartitionContext*)leaf_partition_neighbor_array->leftArray)[partition_left_neighbor_index].left == (int8_t)INVALID_NEIGHBOR_DATA) ?
+        0 : ((PartitionContext*)leaf_partition_neighbor_array->leftArray)[partition_left_neighbor_index].left;
+
+    PART neighbor_part = get_partition_shape(
+        above_ctx,
+        left_ctx,
+        context_ptr->blk_geom->bwidth,
+        context_ptr->blk_geom->bheight);
+#endif
     if (isCompoundEnabled == 0) me_part_1 = me_part_0;
 
     if (me_part_0 != me_part_1) {
@@ -2992,6 +3115,29 @@ void  order_nsq_table(
             context_ptr->nsq_table[4] = PART_VB;
         }
     }
+#if NSQ_ADD_NEIGH_INFO
+    if (neighbor_part == PART_S && me_part_0 == PART_S && me_part_1 ==PART_S) {
+        context_ptr->nsq_table[0] = PART_HA;
+        context_ptr->nsq_table[1] = PART_VA;
+        context_ptr->nsq_table[2] = PART_HB;
+        context_ptr->nsq_table[3] = PART_VB;
+        context_ptr->nsq_table[4] = PART_H4;
+        context_ptr->nsq_table[5] = PART_V4;
+    }else{
+        if (neighbor_part != PART_N && neighbor_part != PART_S && neighbor_part != me_part_0 && neighbor_part != me_part_1) {
+            context_ptr->nsq_table[5] = context_ptr->nsq_table[4];
+            context_ptr->nsq_table[4] = context_ptr->nsq_table[3];
+            context_ptr->nsq_table[3] = context_ptr->nsq_table[2];
+            context_ptr->nsq_table[2] = context_ptr->nsq_table[1];
+            context_ptr->nsq_table[1] = context_ptr->nsq_table[0];
+            context_ptr->nsq_table[0] = neighbor_part;
+        }
+        else {
+            context_ptr->nsq_table[5] = neighbor_part;
+        }
+    }
+#endif
+
 }
 #endif
 void md_encode_block(
@@ -3036,7 +3182,11 @@ void md_encode_block(
                 picture_control_set_ptr,
                 context_ptr,
                 sequence_control_set_ptr,
-                context_ptr->sb_ptr);
+                context_ptr->sb_ptr
+#if NSQ_ADD_NEIGH_INFO
+               , context_ptr->leaf_partition_neighbor_array
+#endif
+            );
         }
     }
 #endif

@@ -2120,8 +2120,6 @@ void  d1_non_square_block_decision(
         context_ptr->md_cu_arr_nsq[context_ptr->blk_geom->sqi_mds].part = from_shape_to_part[context_ptr->blk_geom->shape];
         context_ptr->md_cu_arr_nsq[context_ptr->blk_geom->sqi_mds].best_d1_blk = first_blk_idx;
     }
-
-
 }
 
 
@@ -2151,7 +2149,7 @@ void   compute_depth_costs(
 
 
     /*
-    ___________
+     ___________
     |     |     |
     |blk0 |blk1 |
     |-----|-----|
