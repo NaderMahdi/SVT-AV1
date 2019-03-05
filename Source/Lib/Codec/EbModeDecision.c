@@ -413,13 +413,18 @@ void  re_order_nfl_table(
 
     int32_t left_type = (uint32_t)(
         (context_ptr->mode_type_neighbor_array->leftArray[modeTypeLeftNeighborIndex] != INTRA_MODE &&
-            context_ptr->mode_type_neighbor_array->leftArray[modeTypeLeftNeighborIndex] == INTER_MODE) ? -1:
-        (uint32_t)context_ptr->intra_luma_mode_neighbor_array->leftArray[intraLumaModeLeftNeighborIndex]);
+            context_ptr->mode_type_neighbor_array->leftArray[modeTypeLeftNeighborIndex] == INTER_MODE) ? 0 :
+            (context_ptr->mode_type_neighbor_array->leftArray[modeTypeLeftNeighborIndex] == INTRA_MODE &&
+                context_ptr->mode_type_neighbor_array->leftArray[modeTypeLeftNeighborIndex] != INTER_MODE) ? 1 : -1);
+
+    //  (uint32_t)context_ptr->intra_luma_mode_neighbor_array->leftArray[intraLumaModeLeftNeighborIndex]);
 
     int32_t above_type = (uint32_t)(
         (context_ptr->mode_type_neighbor_array->topArray[modeTypeTopNeighborIndex] != INTRA_MODE &&
-            context_ptr->mode_type_neighbor_array->topArray[modeTypeTopNeighborIndex] == INTER_MODE) ? -1 :
-        (uint32_t)context_ptr->intra_luma_mode_neighbor_array->topArray[intraLumaModeTopNeighborIndex]);
+            context_ptr->mode_type_neighbor_array->topArray[modeTypeTopNeighborIndex] == INTER_MODE) ? 0 :
+            (context_ptr->mode_type_neighbor_array->topArray[modeTypeTopNeighborIndex] == INTRA_MODE &&
+                context_ptr->mode_type_neighbor_array->topArray[modeTypeTopNeighborIndex] != INTER_MODE) ? 1 : -1);
+       // (uint32_t)context_ptr->intra_luma_mode_neighbor_array->topArray[intraLumaModeTopNeighborIndex]);
 
 
     uint32_t skipCoeffLeftNeighborIndex = get_neighbor_array_unit_left_index(
@@ -455,7 +460,7 @@ void  re_order_nfl_table(
         (context_ptr->skip_flag_neighbor_array->topArray[skip_flag_top_neighbor_index]) ? 1 : 0;
 
 
-    if (above_type == -1 && left_type == -1) {
+    if (above_type == 0 && left_type == 0) {
 
         for (i = 0; i < full_recon_candidate_count - 1; ++i) {
             for (j = i + 1; j < full_recon_candidate_count; ++j) {
@@ -467,7 +472,7 @@ void  re_order_nfl_table(
                 }
             }
         }
-    }else if (above_type > -1 && left_type > -1) {
+    }else if (above_type == 1 && left_type == 1) {
 
         for (i = 0; i < full_recon_candidate_count - 1; ++i) {
             for (j = i + 1; j < full_recon_candidate_count; ++j) {
@@ -527,6 +532,7 @@ EbErrorType PreModeDecision(
 #endif
 #if NFL_OPTIMASATION
     ModeDecisionContext_t            *context_ptr,
+    PictureControlSet_t              *picture_control_set_ptr,
 #endif
     EbBool                           same_fast_full_candidate
 )
@@ -577,6 +583,7 @@ EbErrorType PreModeDecision(
     }
     else
         best_candidate_index_array[0] = 0;
+#if !NFL_OPTIMASATION
     for (i = 0; i < fullReconCandidateCount - 1; ++i) {
         for (j = i + 1; j < fullReconCandidateCount; ++j) {
             if ((buffer_ptr_array[best_candidate_index_array[i]]->candidate_ptr->type == INTRA_MODE) &&
@@ -587,6 +594,7 @@ EbErrorType PreModeDecision(
             }
         }
     }
+#endif
 #if TX_SEARCH_LEVELS
     for (i = 0; i < fullReconCandidateCount; i++) {
         if (*(buffer_ptr_array[i]->fast_cost_ptr) < *ref_fast_cost) {
@@ -595,12 +603,14 @@ EbErrorType PreModeDecision(
     }
 #endif
 #if NFL_OPTIMASATION
-    re_order_nfl_table(
-        context_ptr,
-        fullReconCandidateCount,
-        buffer_ptr_array,
-        full_candidate_total_count_ptr,
-        best_candidate_index_array);
+    if (picture_control_set_ptr->slice_type != I_SLICE) {
+        re_order_nfl_table(
+            context_ptr,
+            fullReconCandidateCount,
+            buffer_ptr_array,
+            full_candidate_total_count_ptr,
+            best_candidate_index_array);
+    }
 
     (*full_candidate_total_count_ptr) = MIN(fullReconCandidateCount,MIN(MAX_NFL, NFL_CAP));
 #else
