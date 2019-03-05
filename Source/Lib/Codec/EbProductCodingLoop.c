@@ -3313,6 +3313,9 @@ void md_encode_block(
 #if TX_SEARCH_LEVELS
             &ref_fast_cost,
 #endif
+#if NFL_OPTIMASATION
+            context_ptr,
+#endif
             (EbBool)(secondFastCostSearchCandidateTotalCount == buffer_total_count)); // The fast loop bug fix is now added to 4K only
 
 

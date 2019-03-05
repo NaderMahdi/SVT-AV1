@@ -384,7 +384,132 @@ void LimitMvOverBound(
 
 }
 
+#if NFL_OPTIMASATION
+void  re_order_nfl_table(
+    ModeDecisionContext_t           *context_ptr,
+    uint32_t                        full_recon_candidate_count,
+    ModeDecisionCandidateBuffer_t   **buffer_ptr_array,
+    uint32_t                        *full_candidate_total_count_ptr,
+    uint8_t                         *best_candidate_index_array) {
 
+    uint32_t bl_org_x_pict = context_ptr->cu_origin_x;
+    uint32_t bl_org_y_pict = context_ptr->cu_origin_y;
+
+    uint32_t index, i ,j;
+
+    // Generate Partition context
+    uint32_t modeTypeLeftNeighborIndex = get_neighbor_array_unit_left_index(
+        context_ptr->mode_type_neighbor_array,
+        context_ptr->cu_origin_y);
+    uint32_t modeTypeTopNeighborIndex = get_neighbor_array_unit_top_index(
+        context_ptr->mode_type_neighbor_array,
+        context_ptr->cu_origin_x);
+    uint32_t intraLumaModeLeftNeighborIndex = get_neighbor_array_unit_left_index(
+        context_ptr->intra_luma_mode_neighbor_array,
+        context_ptr->cu_origin_y);
+    uint32_t intraLumaModeTopNeighborIndex = get_neighbor_array_unit_top_index(
+        context_ptr->intra_luma_mode_neighbor_array,
+        context_ptr->cu_origin_x);
+
+    int32_t left_type = (uint32_t)(
+        (context_ptr->mode_type_neighbor_array->leftArray[modeTypeLeftNeighborIndex] != INTRA_MODE &&
+            context_ptr->mode_type_neighbor_array->leftArray[modeTypeLeftNeighborIndex] == INTER_MODE) ? -1:
+        (uint32_t)context_ptr->intra_luma_mode_neighbor_array->leftArray[intraLumaModeLeftNeighborIndex]);
+
+    int32_t above_type = (uint32_t)(
+        (context_ptr->mode_type_neighbor_array->topArray[modeTypeTopNeighborIndex] != INTRA_MODE &&
+            context_ptr->mode_type_neighbor_array->topArray[modeTypeTopNeighborIndex] == INTER_MODE) ? -1 :
+        (uint32_t)context_ptr->intra_luma_mode_neighbor_array->topArray[intraLumaModeTopNeighborIndex]);
+
+
+    uint32_t skipCoeffLeftNeighborIndex = get_neighbor_array_unit_left_index(
+        context_ptr->skip_coeff_neighbor_array,
+        context_ptr->cu_origin_y);
+    uint32_t skipCoeffTopNeighborIndex = get_neighbor_array_unit_top_index(
+        context_ptr->skip_coeff_neighbor_array,
+        context_ptr->cu_origin_x);
+
+
+    int32_t left_skip =
+        (context_ptr->skip_coeff_neighbor_array->leftArray[skipCoeffLeftNeighborIndex] == (uint8_t)INVALID_NEIGHBOR_DATA) ? -1 :
+        (context_ptr->skip_coeff_neighbor_array->leftArray[skipCoeffLeftNeighborIndex]) ? 1 : 0;
+
+    int32_t above_skip =
+        (context_ptr->skip_coeff_neighbor_array->topArray[skipCoeffTopNeighborIndex] == (uint8_t)INVALID_NEIGHBOR_DATA) ? -1 :
+        (context_ptr->skip_coeff_neighbor_array->topArray[skipCoeffTopNeighborIndex]) ? 1 : 0;
+
+
+    uint32_t skip_flag_left_neighbor_index = get_neighbor_array_unit_left_index(
+        context_ptr->skip_flag_neighbor_array,
+        context_ptr->cu_origin_y);
+    uint32_t skip_flag_top_neighbor_index = get_neighbor_array_unit_top_index(
+        context_ptr->skip_flag_neighbor_array,
+        context_ptr->cu_origin_x);
+
+    int32_t left_skipped =
+        (context_ptr->skip_flag_neighbor_array->leftArray[skip_flag_left_neighbor_index] == (uint8_t)INVALID_NEIGHBOR_DATA) ? -1 :
+        (context_ptr->skip_flag_neighbor_array->leftArray[skip_flag_left_neighbor_index]) ? 1 : 0;
+
+    int32_t above_skipped =
+        (context_ptr->skip_flag_neighbor_array->topArray[skip_flag_top_neighbor_index] == (uint8_t)INVALID_NEIGHBOR_DATA) ? -1 :
+        (context_ptr->skip_flag_neighbor_array->topArray[skip_flag_top_neighbor_index]) ? 1 : 0;
+
+
+    if (above_type == -1 && left_type == -1) {
+
+        for (i = 0; i < full_recon_candidate_count - 1; ++i) {
+            for (j = i + 1; j < full_recon_candidate_count; ++j) {
+                if ((buffer_ptr_array[best_candidate_index_array[i]]->candidate_ptr->type == INTRA_MODE) &&
+                    (buffer_ptr_array[best_candidate_index_array[j]]->candidate_ptr->type == INTER_MODE)) {
+                    index = best_candidate_index_array[i];
+                    best_candidate_index_array[i] = (uint8_t)best_candidate_index_array[j];
+                    best_candidate_index_array[j] = (uint8_t)index;
+                }
+            }
+        }
+    }else if (above_type > -1 && left_type > -1) {
+
+        for (i = 0; i < full_recon_candidate_count - 1; ++i) {
+            for (j = i + 1; j < full_recon_candidate_count; ++j) {
+                if ((buffer_ptr_array[best_candidate_index_array[i]]->candidate_ptr->type == INTER_MODE) &&
+                    (buffer_ptr_array[best_candidate_index_array[j]]->candidate_ptr->type == INTRA_MODE)) {
+                    index = best_candidate_index_array[i];
+                    best_candidate_index_array[i] = (uint8_t)best_candidate_index_array[j];
+                    best_candidate_index_array[j] = (uint8_t)index;
+                }
+            }
+        }
+    }
+
+    if (above_skipped == 0 && left_skipped == 0) {
+
+        for (i = 0; i < full_recon_candidate_count - 1; ++i) {
+            for (j = i + 1; j < full_recon_candidate_count; ++j) {
+                if ((buffer_ptr_array[best_candidate_index_array[i]]->candidate_ptr->merge_flag == EB_TRUE) &&
+                    (buffer_ptr_array[best_candidate_index_array[j]]->candidate_ptr->merge_flag == EB_FALSE)) {
+                    index = best_candidate_index_array[i];
+                    best_candidate_index_array[i] = (uint8_t)best_candidate_index_array[j];
+                    best_candidate_index_array[j] = (uint8_t)index;
+                }
+            }
+        }
+    }
+    else if (above_type == 1 && left_type == 1) {
+
+        for (i = 0; i < full_recon_candidate_count - 1; ++i) {
+            for (j = i + 1; j < full_recon_candidate_count; ++j) {
+                if ((buffer_ptr_array[best_candidate_index_array[i]]->candidate_ptr->merge_flag == EB_FALSE) &&
+                    (buffer_ptr_array[best_candidate_index_array[j]]->candidate_ptr->merge_flag == EB_TRUE)) {
+                    index = best_candidate_index_array[i];
+                    best_candidate_index_array[i] = (uint8_t)best_candidate_index_array[j];
+                    best_candidate_index_array[j] = (uint8_t)index;
+                }
+            }
+        }
+    }
+}
+       
+#endif
 /***************************************
 * Pre-Mode Decision
 *   Selects which fast cost modes to
@@ -392,13 +517,16 @@ void LimitMvOverBound(
 ***************************************/
 EbErrorType PreModeDecision(
     CodingUnit_t                   *cu_ptr,
-    uint32_t                          buffer_total_count,
-    ModeDecisionCandidateBuffer_t **buffer_ptr_array,
-    uint32_t                         *full_candidate_total_count_ptr,
-    uint8_t                          *best_candidate_index_array,
-    uint8_t                          *disable_merge_index,
+    uint32_t                        buffer_total_count,
+    ModeDecisionCandidateBuffer_t   **buffer_ptr_array,
+    uint32_t                        *full_candidate_total_count_ptr,
+    uint8_t                         *best_candidate_index_array,
+    uint8_t                         *disable_merge_index,
 #if TX_SEARCH_LEVELS
     uint64_t                         *ref_fast_cost,
+#endif
+#if NFL_OPTIMASATION
+    ModeDecisionContext_t            *context_ptr,
 #endif
     EbBool                           same_fast_full_candidate
 )
@@ -466,8 +594,19 @@ EbErrorType PreModeDecision(
         }
     }
 #endif
+#if NFL_OPTIMASATION
+    re_order_nfl_table(
+        context_ptr,
+        fullReconCandidateCount,
+        buffer_ptr_array,
+        full_candidate_total_count_ptr,
+        best_candidate_index_array);
+
+    (*full_candidate_total_count_ptr) = MIN(fullReconCandidateCount,MIN(MAX_NFL, NFL_CAP));
+#else
     // Set (*full_candidate_total_count_ptr) to fullReconCandidateCount
     (*full_candidate_total_count_ptr) = fullReconCandidateCount;
+#endif
 
     for (i = 0; i < fullReconCandidateCount; ++i) {
         fullCandidateIndex = best_candidate_index_array[i];

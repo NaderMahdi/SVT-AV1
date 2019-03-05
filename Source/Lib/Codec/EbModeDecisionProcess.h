@@ -231,6 +231,9 @@ extern "C" {
 #if NSQ_OPTIMASATION
         PART                               nsq_table[NSQ_TAB_SIZE];
 #endif
+#if NFL_OPTIMASATION
+        uint8_t                            nfl_table[MAX_NFL];
+#endif
 
     } ModeDecisionContext_t;
 

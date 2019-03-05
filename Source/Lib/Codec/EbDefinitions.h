@@ -147,7 +147,7 @@ extern "C" {
 #define TUNED_SETTINGS_FOR_M1                           1
 #define CONTENT_BASED_QPS                               1 // Adaptive QP Scaling (active for I only)
 #define PERFORM_IT_REFINEMENT                           0
-#define NSQ_OPTIMASATION                                1
+#define NSQ_OPTIMASATION                                0
 
 #if NSQ_OPTIMASATION
 #define NSQ_IDX_TH                                      5 // from 1 up to 6
@@ -157,6 +157,11 @@ extern "C" {
 #endif
 
 #define DISABLE_IT_RATE                                 0
+
+#define NFL_OPTIMASATION                                0 
+#if NFL_OPTIMASATION
+#define NFL_CAP                                        12 
+#endif
 
 
 /********************************************************/
@@ -180,6 +185,7 @@ extern "C" {
 #endif
 #define MAX_TXB_COUNT                             4 // Maximum number of transform blocks.
 #define MAX_NFL                                   12
+
 #define MAX_LAD                                   120 // max lookahead-distance 2x60fps
 #define ROUND_UV(x) (((x)>>3)<<3)
 #define AV1_PROB_COST_SHIFT 9

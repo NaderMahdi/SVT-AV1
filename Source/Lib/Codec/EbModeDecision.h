@@ -269,7 +269,7 @@ extern "C" {
         uint32_t                        candidate_total_count,
         uint8_t                        *best_candidate_index_array,
         uint32_t                       *best_intra_mode);
-
+#if !NFL_OPTIMASATION
     EbErrorType PreModeDecision(
         CodingUnit_t                   *cu_ptr,
         uint32_t                        buffer_total_count,
@@ -280,7 +280,11 @@ extern "C" {
 #if TX_SEARCH_LEVELS
         uint64_t                       *ref_fast_cost,
 #endif
+#if NFL_OPTIMASATION
+        ModeDecisionContext_t          *context_ptr,
+#endif
         EbBool                          same_fast_full_candidate);
+#endif
 
     typedef EbErrorType(*EB_INTRA_4x4_FAST_LUMA_COST_FUNC)(
         struct ModeDecisionContext_s           *context_ptr,
