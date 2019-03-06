@@ -485,7 +485,7 @@ void  re_order_nfl_table(
             }
         }
     }
-
+#if 0
     if (above_skipped == 0 && left_skipped == 0) {
 
         for (i = 0; i < full_recon_candidate_count - 1; ++i) {
@@ -512,6 +512,7 @@ void  re_order_nfl_table(
             }
         }
     }
+#endif
 }
        
 #endif
