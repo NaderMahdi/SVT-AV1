@@ -594,7 +594,7 @@ EbErrorType PreModeDecision(
     }
     else
         best_candidate_index_array[0] = 0;
-#if NFL_OPTIMASATION
+#if 1//NFL_OPTIMASATION
     for (i = 0; i < fullReconCandidateCount - 1; ++i) {
         for (j = i + 1; j < fullReconCandidateCount; ++j) {
             if ((buffer_ptr_array[best_candidate_index_array[i]]->candidate_ptr->type == INTRA_MODE) &&
