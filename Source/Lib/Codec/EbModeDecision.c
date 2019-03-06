@@ -628,6 +628,9 @@ EbErrorType PreModeDecision(
         uint32_t nfl_cap = nfl_cap_table[nfl_index];
         (*full_candidate_total_count_ptr) = MIN(fullReconCandidateCount, MIN(MAX_NFL, nfl_cap));
     }
+    else {
+        (*full_candidate_total_count_ptr) = fullReconCandidateCount;
+    }
 #else
     // Set (*full_candidate_total_count_ptr) to fullReconCandidateCount
     (*full_candidate_total_count_ptr) = fullReconCandidateCount;
