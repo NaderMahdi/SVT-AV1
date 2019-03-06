@@ -2647,7 +2647,8 @@ void move_cu_data(
 *******************************************/
 EbBool allowed_ns_cu(
 #if NSQ_OPTIMASATION
-    PictureControlSet_t                *picture_control_set_ptr,
+    EbBool                             is_nsq_table_used,
+    uint8_t                            nsq_max_shapes_md,
 #endif
     ModeDecisionContext_t              *context_ptr,
     uint8_t                            is_complete_sb){
@@ -2661,10 +2662,10 @@ EbBool allowed_ns_cu(
     }
 
 #if NSQ_OPTIMASATION
-    if (picture_control_set_ptr->slice_type == !I_SLICE) {
+    if (is_nsq_table_used) {
         if (context_ptr->blk_geom->shape != PART_N) {
             ret = 0;
-            for (int i = 0; i < picture_control_set_ptr->parent_pcs_ptr->nsq_max_shapes_md; i++) {
+            for (int i = 0; i < nsq_max_shapes_md; i++) {
                 if (context_ptr->blk_geom->shape == context_ptr->nsq_table[i]) {
                     ret = 1;
                 }
@@ -3150,7 +3151,13 @@ void  order_nsq_table(
         context_ptr->blk_geom->bheight);
 
     if (isCompoundEnabled == 0) me_part_1 = me_part_0;
-
+    //init table
+    context_ptr->nsq_table[0] = PART_H;
+    context_ptr->nsq_table[1] = PART_V;
+    context_ptr->nsq_table[2] = PART_HA;
+    context_ptr->nsq_table[3] = PART_HB;
+    context_ptr->nsq_table[4] = PART_VA;
+    context_ptr->nsq_table[5] = PART_VB;
     // Insert predicted Shapes based on ME information
     if (me_part_0 != me_part_1) {
         context_ptr->nsq_table[0] = me_part_0;
@@ -3300,7 +3307,11 @@ void md_encode_block(
     CodingUnit_t *  cu_ptr = context_ptr->cu_ptr;
     candidate_buffer_ptr_array = &(candidateBufferPtrArrayBase[context_ptr->buffer_depth_index_start[0]]);
 #if NSQ_OPTIMASATION
-    if (picture_control_set_ptr->slice_type == !I_SLICE) {
+    EbBool is_nsq_table_used = (picture_control_set_ptr->slice_type == !I_SLICE &&
+        picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE &&
+        picture_control_set_ptr->parent_pcs_ptr->nsq_search_level >= NSQ_SEARCH_LEVEL1 &&
+        picture_control_set_ptr->parent_pcs_ptr->nsq_search_level < NSQ_SEARCH_FULL) ? EB_TRUE : EB_FALSE;
+    if (is_nsq_table_used) {
         if (context_ptr->blk_geom->shape == PART_N) {
             order_nsq_table(
                 picture_control_set_ptr,
@@ -3313,7 +3324,7 @@ void md_encode_block(
 #endif
     if (allowed_ns_cu(
 #if NSQ_OPTIMASATION
-        picture_control_set_ptr, context_ptr, sequence_control_set_ptr->sb_geom[lcuAddr].is_complete_sb))
+        is_nsq_table_used, picture_control_set_ptr->parent_pcs_ptr->nsq_max_shapes_md, context_ptr, sequence_control_set_ptr->sb_geom[lcuAddr].is_complete_sb))
 #else
 #if DISABLE_NSQ_FOR_NON_REF || DISABLE_NSQ
         context_ptr, sequence_control_set_ptr->sb_geom[lcuAddr].is_complete_sb))
