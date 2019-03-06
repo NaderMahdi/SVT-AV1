@@ -39,12 +39,13 @@ const uint32_t parentIndex[85] = { 0, 0, 0, 2, 2, 2, 2, 0, 7, 7, 7, 7, 0, 12, 12
 23, 23, 23, 23, 0, 28, 28, 28, 28, 0, 33, 33, 33, 33, 0, 38, 38, 38, 38, 0, 0,
 44, 44, 44, 44, 0, 49, 49, 49, 49, 0, 54, 54, 54, 54, 0, 59, 59, 59, 59, 0, 0,
 65, 65, 65, 65, 0, 70, 70, 70, 70, 0, 75, 75, 75, 75, 0, 80, 80, 80, 80 };
-
+#if !OIS_BASED_INTRA
 uint8_t GetNumOfIntraModesFromOisPoint(
     PictureParentControlSet_t   *picture_control_set_ptr,
     uint32_t                       meSad,
     uint32_t                       oisDcSad
 );
+#endif
 extern uint32_t stage1ModesArray[];
 
 uint8_t GetMaxDrlIndex(uint8_t  refmvCnt, PredictionMode   mode);
@@ -588,6 +589,9 @@ void Unipred3x3CandidatesInjection(
             candidateArray[canTotalCnt].type = INTER_MODE;
 #if TWO_FAST_LOOP 
             candidateArray[canTotalCnt].enable_two_fast_loops = 0;
+#if OIS_BASED_INTRA
+            candidateArray[canTotalCnt].distortion_ready = 0;
+#endif
 #else
             candidateArray[canTotalCnt].distortion_ready = 0;
 #endif
@@ -664,6 +668,9 @@ void Unipred3x3CandidatesInjection(
                 candidateArray[canTotalCnt].type = INTER_MODE;
 #if TWO_FAST_LOOP 
                 candidateArray[canTotalCnt].enable_two_fast_loops = 0;
+#if OIS_BASED_INTRA
+                candidateArray[canTotalCnt].distortion_ready = 0;
+#endif
 #else
                 candidateArray[canTotalCnt].distortion_ready = 0;
 #endif
@@ -770,6 +777,9 @@ void Bipred3x3CandidatesInjection(
             candidateArray[canTotalCnt].type = INTER_MODE;
 #if TWO_FAST_LOOP 
             candidateArray[canTotalCnt].enable_two_fast_loops = 0;
+#if OIS_BASED_INTRA
+            candidateArray[canTotalCnt].distortion_ready = 0;
+#endif
 #else
             candidateArray[canTotalCnt].distortion_ready = 0;
 #endif
@@ -855,6 +865,9 @@ void Bipred3x3CandidatesInjection(
             candidateArray[canTotalCnt].type = INTER_MODE;
 #if TWO_FAST_LOOP 
             candidateArray[canTotalCnt].enable_two_fast_loops = 0;
+#if OIS_BASED_INTRA
+            candidateArray[canTotalCnt].distortion_ready = 0;
+#endif
 #else
             candidateArray[canTotalCnt].distortion_ready = 0;
 #endif
@@ -985,8 +998,9 @@ void InjectAv1MvpCandidates(
     uint32_t                   canIdx = *candTotCnt;
     ModeDecisionCandidate_t    *candidateArray = context_ptr->fast_candidate_array;
     EbBool isCompoundEnabled = (picture_control_set_ptr->parent_pcs_ptr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
+#if  !BASE_LAYER_REF
     isCompoundEnabled = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : isCompoundEnabled;
-
+#endif
     MacroBlockD  *xd = cu_ptr->av1xd;
     uint8_t drli, maxDrlIndex;
     IntMv    nearestmv[2], nearmv[2], ref_mv[2];
@@ -1004,6 +1018,9 @@ void InjectAv1MvpCandidates(
     candidateArray[canIdx].is_compound = 0;
 #if TWO_FAST_LOOP 
     candidateArray[canIdx].enable_two_fast_loops = 0;
+#if OIS_BASED_INTRA
+    candidateArray[canIdx].distortion_ready = 0;
+#endif
 #else
     candidateArray[canIdx].distortion_ready = 0;
 #endif
@@ -1062,6 +1079,9 @@ void InjectAv1MvpCandidates(
         candidateArray[canIdx].is_compound = 0;
 #if TWO_FAST_LOOP 
         candidateArray[canIdx].enable_two_fast_loops = 0;
+#if OIS_BASED_INTRA
+        candidateArray[canIdx].distortion_ready = 0;
+#endif
 #else
         candidateArray[canIdx].distortion_ready = 0;
 #endif
@@ -1109,6 +1129,9 @@ void InjectAv1MvpCandidates(
         candidateArray[canIdx].is_compound = 0;
 #if TWO_FAST_LOOP 
         candidateArray[canIdx].enable_two_fast_loops = 0;
+#if OIS_BASED_INTRA
+        candidateArray[canIdx].distortion_ready = 0;
+#endif
 #else
         candidateArray[canIdx].distortion_ready = 0;
 #endif
@@ -1166,6 +1189,9 @@ void InjectAv1MvpCandidates(
             candidateArray[canIdx].is_compound = 0;
 #if TWO_FAST_LOOP 
             candidateArray[canIdx].enable_two_fast_loops = 0;
+#if OIS_BASED_INTRA
+            candidateArray[canIdx].distortion_ready = 0;
+#endif
 #else
             candidateArray[canIdx].distortion_ready = 0;
 #endif
@@ -1198,57 +1224,65 @@ void InjectAv1MvpCandidates(
 #endif
         }
 
-        //SKIP (NEAREST_NEAREST with LAST_BWD_FRAME)
-#if REMOVED_DUPLICATE_INTER_BIPRED
-        int16_t to_inject_mv_x_l0 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[LAST_BWD_FRAME][0].this_mv.as_mv.col;
-        int16_t to_inject_mv_y_l0 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[LAST_BWD_FRAME][0].this_mv.as_mv.row;
-        int16_t to_inject_mv_x_l1 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[LAST_BWD_FRAME][0].comp_mv.as_mv.col;
-        int16_t to_inject_mv_y_l1 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[LAST_BWD_FRAME][0].comp_mv.as_mv.row;
-        if (context_ptr->injected_mv_count_bipred == 0 || is_already_injected_mv_bipred(context_ptr, to_inject_mv_x_l0, to_inject_mv_y_l0, to_inject_mv_x_l1, to_inject_mv_y_l1) == EB_FALSE) {
+#if BASE_LAYER_REF
+        if (allow_bipred)
 #endif
-        candidateArray[canIdx].type = INTER_MODE;
-        candidateArray[canIdx].inter_mode = NEAREST_NEARESTMV;
-        candidateArray[canIdx].pred_mode = NEAREST_NEARESTMV;
-        candidateArray[canIdx].motion_mode = SIMPLE_TRANSLATION;
-        candidateArray[canIdx].is_compound = 1;
+        {
+            //SKIP (NEAREST_NEAREST with LAST_BWD_FRAME)
+#if REMOVED_DUPLICATE_INTER_BIPRED
+            int16_t to_inject_mv_x_l0 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[LAST_BWD_FRAME][0].this_mv.as_mv.col;
+            int16_t to_inject_mv_y_l0 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[LAST_BWD_FRAME][0].this_mv.as_mv.row;
+            int16_t to_inject_mv_x_l1 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[LAST_BWD_FRAME][0].comp_mv.as_mv.col;
+            int16_t to_inject_mv_y_l1 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[LAST_BWD_FRAME][0].comp_mv.as_mv.row;
+            if (context_ptr->injected_mv_count_bipred == 0 || is_already_injected_mv_bipred(context_ptr, to_inject_mv_x_l0, to_inject_mv_y_l0, to_inject_mv_x_l1, to_inject_mv_y_l1) == EB_FALSE) {
+#endif
+                candidateArray[canIdx].type = INTER_MODE;
+                candidateArray[canIdx].inter_mode = NEAREST_NEARESTMV;
+                candidateArray[canIdx].pred_mode = NEAREST_NEARESTMV;
+                candidateArray[canIdx].motion_mode = SIMPLE_TRANSLATION;
+                candidateArray[canIdx].is_compound = 1;
 #if TWO_FAST_LOOP 
-        candidateArray[canIdx].enable_two_fast_loops = 0;
-#else
-        candidateArray[canIdx].distortion_ready = 0;
+                candidateArray[canIdx].enable_two_fast_loops = 0;
+#if OIS_BASED_INTRA
+                candidateArray[canIdx].distortion_ready = 0;
 #endif
-        candidateArray[canIdx].merge_flag = EB_TRUE;
-        candidateArray[canIdx].merge_index = 0;
-        candidateArray[canIdx].mpm_flag = EB_FALSE;
-        candidateArray[canIdx].prediction_direction[0] = BI_PRED;
-        candidateArray[canIdx].is_skip_mode_flag = 0;
-        candidateArray[canIdx].is_new_mv = 0;
-        candidateArray[canIdx].is_zero_mv = 0;
-#if REMOVED_DUPLICATE_INTER_BIPRED
-        candidateArray[canIdx].motionVector_x_L0 = to_inject_mv_x_l0;
-        candidateArray[canIdx].motionVector_y_L0 = to_inject_mv_y_l0;
-        candidateArray[canIdx].motionVector_x_L1 = to_inject_mv_x_l1;
-        candidateArray[canIdx].motionVector_y_L1 = to_inject_mv_y_l1;
 #else
-        candidateArray[canIdx].motionVector_x_L0 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[LAST_BWD_FRAME][0].this_mv.as_mv.col;
-        candidateArray[canIdx].motionVector_y_L0 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[LAST_BWD_FRAME][0].this_mv.as_mv.row;
-        candidateArray[canIdx].motionVector_x_L1 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[LAST_BWD_FRAME][0].comp_mv.as_mv.col;
-        candidateArray[canIdx].motionVector_y_L1 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[LAST_BWD_FRAME][0].comp_mv.as_mv.row;
+                candidateArray[canIdx].distortion_ready = 0;
 #endif
-        candidateArray[canIdx].drl_index = 0;
-        candidateArray[canIdx].ref_mv_index = 0;
-        candidateArray[canIdx].pred_mv_weight = 0;
-        candidateArray[canIdx].ref_frame_type = LAST_BWD_FRAME;
-        candidateArray[canIdx].transform_type[PLANE_TYPE_Y] = DCT_DCT;
-        candidateArray[canIdx].transform_type[PLANE_TYPE_UV] = DCT_DCT;
-        ++canIdx;
+                candidateArray[canIdx].merge_flag = EB_TRUE;
+                candidateArray[canIdx].merge_index = 0;
+                candidateArray[canIdx].mpm_flag = EB_FALSE;
+                candidateArray[canIdx].prediction_direction[0] = BI_PRED;
+                candidateArray[canIdx].is_skip_mode_flag = 0;
+                candidateArray[canIdx].is_new_mv = 0;
+                candidateArray[canIdx].is_zero_mv = 0;
 #if REMOVED_DUPLICATE_INTER_BIPRED
-        context_ptr->injected_mv_x_bipred_l0_array[context_ptr->injected_mv_count_bipred] = to_inject_mv_x_l0;
-        context_ptr->injected_mv_y_bipred_l0_array[context_ptr->injected_mv_count_bipred] = to_inject_mv_y_l0;
-        context_ptr->injected_mv_x_bipred_l1_array[context_ptr->injected_mv_count_bipred] = to_inject_mv_x_l1;
-        context_ptr->injected_mv_y_bipred_l1_array[context_ptr->injected_mv_count_bipred] = to_inject_mv_y_l1;
-        ++context_ptr->injected_mv_count_bipred;
+                candidateArray[canIdx].motionVector_x_L0 = to_inject_mv_x_l0;
+                candidateArray[canIdx].motionVector_y_L0 = to_inject_mv_y_l0;
+                candidateArray[canIdx].motionVector_x_L1 = to_inject_mv_x_l1;
+                candidateArray[canIdx].motionVector_y_L1 = to_inject_mv_y_l1;
+#else
+                candidateArray[canIdx].motionVector_x_L0 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[LAST_BWD_FRAME][0].this_mv.as_mv.col;
+                candidateArray[canIdx].motionVector_y_L0 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[LAST_BWD_FRAME][0].this_mv.as_mv.row;
+                candidateArray[canIdx].motionVector_x_L1 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[LAST_BWD_FRAME][0].comp_mv.as_mv.col;
+                candidateArray[canIdx].motionVector_y_L1 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[LAST_BWD_FRAME][0].comp_mv.as_mv.row;
+#endif
+                candidateArray[canIdx].drl_index = 0;
+                candidateArray[canIdx].ref_mv_index = 0;
+                candidateArray[canIdx].pred_mv_weight = 0;
+                candidateArray[canIdx].ref_frame_type = LAST_BWD_FRAME;
+                candidateArray[canIdx].transform_type[PLANE_TYPE_Y] = DCT_DCT;
+                candidateArray[canIdx].transform_type[PLANE_TYPE_UV] = DCT_DCT;
+                ++canIdx;
+#if REMOVED_DUPLICATE_INTER_BIPRED
+                context_ptr->injected_mv_x_bipred_l0_array[context_ptr->injected_mv_count_bipred] = to_inject_mv_x_l0;
+                context_ptr->injected_mv_y_bipred_l0_array[context_ptr->injected_mv_count_bipred] = to_inject_mv_y_l0;
+                context_ptr->injected_mv_x_bipred_l1_array[context_ptr->injected_mv_count_bipred] = to_inject_mv_x_l1;
+                context_ptr->injected_mv_y_bipred_l1_array[context_ptr->injected_mv_count_bipred] = to_inject_mv_y_l1;
+                ++context_ptr->injected_mv_count_bipred;
+            }
+#endif
         }
-#endif
         //NEAR_NEAR
         if (allow_bipred) {
 
@@ -1280,6 +1314,9 @@ void InjectAv1MvpCandidates(
                 candidateArray[canIdx].is_compound = 1;
 #if TWO_FAST_LOOP 
                 candidateArray[canIdx].enable_two_fast_loops = 0;
+#if OIS_BASED_INTRA
+                candidateArray[canIdx].distortion_ready = 0;
+#endif
 #else
                 candidateArray[canIdx].distortion_ready = 0;
 #endif
@@ -1353,6 +1390,9 @@ void inject_warped_motion_candidates(
         candidateArray[canIdx].is_compound = 0;
 #if TWO_FAST_LOOP 
         candidateArray[canIdx].enable_two_fast_loops = 0;
+#if OIS_BASED_INTRA
+        candidateArray[canIdx].distortion_ready = 0;
+#endif
 #else
         candidateArray[canIdx].distortion_ready = 0;
 #endif
@@ -1426,6 +1466,9 @@ void inject_warped_motion_candidates(
             candidateArray[canIdx].is_compound = 0;
 #if TWO_FAST_LOOP 
             candidateArray[canIdx].enable_two_fast_loops = 0;
+#if OIS_BASED_INTRA
+            candidateArray[canIdx].distortion_ready = 0;
+#endif
 #else
             candidateArray[canIdx].distortion_ready = 0;
 #endif
@@ -1491,6 +1534,9 @@ void inject_warped_motion_candidates(
         candidateArray[canIdx].type = INTER_MODE;
 #if TWO_FAST_LOOP 
         candidateArray[canIdx].enable_two_fast_loops = 0;
+#if OIS_BASED_INTRA
+        candidateArray[canIdx].distortion_ready = 0;
+#endif
 #else
         candidateArray[canIdx].distortion_ready = 0;
 #endif
@@ -1649,19 +1695,32 @@ void  inject_inter_candidates(
         ((context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) || (context_ptr->blk_geom->bwidth > 64 || context_ptr->blk_geom->bheight > 64)) ? EB_TRUE : EB_FALSE;
 
     uint32_t close_loop_me_index = use_close_loop_me ? get_in_loop_me_info_index(MAX_SS_ME_PU_COUNT, sequence_control_set_ptr->sb_size == BLOCK_128X128 ? 1 : 0, context_ptr->blk_geom) : 0;
+#if BASE_LAYER_REF
+    EbBool allow_bipred = (picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index == 0 || context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
+#else    
     EbBool allow_bipred = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
+#endif
     IntMv  bestPredmv[2] = { {0}, {0} };
     uint8_t sq_index = LOG2F(context_ptr->blk_geom->sq_size) - 2;
     uint8_t inject_newmv_candidate = 1;
+#if !NSQ_OPTIMASATION
     if (picture_control_set_ptr->parent_pcs_ptr->nsq_search_level == NSQ_INTER_SEARCH_BASE_ON_SQ_MVMODE) {
         inject_newmv_candidate = context_ptr->blk_geom->shape == PART_N ? 1 :
             context_ptr->parent_sq_pred_mode[sq_index] == NEWMV || context_ptr->parent_sq_pred_mode[sq_index] == NEW_NEWMV ? inject_newmv_candidate : 0;
     }
-
+#endif
+#if NSQ_OPTIMASATION
+    if (picture_control_set_ptr->parent_pcs_ptr->nsq_search_level >= NSQ_SEARCH_LEVEL1 &&
+        picture_control_set_ptr->parent_pcs_ptr->nsq_search_level < NSQ_SEARCH_FULL) {
+        inject_newmv_candidate = context_ptr->blk_geom->shape == PART_N ? 1 :
+            context_ptr->parent_sq_has_coeff[sq_index] != 0 ? inject_newmv_candidate : 0;
+    }
+#else
     if (picture_control_set_ptr->parent_pcs_ptr->nsq_search_level == NSQ_SEARCH_BASE_ON_SQ_COEFF) {
         inject_newmv_candidate = context_ptr->blk_geom->shape == PART_N ? 1 :
             context_ptr->parent_sq_has_coeff[sq_index] != 0 ? inject_newmv_candidate : 0;
     }
+#endif
 
     generate_av1_mvp_table(
 #if TILES
@@ -1710,6 +1769,9 @@ void  inject_inter_candidates(
         candidateArray[canTotalCnt].type = INTER_MODE;
 #if TWO_FAST_LOOP 
         candidateArray[canTotalCnt].enable_two_fast_loops = 0;
+#if OIS_BASED_INTRA
+        candidateArray[canTotalCnt].distortion_ready = 0;
+#endif
 #else
         candidateArray[canTotalCnt].distortion_ready = 0;
 #endif
@@ -1781,6 +1843,9 @@ void  inject_inter_candidates(
             candidateArray[canTotalCnt].type = INTER_MODE;
 #if TWO_FAST_LOOP 
             candidateArray[canTotalCnt].enable_two_fast_loops = 0;
+#if OIS_BASED_INTRA
+            candidateArray[canTotalCnt].distortion_ready = 0;
+#endif
 #else
             candidateArray[canTotalCnt].distortion_ready = 0;
 #endif
@@ -1855,6 +1920,9 @@ void  inject_inter_candidates(
                 candidateArray[canTotalCnt].type = INTER_MODE;
 #if TWO_FAST_LOOP 
                 candidateArray[canTotalCnt].enable_two_fast_loops = 0;
+#if OIS_BASED_INTRA
+                candidateArray[canTotalCnt].distortion_ready = 0;
+#endif
 #else
                 candidateArray[canTotalCnt].distortion_ready = 0;
 #endif
@@ -1926,7 +1994,7 @@ void  inject_inter_candidates(
             }
 
         }
-#if M0_ME_SEARCH_BASE
+#if M0_ME_SEARCH_BASE && !BASE_LAYER_REF
         /**************
         inject NewMv from L1 as a candidate of NEWMV L0 in base layer frame (Only single reference support in base layer)
         ************* */
@@ -1939,6 +2007,9 @@ void  inject_inter_candidates(
             candidateArray[canTotalCnt].type = INTER_MODE;
 #if TWO_FAST_LOOP 
             candidateArray[canTotalCnt].enable_two_fast_loops = 0;
+#if OIS_BASED_INTRA
+            candidateArray[canTotalCnt].distortion_ready = 0;
+#endif
 #else
             candidateArray[canTotalCnt].distortion_ready = 0;
 #endif
@@ -2015,6 +2086,9 @@ void  inject_inter_candidates(
         candidateArray[canTotalCnt].type = INTER_MODE;
 #if TWO_FAST_LOOP 
         candidateArray[canTotalCnt].enable_two_fast_loops = 0;
+#if OIS_BASED_INTRA
+        candidateArray[canTotalCnt].distortion_ready = 0;
+#endif
 #else
         candidateArray[canTotalCnt].distortion_ready = 0;
 #endif
@@ -2072,6 +2146,9 @@ void  inject_inter_candidates(
         candidateArray[canTotalCnt].type = INTER_MODE;
 #if TWO_FAST_LOOP 
         candidateArray[canTotalCnt].enable_two_fast_loops = 0;
+#if OIS_BASED_INTRA
+        candidateArray[canTotalCnt].distortion_ready = 0;
+#endif
 #else
         candidateArray[canTotalCnt].distortion_ready = 0;
 #endif
@@ -2142,8 +2219,12 @@ void  inject_inter_candidates(
     }
 
     if (inject_newmv_candidate) {
+#if BASE_LAYER_REF
+        if (isCompoundEnabled) {
+            if (allow_bipred) {
+#else
         if (allow_bipred) {
-
+#endif
 #if IMPROVED_BIPRED_INJECTION
             //----------------------
             // Bipred2Nx2N
@@ -2161,7 +2242,9 @@ void  inject_inter_candidates(
                         me2Nx2NTableOffset,
                         &canTotalCnt);
 #endif
-
+#if BASE_LAYER_REF
+            }
+#endif
 #if IMPROVED_UNIPRED_INJECTION
             //----------------------
             // Unipred2Nx2N
@@ -2293,6 +2376,148 @@ static INLINE TxType av1_get_tx_type(
 }
 
 
+#if OIS_BASED_INTRA
+
+void  inject_intra_candidates_ois(
+    PictureControlSet_t            *picture_control_set_ptr,
+    ModeDecisionContext_t          *context_ptr,
+    LargestCodingUnit_t            *sb_ptr,
+    uint32_t                       *candidate_total_cnt){
+
+    uint8_t                     intra_candidate_counter;
+    uint8_t                     intra_mode;
+    uint32_t                    can_total_cnt = 0;
+    EbBool                      use_angle_delta = (context_ptr->blk_geom->bsize >= BLOCK_8X8);
+    ModeDecisionCandidate_t    *candidate_array = context_ptr->fast_candidate_array;
+
+    EbBool                      disable_cfl_flag = (context_ptr->blk_geom->sq_size > 32 || 
+                                                    context_ptr->blk_geom->bwidth == 4  ||   
+                                                    context_ptr->blk_geom->bheight == 4)    ? EB_TRUE : EB_FALSE;
+
+
+    ois_sb_results_t    *ois_sb_results_ptr = picture_control_set_ptr->parent_pcs_ptr->ois_sb_results[sb_ptr->index];
+    ois_candidate_t     *ois_blk_ptr = ois_sb_results_ptr->ois_candidate_array[ep_to_pa_block_index[context_ptr->blk_geom->blkidx_mds]];
+    uint8_t              total_intra_luma_mode = ois_sb_results_ptr-> total_ois_intra_candidate[ep_to_pa_block_index[context_ptr->blk_geom->blkidx_mds]];
+    
+#if TWO_FAST_LOOP 
+    uint8_t enable_two_fast_loops = picture_control_set_ptr->parent_pcs_ptr->enable_two_fast_loops && (context_ptr->blk_geom->sq_size > 4 && context_ptr->blk_geom->shape == PART_N);          
+#endif
+
+    for (intra_candidate_counter = 0; intra_candidate_counter < total_intra_luma_mode; ++intra_candidate_counter) {
+                
+
+        intra_mode = ois_blk_ptr[can_total_cnt].intra_mode;
+        if (av1_is_directional_mode((PredictionMode)intra_mode)) {
+
+            int32_t angle_delta = ois_blk_ptr[can_total_cnt].angle_delta ;
+            candidate_array[can_total_cnt].type = INTRA_MODE;
+            candidate_array[can_total_cnt].intra_luma_mode = intra_mode;
+#if TWO_FAST_LOOP 
+            candidate_array[can_total_cnt].enable_two_fast_loops =  enable_two_fast_loops;
+#endif
+            candidate_array[can_total_cnt].distortion_ready =  1;
+            candidate_array[can_total_cnt].me_distortion = ois_blk_ptr[can_total_cnt].distortion;
+
+            candidate_array[can_total_cnt].is_directional_mode_flag = (uint8_t)av1_is_directional_mode((PredictionMode)intra_mode);
+            candidate_array[can_total_cnt].use_angle_delta = use_angle_delta ? candidate_array[can_total_cnt].is_directional_mode_flag : 0;
+            candidate_array[can_total_cnt].angle_delta[PLANE_TYPE_Y] = angle_delta;
+#if CHROMA_BLIND 
+            candidate_array[can_total_cnt].intra_chroma_mode = disable_cfl_flag ? intra_luma_to_chroma[intra_mode] : 
+                                                               context_ptr->chroma_level == CHROMA_MODE_0 ? UV_CFL_PRED : UV_DC_PRED;
+#else
+            candidate_array[can_total_cnt].intra_chroma_mode = disable_cfl_flag ? intra_luma_to_chroma[openLoopIntraCandidate] : UV_CFL_PRED;
+#endif
+            candidate_array[can_total_cnt].cfl_alpha_signs = 0;
+            candidate_array[can_total_cnt].cfl_alpha_idx = 0;
+            candidate_array[can_total_cnt].is_directional_chroma_mode_flag = (uint8_t)av1_is_directional_mode((PredictionMode)candidate_array[can_total_cnt].intra_chroma_mode);
+            candidate_array[can_total_cnt].angle_delta[PLANE_TYPE_UV] = 0;
+            candidate_array[can_total_cnt].transform_type[PLANE_TYPE_Y] = DCT_DCT;
+
+            if (candidate_array[can_total_cnt].intra_chroma_mode == UV_CFL_PRED)
+                candidate_array[can_total_cnt].transform_type[PLANE_TYPE_UV] = DCT_DCT;
+            else
+                candidate_array[can_total_cnt].transform_type[PLANE_TYPE_UV] =
+                av1_get_tx_type(
+                    context_ptr->blk_geom->bsize,
+                    0,
+                    (PredictionMode)candidate_array[can_total_cnt].intra_luma_mode,
+                    (UV_PredictionMode)candidate_array[can_total_cnt].intra_chroma_mode,
+                    PLANE_TYPE_UV,
+                    0,
+                    0,
+                    0,
+                    context_ptr->blk_geom->txsize_uv[0],
+                    picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
+            // candidate_array[can_total_cnt].transform_type[PLANE_TYPE_UV]            = context_ptr->blk_geom->bwidth_uv >= 32 || context_ptr->blk_geom->bheight_uv >= 32  ? DCT_DCT : chroma_transform_type[candidate_array[can_total_cnt].intra_chroma_mode];
+            candidate_array[can_total_cnt].mpm_flag = EB_FALSE;
+            candidate_array[can_total_cnt].ref_frame_type = INTRA_FRAME;
+            candidate_array[can_total_cnt].pred_mode = (PredictionMode)intra_mode;
+            candidate_array[can_total_cnt].motion_mode = SIMPLE_TRANSLATION;
+            ++can_total_cnt;
+
+        }
+        else {
+            candidate_array[can_total_cnt].type = INTRA_MODE;
+            candidate_array[can_total_cnt].intra_luma_mode = intra_mode;
+#if TWO_FAST_LOOP 
+            candidate_array[can_total_cnt].enable_two_fast_loops =  enable_two_fast_loops;
+#endif
+            candidate_array[can_total_cnt].distortion_ready =  1;
+            candidate_array[can_total_cnt].me_distortion = ois_blk_ptr[can_total_cnt].distortion;
+
+            candidate_array[can_total_cnt].is_directional_mode_flag = (uint8_t)av1_is_directional_mode((PredictionMode)intra_mode);
+            candidate_array[can_total_cnt].use_angle_delta = candidate_array[can_total_cnt].is_directional_mode_flag;
+            candidate_array[can_total_cnt].angle_delta[PLANE_TYPE_Y] = 0;
+#if TURN_OFF_CFL
+            candidate_array[can_total_cnt].intra_chroma_mode = intra_luma_to_chroma[openLoopIntraCandidate];
+#else
+#if CHROMA_BLIND
+            candidate_array[can_total_cnt].intra_chroma_mode =  disable_cfl_flag ? intra_luma_to_chroma[intra_mode] : 
+                                                                context_ptr->chroma_level == CHROMA_MODE_0 ? UV_CFL_PRED : UV_DC_PRED;
+
+#else
+            candidate_array[can_total_cnt].intra_chroma_mode = disable_cfl_flag ? intra_luma_to_chroma[openLoopIntraCandidate] : UV_CFL_PRED;
+#endif
+#endif
+            candidate_array[can_total_cnt].cfl_alpha_signs = 0;
+            candidate_array[can_total_cnt].cfl_alpha_idx = 0;
+            candidate_array[can_total_cnt].is_directional_chroma_mode_flag = (uint8_t)av1_is_directional_mode((PredictionMode)candidate_array[can_total_cnt].intra_chroma_mode);
+            candidate_array[can_total_cnt].angle_delta[PLANE_TYPE_UV] = 0;
+            candidate_array[can_total_cnt].transform_type[PLANE_TYPE_Y] = DCT_DCT;
+
+            if (candidate_array[can_total_cnt].intra_chroma_mode == UV_CFL_PRED)
+                candidate_array[can_total_cnt].transform_type[PLANE_TYPE_UV] = DCT_DCT;
+            else
+                candidate_array[can_total_cnt].transform_type[PLANE_TYPE_UV] =
+                av1_get_tx_type(
+                    context_ptr->blk_geom->bsize,
+                    0,
+                    (PredictionMode)candidate_array[can_total_cnt].intra_luma_mode,
+                    (UV_PredictionMode)candidate_array[can_total_cnt].intra_chroma_mode,
+                    PLANE_TYPE_UV,
+                    0,
+                    0,
+                    0,
+                    context_ptr->blk_geom->txsize_uv[0],
+                    picture_control_set_ptr->parent_pcs_ptr->reduced_tx_set_used);
+
+            candidate_array[can_total_cnt].mpm_flag = EB_FALSE;
+            candidate_array[can_total_cnt].ref_frame_type = INTRA_FRAME;
+            candidate_array[can_total_cnt].pred_mode = (PredictionMode)intra_mode;
+            candidate_array[can_total_cnt].motion_mode = SIMPLE_TRANSLATION;
+            ++can_total_cnt;
+        }
+    }
+
+
+    // update the total number of candidates injected
+    (*candidate_total_cnt) = can_total_cnt;
+
+
+    return;
+}
+
+#endif
 // END of Function Declarations
 void  inject_intra_candidates(
     PictureControlSet_t            *picture_control_set_ptr,
@@ -2329,21 +2554,17 @@ void  inject_intra_candidates(
     uint8_t                     disable_angle_refinement;
     uint8_t                     disable_angle_prediction;
 
-    if (picture_control_set_ptr->parent_pcs_ptr->intra_pred_mode == 0){
+    if (picture_control_set_ptr->parent_pcs_ptr->intra_pred_mode == 3){
         disable_z2_prediction       = 0;
         disable_angle_refinement    = 0;
         disable_angle_prediction    = 1;
-    } else if (picture_control_set_ptr->parent_pcs_ptr->intra_pred_mode == 1) {
+    } else if (picture_control_set_ptr->parent_pcs_ptr->intra_pred_mode == 2) {
         disable_z2_prediction       = 0;
         disable_angle_refinement    = 0 ;
         disable_angle_prediction    = (context_ptr->blk_geom->sq_size > 16 ||
                                        context_ptr->blk_geom->bwidth == 4 ||
                                        context_ptr->blk_geom->bheight == 4) ? 1 : 0;
-    } else if (picture_control_set_ptr->parent_pcs_ptr->intra_pred_mode == 2) {
-        disable_z2_prediction       = 1;
-        disable_angle_refinement    = 1;
-        disable_angle_prediction    = 0;
-    } else if (picture_control_set_ptr->parent_pcs_ptr->intra_pred_mode == 3) {
+    } else if (picture_control_set_ptr->parent_pcs_ptr->intra_pred_mode == 1) {
         disable_z2_prediction       = (context_ptr->blk_geom->sq_size > 16 ||
                                        context_ptr->blk_geom->bwidth == 4 ||
                                        context_ptr->blk_geom->bheight == 4) ? 1 : 0;
@@ -2357,24 +2578,22 @@ void  inject_intra_candidates(
         disable_angle_prediction    = 0;
 
     }
-#if MR_MODE
-    disable_z2_prediction       = 0;
-    disable_angle_refinement    = 0;
-    disable_angle_prediction    = 0;
-#endif
+
     angleDeltaCandidateCount = disable_angle_refinement ? 1: angleDeltaCandidateCount;
     uint8_t sq_index = LOG2F(context_ptr->blk_geom->sq_size) - 2;
+#if !NSQ_OPTIMASATION
     if (picture_control_set_ptr->parent_pcs_ptr->nsq_search_level == NSQ_INTER_SEARCH_BASE_ON_SQ_INTRAMODE) {
         disable_z2_prediction = context_ptr->blk_geom->shape == PART_N ? disable_z2_prediction :
             context_ptr->parent_sq_type[sq_index] == INTRA_MODE ? disable_z2_prediction : 0;
     }
+#endif
 #if TWO_FAST_LOOP 
     uint8_t enable_two_fast_loops = picture_control_set_ptr->parent_pcs_ptr->enable_two_fast_loops && (context_ptr->blk_geom->sq_size > 4 && context_ptr->blk_geom->shape == PART_N);          
 #endif
 #if !DIS_EDGE_FIL
     const int32_t disable_ang_uv = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) && context_ptr->blk_geom->has_uv ? 1 : 0;
 #endif
-    for (openLoopIntraCandidate = intra_mode_start; openLoopIntraCandidate < intra_mode_end + 1; ++openLoopIntraCandidate) {
+    for (openLoopIntraCandidate = intra_mode_start; openLoopIntraCandidate <= intra_mode_end ; ++openLoopIntraCandidate) {
 
         if (av1_is_directional_mode((PredictionMode)openLoopIntraCandidate)) {
 
@@ -2387,6 +2606,9 @@ void  inject_intra_candidates(
                         candidateArray[canTotalCnt].intra_luma_mode = openLoopIntraCandidate;
 #if TWO_FAST_LOOP 
                         candidateArray[canTotalCnt].enable_two_fast_loops = enable_two_fast_loops;
+#if OIS_BASED_INTRA
+                        candidateArray[canTotalCnt].distortion_ready = 0;
+#endif
 #else
                         candidateArray[canTotalCnt].distortion_ready = 0;
 #endif
@@ -2442,6 +2664,9 @@ void  inject_intra_candidates(
             candidateArray[canTotalCnt].intra_luma_mode = openLoopIntraCandidate;
 #if TWO_FAST_LOOP 
             candidateArray[canTotalCnt].enable_two_fast_loops =  enable_two_fast_loops;
+#if OIS_BASED_INTRA
+            candidateArray[canTotalCnt].distortion_ready = 0;
+#endif
 #else
             candidateArray[canTotalCnt].distortion_ready = 0;
 #endif
@@ -2554,32 +2779,48 @@ EbErrorType ProductGenerateMdCandidatesCu(
     uint8_t inject_inter_candidate = 1;
 
     if (slice_type != I_SLICE) {
+#if !NSQ_OPTIMASATION
         if (picture_control_set_ptr->parent_pcs_ptr->nsq_search_level == NSQ_SEARCH_BASE_ON_SQ_TYPE) {
             inject_intra_candidate = context_ptr->blk_geom->shape == PART_N ? 1 :
                 context_ptr->parent_sq_type[sq_index] == INTRA_MODE ? inject_intra_candidate : 0;
             inject_inter_candidate = context_ptr->blk_geom->shape == PART_N ? 1 :
                 context_ptr->parent_sq_type[sq_index] == INTER_MODE ? inject_inter_candidate : 0;
         }
+#endif
+#if NSQ_OPTIMASATION
+        if (picture_control_set_ptr->parent_pcs_ptr->nsq_search_level >= NSQ_SEARCH_LEVEL1 &&
+            picture_control_set_ptr->parent_pcs_ptr->nsq_search_level < NSQ_SEARCH_FULL) {
+            inject_intra_candidate = context_ptr->blk_geom->shape == PART_N ? 1 :
+                context_ptr->parent_sq_has_coeff[sq_index] != 0 ? inject_intra_candidate : 0;
+        }
+#else
         if (picture_control_set_ptr->parent_pcs_ptr->nsq_search_level == NSQ_SEARCH_BASE_ON_SQ_COEFF) {
             inject_intra_candidate = context_ptr->blk_geom->shape == PART_N ? 1 :
                 context_ptr->parent_sq_has_coeff[sq_index] != 0 ? inject_intra_candidate : 0;
         }
+#endif
 }
     //----------------------
     // Intra
-    if (context_ptr->blk_geom->sq_size < 128)
-#if    ENABLE_INTER_4x4
-        if (context_ptr->blk_geom->bwidth != 4 && context_ptr->blk_geom->bheight != 4)
+    if (context_ptr->blk_geom->sq_size < 128) {
+#if OIS_BASED_INTRA
+        if (picture_control_set_ptr->parent_pcs_ptr->intra_pred_mode == 4 && context_ptr->blk_geom->sq_size > 4 && context_ptr->blk_geom->shape == PART_N)
+            inject_intra_candidates_ois(
+                picture_control_set_ptr,
+                context_ptr,
+                sb_ptr,
+                &canTotalCnt);
+        else 
 #endif
             if (inject_intra_candidate)
-                inject_intra_candidates(
-                    picture_control_set_ptr,
-                    context_ptr,
-                    sequence_control_set_ptr,
-                    sb_ptr,
-                    &canTotalCnt,
-                    leaf_index);
-
+            inject_intra_candidates(
+                picture_control_set_ptr,
+                context_ptr,
+                sequence_control_set_ptr,
+                sb_ptr,
+                &canTotalCnt,
+                leaf_index);
+    }
     if (slice_type != I_SLICE) {
         if (inject_inter_candidate)
             inject_inter_candidates(

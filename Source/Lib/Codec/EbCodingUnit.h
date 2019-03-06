@@ -39,7 +39,11 @@ extern "C" {
 #define MAX_CU_COST (0xFFFFFFFFFFFFFFFFull >> 1)
 #define MAX_MODE_COST ( 13616969489728 * 8) // RDCOST(6544618, 128 * 128 * 255 * 255, 128 * 128 * 255 * 255) * 8;
 #define INVALID_FAST_CANDIDATE_INDEX    ~0
+#if OIS_BASED_INTRA
+#define MAX_OIS_CANDIDATES  61  //18//18
+#else
 #define MAX_OPEN_LOOP_INTRA_CANDIDATES  18//18
+#endif
 
     static const uint32_t intra_hev_cmode_to_intra_av1_mode[35] = {
         /*SMOOTH_PRED   */  SMOOTH_PRED,                                                        // EB_INTRA_PLANAR
@@ -65,6 +69,23 @@ extern "C" {
         /*D67_PRED      */   2, 0, -2,                                                          // EB_INTRA_MODE_28 -> EB_INTRA_MODE_30
         /*D45_PRED      */   3, 2, 0, -2,                                                       // EB_INTRA_MODE_31 -> EB_INTRA_MODE_34
     };
+#if IMPROVE_CHROMA_MODE
+    static const uint32_t intra_luma_to_chroma[INTRA_MODES] = {                                                                            // EB_INTRA_PLANAR
+       UV_DC_PRED,        // Average of above and left pixels
+       UV_V_PRED,         // Vertical
+       UV_H_PRED,         // Horizontal
+       UV_D45_PRED,       // Directional 45  degree
+       UV_D135_PRED,      // Directional 135 degree
+       UV_D113_PRED,      // Directional 113 degree
+       UV_D157_PRED,      // Directional 157 degree
+       UV_D203_PRED,      // Directional 203 degree
+       UV_D67_PRED,       // Directional 67  degree
+       UV_SMOOTH_PRED,    // Combination of horizontal and vertical interpolation
+       UV_SMOOTH_V_PRED,  // Vertical interpolation
+       UV_SMOOTH_H_PRED,  // Horizontal interpolation
+       UV_PAETH_PRED,     // Predict from the direction of smallest gradient
+    };
+#else
     static const uint32_t intra_luma_to_chroma[INTRA_MODES] = {                                                                            // EB_INTRA_PLANAR
         /*DC_PRED       */  UV_DC_PRED,
         /*V_PRED        */  UV_SMOOTH_PRED,
@@ -80,6 +101,7 @@ extern "C" {
         /*SMOOTH_H_PRED */  UV_SMOOTH_PRED,
         /*PAETH_PRED    */  UV_PAETH_PRED,
     };
+#endif
     static const TxType chroma_transform_type[14] = {
         /*UV_DC_PRED,          */   DCT_DCT   ,
         /*UV_V_PRED,           */   ADST_DCT  ,
@@ -304,6 +326,26 @@ extern "C" {
         uint8_t                    *neigh_top_recon[3];
         uint32_t                    best_d1_blk;
     } CodingUnit_t;
+#if OIS_BASED_INTRA
+        typedef struct ois_candidate_s {
+        union {
+            struct {
+                unsigned distortion : 20;
+                unsigned valid_distortion : 1;
+                unsigned : 3;
+                unsigned intra_mode : 8;
+            };
+            uint32_t ois_results;
+        };
+        int32_t angle_delta;
+    } ois_candidate_t;
+    typedef struct ois_sb_results_s
+    {
+        uint8_t             total_ois_intra_candidate[CU_MAX_COUNT];
+        ois_candidate_t*    ois_candidate_array[CU_MAX_COUNT];
+        int8_t              best_distortion_index[CU_MAX_COUNT];
+    } ois_sb_results_t;
+#else
     typedef struct OisCandidate_s {
         union {
             struct {
@@ -330,6 +372,7 @@ extern "C" {
         uint8_t            total_intra_luma_mode[64];
         OisCandidate_t*    sorted_ois_candidate[64];
     } OisCu8Results_t;
+#endif
     typedef struct QpmLcuResults_s {
         uint8_t  cu_qp;
         uint8_t  cu_intra_qp;
