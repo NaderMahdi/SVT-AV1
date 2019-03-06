@@ -516,6 +516,16 @@ void  re_order_nfl_table(
 }
        
 #endif
+#if NFL_OPTIMASATION
+uint32_t nfl_cap_table[6] = {
+    NFL_CAP_4x4, 
+    NFL_CAP_8x8, 
+    NFL_CAP_16x16, 
+    NFL_CAP_32x32, 
+    NFL_CAP_64x64, 
+    NFL_CAP_128x128 
+};
+#endif
 /***************************************
 * Pre-Mode Decision
 *   Selects which fast cost modes to
@@ -604,16 +614,17 @@ EbErrorType PreModeDecision(
     }
 #endif
 #if NFL_OPTIMASATION
-    if (picture_control_set_ptr->slice_type != I_SLICE) {
+    /*if (picture_control_set_ptr->slice_type != I_SLICE) {
         re_order_nfl_table(
             context_ptr,
             fullReconCandidateCount,
             buffer_ptr_array,
             full_candidate_total_count_ptr,
             best_candidate_index_array);
-    }
-
-    (*full_candidate_total_count_ptr) = MIN(fullReconCandidateCount,MIN(MAX_NFL, NFL_CAP));
+    }*/
+    uint8_t nfl_index = LOG2F(context_ptr->blk_geom->sq_size) - 2;
+    uint32_t nfl_cap = nfl_cap_table[nfl_index];
+    (*full_candidate_total_count_ptr) = MIN(fullReconCandidateCount,MIN(MAX_NFL, nfl_cap));
 #else
     // Set (*full_candidate_total_count_ptr) to fullReconCandidateCount
     (*full_candidate_total_count_ptr) = fullReconCandidateCount;

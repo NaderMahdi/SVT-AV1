@@ -158,9 +158,14 @@ extern "C" {
 
 #define DISABLE_IT_RATE                                 0
 
-#define NFL_OPTIMASATION                                0 
+#define NFL_OPTIMASATION                             0 
 #if NFL_OPTIMASATION
-#define NFL_CAP                                        12 
+#define NFL_CAP_4x4                                  12
+#define NFL_CAP_8x8                                  12
+#define NFL_CAP_16x16                                12
+#define NFL_CAP_32x32                                12
+#define NFL_CAP_64x64                                12
+#define NFL_CAP_128x128                              12
 #endif
 
 
