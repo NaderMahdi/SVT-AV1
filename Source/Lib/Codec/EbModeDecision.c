@@ -594,7 +594,7 @@ EbErrorType PreModeDecision(
     }
     else
         best_candidate_index_array[0] = 0;
-#if !NFL_OPTIMASATION
+#if NFL_OPTIMASATION
     for (i = 0; i < fullReconCandidateCount - 1; ++i) {
         for (j = i + 1; j < fullReconCandidateCount; ++j) {
             if ((buffer_ptr_array[best_candidate_index_array[i]]->candidate_ptr->type == INTRA_MODE) &&
@@ -614,7 +614,7 @@ EbErrorType PreModeDecision(
     }
 #endif
 #if NFL_OPTIMASATION
-    /*if (picture_control_set_ptr->slice_type != I_SLICE) {
+    /*
         re_order_nfl_table(
             context_ptr,
             fullReconCandidateCount,
@@ -622,9 +622,12 @@ EbErrorType PreModeDecision(
             full_candidate_total_count_ptr,
             best_candidate_index_array);
     }*/
-    uint8_t nfl_index = LOG2F(context_ptr->blk_geom->sq_size) - 2;
-    uint32_t nfl_cap = nfl_cap_table[nfl_index];
-    (*full_candidate_total_count_ptr) = MIN(fullReconCandidateCount,MIN(MAX_NFL, nfl_cap));
+
+    if (picture_control_set_ptr->slice_type != I_SLICE) {
+        uint8_t nfl_index = LOG2F(context_ptr->blk_geom->sq_size) - 2;
+        uint32_t nfl_cap = nfl_cap_table[nfl_index];
+        (*full_candidate_total_count_ptr) = MIN(fullReconCandidateCount, MIN(MAX_NFL, nfl_cap));
+    }
 #else
     // Set (*full_candidate_total_count_ptr) to fullReconCandidateCount
     (*full_candidate_total_count_ptr) = fullReconCandidateCount;
