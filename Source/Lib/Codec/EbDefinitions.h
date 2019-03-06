@@ -165,6 +165,9 @@ extern "C" {
 #define ENABLE_EOB_ZERO_CHECK                           1
 #define DISABLE_128_SB_FOR_SUB_720                      1
 
+
+#define CHROMA_BLIND_IF_SEARCH                          1
+
 /********************************************************/
 /****************** Pre-defined Values ******************/
 /********************************************************/
@@ -511,6 +514,9 @@ typedef enum INTERPOLATION_SEARCH_LEVEL {
     IT_SEARCH_OFF,
     IT_SEARCH_INTER_DEPTH,
     IT_SEARCH_FULL_LOOP,
+#if CHROMA_BLIND_IF_SEARCH
+    IT_SEARCH_FAST_LOOP_UV_BLIND,
+#endif
     IT_SEARCH_FAST_LOOP,
 } INTERPOLATION_SEARCH_LEVEL;
 typedef enum NSQ_SEARCH_LEVEL {
