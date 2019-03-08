@@ -674,6 +674,16 @@ void set_nfl(
 
         //if (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode == PIC_SB_SWITCH_DEPTH_MODE && picture_control_set_ptr->parent_pcs_ptr->sb_md_mode_array[sb_ptr->index] == LCU_PRED_OPEN_LOOP_1_NFL_DEPTH_MODE)
         //    context_ptr->full_recon_search_count = 1;
+
+#if NFL_8_IN_NON_REF 
+    if (!picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag)
+        context_ptr->full_recon_search_count = 8;
+
+#endif
+#if NFL_8_IN_NON_BASE   
+    if (picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index > 0)
+        context_ptr->full_recon_search_count = 8;
+#endif
     ASSERT(context_ptr->full_recon_search_count <= MAX_NFL);
 }
 

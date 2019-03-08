@@ -168,6 +168,9 @@ extern "C" {
 #define NFL_CAP_128x128                              12
 #endif
 
+#define NFL_8_IN_NON_REF                              0
+#define NFL_8_IN_NON_BASE                             0
+
 
 /********************************************************/
 /****************** Pre-defined Values ******************/
