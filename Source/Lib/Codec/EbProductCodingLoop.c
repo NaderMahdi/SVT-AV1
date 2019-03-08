@@ -680,6 +680,11 @@ void set_nfl(
         context_ptr->full_recon_search_count = 8;
 
 #endif
+#if NFL_10_IN_NON_REF 
+    if (!picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag)
+        context_ptr->full_recon_search_count = 10;
+
+#endif
 #if NFL_8_IN_NON_BASE   
     if (picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index > 0)
         context_ptr->full_recon_search_count = 8;

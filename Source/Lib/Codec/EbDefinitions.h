@@ -169,6 +169,7 @@ extern "C" {
 #endif
 
 #define NFL_8_IN_NON_REF                              0
+#define NFL_10_IN_NON_REF                             0
 #define NFL_8_IN_NON_BASE                             0
 
 
