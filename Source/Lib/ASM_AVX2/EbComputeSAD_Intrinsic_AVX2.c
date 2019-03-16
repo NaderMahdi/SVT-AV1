@@ -4914,6 +4914,119 @@ void sad_loop_kernel_avx2_hme_l0_intrin(
 }
 
 #if NSQ_ME_OPT
+
+void ext_all_sad_calculation_8x8_16x16_avx2(
+    uint8_t   *src,
+    uint32_t   src_stride,
+    uint8_t   *ref,
+    uint32_t   ref_stride,
+    uint32_t   mv,
+    uint32_t  *p_best_sad8x8,
+    uint32_t  *p_best_sad16x16,
+    uint32_t  *p_best_mv8x8,
+    uint32_t  *p_best_mv16x16,
+    uint32_t   p_eight_sad16x16[16][8],
+    uint32_t   p_eight_sad8x8[64][8])
+{
+    static const char offsets[16] = {
+        0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15
+    };
+
+    //---- 16x16 : 0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15
+    for (int y = 0; y < 4; y++) {
+        for (int x = 0; x < 4; x++) {
+            const uint32_t blockIndex = 16 * y * src_stride + 16 * x;
+            const uint32_t searchPositionIndex = 16 * y * ref_stride + 16 * x;
+            const uint32_t start_16x16_pos = offsets[4 * y + x];
+            const uint32_t start_8x8_pos = 4 * start_16x16_pos;
+            const uint8_t *s = src + 16 * y * src_stride + 16 * x;
+            const uint8_t *r = ref + 16 * y * ref_stride + 16 * x;
+            __m256i sad02 = _mm256_setzero_si256();
+            __m256i sad13 = _mm256_setzero_si256();
+
+            for (int i = 0; i < 4; i++)
+            {
+                const __m128i src01 = _mm_loadu_si128((__m128i *)(s + 0 * src_stride));
+                const __m128i src23 = _mm_loadu_si128((__m128i *)(s + 8 * src_stride));
+                const __m128i ref0 = _mm_loadu_si128((__m128i *)(r + 0 * ref_stride + 0));
+                const __m128i ref1 = _mm_loadu_si128((__m128i *)(r + 0 * ref_stride + 8));
+                const __m128i ref2 = _mm_loadu_si128((__m128i *)(r + 8 * ref_stride + 0));
+                const __m128i ref3 = _mm_loadu_si128((__m128i *)(r + 8 * ref_stride + 8));
+                const __m256i src0123 = _mm256_insertf128_si256(_mm256_castsi128_si256(src01), src23, 1);
+                const __m256i ref02 = _mm256_insertf128_si256(_mm256_castsi128_si256(ref0), ref2, 1);
+                const __m256i ref13 = _mm256_insertf128_si256(_mm256_castsi128_si256(ref1), ref3, 1);
+                sad02 = _mm256_adds_epu16(sad02, _mm256_mpsadbw_epu8(ref02, src0123, 0));  // 000 000
+                sad02 = _mm256_adds_epu16(sad02, _mm256_mpsadbw_epu8(ref02, src0123, 45)); // 101 101
+                sad13 = _mm256_adds_epu16(sad13, _mm256_mpsadbw_epu8(ref13, src0123, 18)); // 010 010
+                sad13 = _mm256_adds_epu16(sad13, _mm256_mpsadbw_epu8(ref13, src0123, 63)); // 111 111
+                s += 2 * src_stride;
+                r += 2 * ref_stride;
+            }
+
+            sad02 = _mm256_slli_epi16(sad02, 1);
+            sad13 = _mm256_slli_epi16(sad13, 1);
+
+            const __m256i sad0202 = _mm256_permute4x64_epi64(sad02, 0xD8);
+            const __m256i sad1313 = _mm256_permute4x64_epi64(sad13, 0xD8);
+            const __m256i sad00 = _mm256_unpacklo_epi16(sad0202, _mm256_setzero_si256());
+            const __m256i sad11 = _mm256_unpacklo_epi16(sad1313, _mm256_setzero_si256());
+            const __m256i sad22 = _mm256_unpackhi_epi16(sad0202, _mm256_setzero_si256());
+            const __m256i sad33 = _mm256_unpackhi_epi16(sad1313, _mm256_setzero_si256());
+
+            _mm256_storeu_si256((__m256i*)(p_eight_sad8x8[0 + start_8x8_pos]), sad00);
+            _mm256_storeu_si256((__m256i*)(p_eight_sad8x8[1 + start_8x8_pos]), sad11);
+            _mm256_storeu_si256((__m256i*)(p_eight_sad8x8[2 + start_8x8_pos]), sad22);
+            _mm256_storeu_si256((__m256i*)(p_eight_sad8x8[3 + start_8x8_pos]), sad33);
+
+            const __m128i sad0 = _mm256_extracti128_si256(sad02, 0);
+            const __m128i sad1 = _mm256_extracti128_si256(sad13, 0);
+            const __m128i sad2 = _mm256_extracti128_si256(sad02, 1);
+            const __m128i sad3 = _mm256_extracti128_si256(sad13, 1);
+
+            const __m128i minpos0 = _mm_minpos_epu16(sad0);
+            const __m128i minpos1 = _mm_minpos_epu16(sad1);
+            const __m128i minpos2 = _mm_minpos_epu16(sad2);
+            const __m128i minpos3 = _mm_minpos_epu16(sad3);
+
+            const __m128i minpos01 = _mm_unpacklo_epi16(minpos0, minpos1);
+            const __m128i minpos23 = _mm_unpacklo_epi16(minpos2, minpos3);
+            const __m128i minpos0123 = _mm_unpacklo_epi32(minpos01, minpos23);
+            const __m128i sad8x8 = _mm_unpacklo_epi16(minpos0123, _mm_setzero_si128());
+            const __m128i pos0123 = _mm_unpackhi_epi16(minpos0123, _mm_setzero_si128());
+            const __m128i pos8x8 = _mm_slli_epi32(pos0123, 2);
+
+            __m128i best_sad8x8 = _mm_loadu_si128((__m128i *)(p_best_sad8x8 + start_8x8_pos));
+            const __m128i mask = _mm_cmplt_epi32(sad8x8, best_sad8x8);
+            best_sad8x8 = _mm_min_epi32(best_sad8x8, sad8x8);
+            _mm_storeu_si128((__m128i *)(p_best_sad8x8 + start_8x8_pos), best_sad8x8);
+
+            __m128i best_mv8x8 = _mm_loadu_si128((__m128i *)(p_best_mv8x8 + start_8x8_pos));
+            const __m128i mvs = _mm_set1_epi32(mv);
+            const __m128i mv8x8 = _mm_add_epi16(mvs, pos8x8);
+            best_mv8x8 = _mm_blendv_epi8(best_mv8x8, mv8x8, mask);
+            _mm_storeu_si128((__m128i *)(p_best_mv8x8 + start_8x8_pos), best_mv8x8);
+
+            const __m128i sum01 = _mm_add_epi16(sad0, sad1);
+            const __m128i sum23 = _mm_add_epi16(sad2, sad3);
+            const __m128i sad16x16_16 = _mm_add_epi16(sum01, sum23);
+            const __m256i sad16x16_32 = _mm256_cvtepu16_epi32(sad16x16_16);
+            _mm256_storeu_si256((__m256i*)(p_eight_sad16x16[start_16x16_pos]), sad16x16_32);
+
+            const __m128i minpos16x16 = _mm_minpos_epu16(sad16x16_16);
+            const uint32_t min16x16 = _mm_extract_epi16(minpos16x16, 0);
+
+            if (min16x16 < p_best_sad16x16[start_16x16_pos]) {
+                p_best_sad16x16[start_16x16_pos] = min16x16;
+
+                const __m128i pos = _mm_srli_si128(minpos16x16, 2);
+                const __m128i pos16x16 = _mm_slli_epi32(pos, 2);
+                const __m128i mv16x16 = _mm_add_epi16(mvs, pos16x16);
+                p_best_mv16x16[start_16x16_pos] = _mm_extract_epi32(mv16x16, 0);
+            }
+        }
+    }
+}
+
 #define avx2_find_min_pos_init() \
     const __m256i idx_min_pos_prv = _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7)
 
