@@ -145,8 +145,6 @@ extern "C" {
 #define FAST_WN                                         1
 #define CHROMA_BLIND                                    1 // Added the ability to switch between three chroma modes: 1. chroma @ MD, 2. chroma blind @ MD + CFL @ EP. 3. chroma blind @ MD + no CFL @ EP
 #define CONTENT_BASED_QPS                               1 // Adaptive QP Scaling (active for I only)
-
-
 #define ADAPTIVE_DEPTH_PARTITIONING                     1 // Added the ability to switch @ SB basis between: (1) all square up to 64x64,  (2) mdc up to 64x64, (3) mdc up to 64x64 only pred, (4) mdc up to 64x64 only pred + 1 NFL
 #if ADAPTIVE_DEPTH_PARTITIONING
 #define ADP_V1                                          0      
@@ -204,7 +202,7 @@ extern "C" {
 #define IMPROVE_CHROMA_MODE                             1
 #define CHROMA_BLIND_IF_SEARCH                          1
 #define OIS_BASED_INTRA                                 1
-#define NSQ_ME_OPT                                      0
+#define NSQ_ME_OPT                                      1
 
 #define SHUT_FULL_DENOISE                               1
 
