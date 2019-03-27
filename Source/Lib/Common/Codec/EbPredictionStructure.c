@@ -973,7 +973,11 @@ static EbErrorType PredictionStructureCtor(
 
             // Copy Config List1 => LeadingPic Reference List 0
             for (refIndex = 0; refIndex < predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceListCount; ++refIndex) {
+#if MRP_ME
+                predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList[refIndex] = predictionStructureConfigPtr->entryArray[configEntryIndex].refList1; // NM: To be added [refIndex];
+#else
                 predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList = predictionStructureConfigPtr->entryArray[configEntryIndex].refList1;
+#endif
             }
 
             // Null out List 1
@@ -1022,7 +1026,11 @@ static EbErrorType PredictionStructureCtor(
 
             // Copy Reference List 0
             for (refIndex = 0; refIndex < predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceListCount; ++refIndex) {
+#if MRP_ME
+                predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList[refIndex] = predictionStructureConfigPtr->entryArray[configEntryIndex].refList0;// NM: To be added [refIndex];
+#else
                 predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList = predictionStructureConfigPtr->entryArray[configEntryIndex].refList0;
+#endif
             }
 
             // REFERENCE LIST 1
@@ -1075,7 +1083,11 @@ static EbErrorType PredictionStructureCtor(
 
                 // Copy Reference List 1
                 for (refIndex = 0; refIndex < predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceListCount; ++refIndex) {
+#if MRP_ME
+                    predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceList[refIndex] = predictionStructureConfigPtr->entryArray[configEntryIndex].refList1;// NM: To be added [refIndex];
+#else
                     predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceList = predictionStructureConfigPtr->entryArray[configEntryIndex].refList1;
+#endif
                 }
 
                 break;
@@ -1122,7 +1134,11 @@ static EbErrorType PredictionStructureCtor(
             //EB_MALLOC(int32_t*, predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList, sizeof(int32_t) * predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceListCount, EB_N_PTR);
             // Copy Reference List 0
             for (refIndex = 0; refIndex < predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceListCount; ++refIndex) {
+#if MRP_ME
+                predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList[refIndex] = predictionStructureConfigPtr->entryArray[configEntryIndex].refList0;// NM: To be added [refIndex];
+#else
                 predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList = predictionStructureConfigPtr->entryArray[configEntryIndex].refList0;
+#endif
             }
 
             // REFERENCE LIST 1
@@ -1171,7 +1187,11 @@ static EbErrorType PredictionStructureCtor(
 
                 // Copy Reference List 1
                 for (refIndex = 0; refIndex < predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceListCount; ++refIndex) {
+#if MRP_ME
+                    predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceList[refIndex] = predictionStructureConfigPtr->entryArray[configEntryIndex].refList1;// NM: To be added [refIndex];
+#else
                     predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceList = predictionStructureConfigPtr->entryArray[configEntryIndex].refList1;
+#endif
                 }
 
                 break;
@@ -1249,7 +1269,11 @@ static EbErrorType PredictionStructureCtor(
                 // Go through each Reference picture and accumulate counts
                 for (refIndex = 0; refIndex < predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceListCount; ++refIndex) {
 
+#if MRP_ME
+                    depIndex = picture_number - predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList[refIndex];
+#else
                     depIndex = picture_number - predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList;
+#endif
 
                     if (depIndex >= 0 && depIndex < (int32_t)(predictionStructurePtr->steadyStateIndex + predictionStructurePtr->predStructPeriod)) {
                         ++predictionStructurePtr->predStructEntryPtrArray[depIndex]->depList0.listCount;
@@ -1266,7 +1290,11 @@ static EbErrorType PredictionStructureCtor(
                 // Go through each Reference picture and accumulate counts
                 for (refIndex = 0; refIndex < predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceListCount; ++refIndex) {
 
+#if MRP_ME
+                    depIndex = picture_number - predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList[refIndex];
+#else
                     depIndex = picture_number - predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList;
+#endif
 
                     if (depIndex >= 0 && depIndex < (int32_t)(predictionStructurePtr->steadyStateIndex + predictionStructurePtr->predStructPeriod)) {
                         ++predictionStructurePtr->predStructEntryPtrArray[depIndex]->depList0.listCount;
@@ -1305,11 +1333,19 @@ static EbErrorType PredictionStructureCtor(
                 // Go through each Reference picture and accumulate counts
                 for (refIndex = 0; refIndex < predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceListCount; ++refIndex) {
 
+#if MRP_ME
+                    depIndex = picture_number - predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList[refIndex];
+#else
                     depIndex = picture_number - predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList;
+#endif
 
                     if (depIndex >= 0 && depIndex < (int32_t)(predictionStructurePtr->steadyStateIndex + predictionStructurePtr->predStructPeriod)) {
                         predictionStructurePtr->predStructEntryPtrArray[depIndex]->depList0.list[predictionStructurePtr->predStructEntryPtrArray[depIndex]->depList0.listCount++] =
+#if MRP_ME
+                            predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList[refIndex];
+#else
                             predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList;
+#endif
                     }
                 }
 
@@ -1322,13 +1358,20 @@ static EbErrorType PredictionStructureCtor(
 
                 // Go through each Reference picture and accumulate counts
                 for (refIndex = 0; refIndex < predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceListCount; ++refIndex) {
-
+#if MRP_ME
+                    depIndex = picture_number - predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList[refIndex];
+#else
                     depIndex = picture_number - predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList;
+#endif
 
                     // Assign the Reference to the Dep List and Increment the Dep List Count
                     if (depIndex >= 0 && depIndex < (int32_t)(predictionStructurePtr->steadyStateIndex + predictionStructurePtr->predStructPeriod)) {
                         predictionStructurePtr->predStructEntryPtrArray[depIndex]->depList0.list[predictionStructurePtr->predStructEntryPtrArray[depIndex]->depList0.listCount++] =
+#if MRP_ME
+                            predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList[refIndex];
+#else
                             predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList;
+#endif
                     }
                 }
 
@@ -1356,9 +1399,11 @@ static EbErrorType PredictionStructureCtor(
 
                 // Go through each Reference picture and accumulate counts
                 for (refIndex = 0; refIndex < predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceListCount; ++refIndex) {
-
+#if MRP_ME
+                    depIndex = picture_number - predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceList[refIndex];
+#else
                     depIndex = picture_number - predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceList;
-
+#endif
                     if (depIndex >= 0 && depIndex < (int32_t)(predictionStructurePtr->steadyStateIndex + predictionStructurePtr->predStructPeriod)) {
                         ++predictionStructurePtr->predStructEntryPtrArray[depIndex]->depList1.listCount;
                     }
@@ -1373,9 +1418,11 @@ static EbErrorType PredictionStructureCtor(
 
                 // Go through each Reference picture and accumulate counts
                 for (refIndex = 0; refIndex < predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceListCount; ++refIndex) {
-
+#if MRP_ME
+                    depIndex = picture_number - predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceList[refIndex];
+#else
                     depIndex = picture_number - predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceList;
-
+#endif
                     if (depIndex >= 0 && depIndex < (int32_t)(predictionStructurePtr->steadyStateIndex + predictionStructurePtr->predStructPeriod)) {
                         ++predictionStructurePtr->predStructEntryPtrArray[depIndex]->depList1.listCount;
                     }
@@ -1412,12 +1459,18 @@ static EbErrorType PredictionStructureCtor(
 
                 // Go through each Reference picture and accumulate counts
                 for (refIndex = 0; refIndex < predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceListCount; ++refIndex) {
-
+#if MRP_ME
+                    depIndex = picture_number - predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceList[refIndex];
+#else
                     depIndex = picture_number - predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceList;
-
+#endif
                     if (depIndex >= 0 && depIndex < (int32_t)(predictionStructurePtr->steadyStateIndex + predictionStructurePtr->predStructPeriod)) {
                         predictionStructurePtr->predStructEntryPtrArray[depIndex]->depList1.list[predictionStructurePtr->predStructEntryPtrArray[depIndex]->depList1.listCount++] =
+#if MRP_ME
+                            predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceList[refIndex];
+#else
                             predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceList;
+#endif
                     }
                 }
 
@@ -1430,13 +1483,19 @@ static EbErrorType PredictionStructureCtor(
 
                 // Go through each Reference picture and accumulate counts
                 for (refIndex = 0; refIndex < predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceListCount; ++refIndex) {
-
+#if MRP_ME
+                    depIndex = picture_number - predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceList[refIndex];
+#else
                     depIndex = picture_number - predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceList;
-
+#endif
                     // Assign the Reference to the Dep List and Increment the Dep List Count
                     if (depIndex >= 0 && depIndex < (int32_t)(predictionStructurePtr->steadyStateIndex + predictionStructurePtr->predStructPeriod)) {
                         predictionStructurePtr->predStructEntryPtrArray[depIndex]->depList1.list[predictionStructurePtr->predStructEntryPtrArray[depIndex]->depList1.listCount++] =
+#if MRP_ME
+                            predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceList[refIndex];
+#else
                             predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceList;
+#endif
                     }
                 }
 
@@ -1637,8 +1696,13 @@ static EbErrorType PredictionStructureCtor(
                 for (refIndex = 0; (refIndex < predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceListCount) && (pocInReferenceList0 == EB_FALSE); ++refIndex) {
 
                     // Reference List 0
+#if MRP_ME
+                    if ((predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList[refIndex] != 0) &&
+                        (predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList[refIndex] == deltaPoc))
+#else
                     if ((predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList != 0) &&
                         (predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList == deltaPoc))
+#endif
                     {
                         pocInReferenceList0 = EB_TRUE;
                         ++predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refPicsList0TotalCountMinus1;
@@ -1650,8 +1714,13 @@ static EbErrorType PredictionStructureCtor(
                 for (refIndex = 0; (refIndex < predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceListCount) && (pocInReferenceList1 == EB_FALSE); ++refIndex) {
 
                     // Reference List 1
+#if MRP_ME
+                    if ((predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceList[refIndex] != 0) &&
+                        (predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceList[refIndex] == deltaPoc))
+#else
                     if ((predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceList != 0) &&
                         (predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceList == deltaPoc))
+#endif
                     {
                         pocInReferenceList1 = EB_TRUE;
                         ++predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refPicsList1TotalCountMinus1;
@@ -1681,8 +1750,13 @@ static EbErrorType PredictionStructureCtor(
                 for (refIndex = 0; (refIndex < predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceListCount) && (pocInReferenceList0 == EB_FALSE); ++refIndex) {
 
                     // Reference List 0
+#if MRP_ME
+                    if ((predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList[refIndex] != 0) &&
+                        (predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList[refIndex] == deltaPoc))
+#else
                     if ((predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList != 0) &&
                         (predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList0.referenceList == deltaPoc))
+#endif
                     {
                         pocInReferenceList0 = EB_TRUE;
                         ++predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refPicsList0TotalCountMinus1;
@@ -1692,8 +1766,13 @@ static EbErrorType PredictionStructureCtor(
                 // Check to see if the deltaPoc is in Ref List 1
                 pocInReferenceList1 = EB_FALSE;
                 for (refIndex = 0; (refIndex < predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceListCount) && (pocInReferenceList1 == EB_FALSE); ++refIndex) {
+#if MRP_ME
+                    if ((predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceList[refIndex] != 0) &&
+                        (predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceList[refIndex] == deltaPoc))
+#else
                     if ((predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceList != 0) &&
                         (predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refList1.referenceList == deltaPoc))
+#endif
                     {
                         pocInReferenceList1 = EB_TRUE;
                         ++predictionStructurePtr->predStructEntryPtrArray[entryIndex]->refPicsList1TotalCountMinus1;

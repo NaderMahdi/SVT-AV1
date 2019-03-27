@@ -227,6 +227,12 @@ extern "C" {
 #define SC_HME_ME  0//use sc detector for hme/me setting
 
 #define AOM_INTERP_EXTEND 4
+
+#define MRP_SUPPORT    1
+#if MRP_SUPPORT
+#define MRP_ME         0
+#define MRP_CONNECTION 0
+#endif
 struct buf_2d {
     uint8_t *buf;
     uint8_t *buf0;
@@ -2727,6 +2733,9 @@ void(*ErrorHandler)(
                                                 ((MAX_PICTURE_HEIGHT_SIZE + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64)
 
 //***Prediction Structure***
+#if MRP_ME
+#define REF_LIST_MAX_DEPTH                          4 // NM - To be specified
+#endif
 #define MAX_TEMPORAL_LAYERS                         6
 #define MAX_HIERARCHICAL_LEVEL                      6
 #define MAX_REF_IDX                                 1        // Set MAX_REF_IDX as 1 to avoid sending extra refPicIdc for each PU in IPPP flat GOP structure.

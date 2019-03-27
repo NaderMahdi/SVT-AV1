@@ -1587,8 +1587,29 @@ EbAuraStatus AuraDetection64x64Gold(
         uint32_t k;
 
 
+#if MRP_ME
+        //picture_control_set_ptr->me_results[sb_index]->me_candidate[pu_index][candidateIndex].distortion = me_candidate->distortion;
+        //MeLcuResults_t * mePuResult = &picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index];
+        //Curr Block
 
+        for (k = 0; k < picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index][0].totalMeCandidateIndex; k++) {
+
+            if (picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index]->me_candidate[0][k].direction == UNI_PRED_LIST_0) {
+                // Get reference list 0 / reference index 0 MV
+                xMv0 = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index]->me_candidate[0][k].xMvL0;
+                yMv0 = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index]->me_candidate[0][k].yMvL0;
+            }
+            if (picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index]->me_candidate[0][k].direction == UNI_PRED_LIST_1) {
+                // Get reference list  1 / reference index 0 MV
+                xMv1 = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index]->me_candidate[0][k].xMvL1;
+                yMv1 = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index]->me_candidate[0][k].yMvL1;
+            }
+
+        }
+        currDist = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index]->me_candidate[0][k].distortion;
+#else
         MeCuResults_t * mePuResult = &picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index][0];
+
 
         //Curr Block
 
@@ -1608,7 +1629,7 @@ EbAuraStatus AuraDetection64x64Gold(
         }
         currDist = mePuResult->distortionDirection[0].distortion;
 
-
+#endif
 
         if ((currDist > 64 * 64) &&
             // Only mark a block as aura when it is moving (MV amplitude higher than X; X is temporal layer dependent)
@@ -1623,30 +1644,50 @@ EbAuraStatus AuraDetection64x64Gold(
 
             //Top Distortion
             lcuOffset = -picture_width_in_sb;
+#if MRP_CONNECTION
+            topDist = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index + lcuOffset]->me_candidate[0][0].distortion;
+#else
             topDist = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index + lcuOffset]->distortionDirection[0].distortion;
+#endif
 
 
             //TopLeft Distortion
             lcuOffset = -picture_width_in_sb - 1;
+#if MRP_CONNECTION
+            topLDist = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index + lcuOffset]->me_candidate[0][0].distortion;
+#else
             topLDist = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index + lcuOffset]->distortionDirection[0].distortion;
+#endif
 
 
             //TopRightDistortion
             lcuOffset = -picture_width_in_sb + 1;
+#if MRP_CONNECTION
+            topRDist = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index + lcuOffset]->me_candidate[0][0].distortion;
+#else
             topRDist = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index + lcuOffset]->distortionDirection[0].distortion;
+#endif
 
 
             topRDist = (xLcuIndex < (uint32_t)(picture_width_in_sb - 2)) ? topRDist : currDist;
 
             //left Distortion
             lcuOffset = -1;
+#if MRP_CONNECTION
+            leftDist = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index + lcuOffset]->me_candidate[0][0].distortion;
+#else
             leftDist = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index + lcuOffset]->distortionDirection[0].distortion;
+#endif
 
 
 
             //RightDistortion
             lcuOffset = 1;
+#if MRP_CONNECTION
+            rightDist = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index + lcuOffset]->me_candidate[0][0].distortion;
+#else
             rightDist = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index + lcuOffset]->distortionDirection[0].distortion;
+#endif
 
 
 
@@ -2060,7 +2101,11 @@ void derive_sb_score(
                 distortion = 0;
                 for (cu8x8Index = RASTER_SCAN_CU_INDEX_8x8_0; cu8x8Index <= RASTER_SCAN_CU_INDEX_8x8_63; cu8x8Index++) {
                     if (sb_params->raster_scan_cu_validity[cu8x8Index]) {
+#if MRP_CONNECTION
+                        distortion = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index]->me_candidate[cu8x8Index][0].distortion;
+#else
                         distortion += picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index][cu8x8Index].distortionDirection[0].distortion;
+#endif
                         validCu8x8Count++;
                     }
                 }
@@ -2072,7 +2117,11 @@ void derive_sb_score(
 
             }
             else {
+#if MRP_CONNECTION
+                distortion = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index]->me_candidate[RASTER_SCAN_CU_INDEX_64x64][0].distortion;
+#else
                 distortion = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index][RASTER_SCAN_CU_INDEX_64x64].distortionDirection[0].distortion;
+#endif
                 // Perform SB score manipulation for incomplete SBs for SQ mode
                 sb_score = distortion;
 

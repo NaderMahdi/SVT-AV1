@@ -427,7 +427,11 @@ void* picture_manager_kernel(void *input_ptr)
                 inputEntryPtr->list0Ptr->referenceListCount = predPositionPtr->refList0.referenceListCount;
 
                 if (picture_control_set_ptr->temporal_layer_index == 0 && picture_control_set_ptr->slice_type != I_SLICE && picture_control_set_ptr->picture_number < sequence_control_set_ptr->max_frame_window_to_ref_islice + picture_control_set_ptr->last_islice_picture_number)
+#if MRP_ME
+                    inputEntryPtr->list1Ptr->referenceList[0] = picture_control_set_ptr->picture_number - picture_control_set_ptr->last_islice_picture_number; // NM: to review
+#else
                     inputEntryPtr->list1Ptr->referenceList = picture_control_set_ptr->picture_number - picture_control_set_ptr->last_islice_picture_number;
+#endif
                 else
                     inputEntryPtr->list1Ptr->referenceList = predPositionPtr->refList1.referenceList;
                 inputEntryPtr->list1Ptr->referenceListCount = predPositionPtr->refList1.referenceListCount;
@@ -588,6 +592,41 @@ void* picture_manager_kernel(void *input_ptr)
                     availabilityFlag = EB_TRUE;
 
                     // Check RefList0 Availability
+#if MRP_ME
+                    uint8_t refIdx;
+                    for (refIdx = 0; refIdx < entryPictureControlSetPtr->ref_list0_count; ++refIdx) {
+                        if (entryPictureControlSetPtr->ref_list0_count) {
+                            referenceQueueIndex = (uint32_t)CIRCULAR_ADD(
+                                ((int32_t)inputEntryPtr->referenceEntryIndex) -     // Base
+                                inputEntryPtr->list0Ptr->referenceList[refIdx],     // Offset
+                                REFERENCE_QUEUE_MAX_DEPTH);                         // Max
+
+                            referenceEntryPtr = encode_context_ptr->reference_picture_queue[referenceQueueIndex];
+
+                            CHECK_REPORT_ERROR(
+                                (referenceEntryPtr),
+                                encode_context_ptr->app_callback_ptr,
+                                EB_ENC_PM_ERROR10);
+
+                            refPoc = POC_CIRCULAR_ADD(
+                                entryPictureControlSetPtr->picture_number,
+                                -inputEntryPtr->list0Ptr->referenceList[refIdx]/*,
+                                entrySequenceControlSetPtr->bits_for_picture_order_count*/);
+
+                                // Increment the current_input_poc is the case of POC rollover
+                            current_input_poc = encode_context_ptr->current_input_poc;
+                            //current_input_poc += ((current_input_poc < refPoc) && (inputEntryPtr->list0Ptr->referenceList[refIdx] > 0)) ?
+                            //    (1 << entrySequenceControlSetPtr->bits_for_picture_order_count) :
+                            //    0;
+
+                            availabilityFlag =
+                                (availabilityFlag == EB_FALSE) ? EB_FALSE :   // Don't update if already False
+                                (refPoc > current_input_poc) ? EB_FALSE :   // The Reference has not been received as an Input Picture yet, then its availability is false
+                                (referenceEntryPtr->referenceAvailable) ? EB_TRUE :   // The Reference has been completed
+                                EB_FALSE;     // The Reference has not been completed
+                        }
+                    }
+#else
                     if (entryPictureControlSetPtr->ref_list0_count) {
                         referenceQueueIndex = (uint32_t)CIRCULAR_ADD(
                             ((int32_t)inputEntryPtr->referenceEntryIndex) -     // Base
@@ -618,9 +657,50 @@ void* picture_manager_kernel(void *input_ptr)
                             (referenceEntryPtr->referenceAvailable) ? EB_TRUE :   // The Reference has been completed
                             EB_FALSE;     // The Reference has not been completed
                     }
+#endif
 
                     // Check RefList1 Availability
                     if (entryPictureControlSetPtr->slice_type == B_SLICE) {
+
+#if MRP_ME
+                        uint8_t refIdx;
+                        for (refIdx = 0; refIdx < entryPictureControlSetPtr->ref_list1_count; ++refIdx) {
+                            if (entryPictureControlSetPtr->ref_list1_count) {
+                                // If Reference is valid (non-zero), update the availability
+                                if (inputEntryPtr->list1Ptr->referenceList[refIdx] != (int32_t)INVALID_POC) {
+
+                                    referenceQueueIndex = (uint32_t)CIRCULAR_ADD(
+                                        ((int32_t)inputEntryPtr->referenceEntryIndex) -     // Base
+                                        inputEntryPtr->list1Ptr->referenceList[refIdx],     // Offset
+                                        REFERENCE_QUEUE_MAX_DEPTH);                         // Max
+
+                                    referenceEntryPtr = encode_context_ptr->reference_picture_queue[referenceQueueIndex];
+
+                                    CHECK_REPORT_ERROR(
+                                        (referenceEntryPtr),
+                                        encode_context_ptr->app_callback_ptr,
+                                        EB_ENC_PM_ERROR10);
+
+                                    refPoc = POC_CIRCULAR_ADD(
+                                        entryPictureControlSetPtr->picture_number,
+                                        -inputEntryPtr->list1Ptr->referenceList[refIdx]/*,
+                                        entrySequenceControlSetPtr->bits_for_picture_order_count*/);
+
+                                        // Increment the current_input_poc is the case of POC rollover
+                                    current_input_poc = encode_context_ptr->current_input_poc;
+                                    //current_input_poc += ((current_input_poc < refPoc && inputEntryPtr->list1Ptr->referenceList[refIdx] > 0)) ?
+                                    //    (1 << entrySequenceControlSetPtr->bits_for_picture_order_count) :
+                                    //    0;
+
+                                    availabilityFlag =
+                                        (availabilityFlag == EB_FALSE) ? EB_FALSE :   // Don't update if already False
+                                        (refPoc > current_input_poc) ? EB_FALSE :   // The Reference has not been received as an Input Picture yet, then its availability is false
+                                        (referenceEntryPtr->referenceAvailable) ? EB_TRUE :   // The Reference has been completed
+                                        EB_FALSE;     // The Reference has not been completed
+                                }
+                            }
+                        }
+#else
                         if (entryPictureControlSetPtr->ref_list1_count) {
                             // If Reference is valid (non-zero), update the availability
                             if (inputEntryPtr->list1Ptr->referenceList != (int32_t)INVALID_POC) {
@@ -655,6 +735,7 @@ void* picture_manager_kernel(void *input_ptr)
                                     EB_FALSE;     // The Reference has not been completed
                             }
                         }
+#endif
                     }
 
                     if (availabilityFlag == EB_TRUE) {
@@ -781,6 +862,42 @@ void* picture_manager_kernel(void *input_ptr)
                         // Configure List0
                         if ((entryPictureControlSetPtr->slice_type == P_SLICE) || (entryPictureControlSetPtr->slice_type == B_SLICE)) {
 
+#if MRP_ME
+                            uint8_t refIdx;
+                            for (refIdx = 0; refIdx < entryPictureControlSetPtr->ref_list0_count; ++refIdx) {
+                                if (entryPictureControlSetPtr->ref_list0_count) {
+                                    referenceQueueIndex = (uint32_t)CIRCULAR_ADD(
+                                        ((int32_t)inputEntryPtr->referenceEntryIndex) - inputEntryPtr->list0Ptr->referenceList[refIdx],
+                                        REFERENCE_QUEUE_MAX_DEPTH);                                                                                             // Max
+
+                                    referenceEntryPtr = encode_context_ptr->reference_picture_queue[referenceQueueIndex];
+
+                                    // Set the Reference Object
+                                    ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_0] = referenceEntryPtr->referenceObjectPtr;
+
+#if ADD_DELTA_QP_SUPPORT
+                                    ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_0] = (uint8_t)((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->object_ptr)->qp;
+                                    ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_0] = (uint8_t)((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->object_ptr)->slice_type;
+#else
+                                    ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_0] = ((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->object_ptr)->qp;
+                                    ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_0] = ((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->object_ptr)->slice_type;
+#endif
+                                    // Increment the Reference's liveCount by the number of tiles in the input picture
+                                    eb_object_inc_live_count(
+                                        referenceEntryPtr->referenceObjectPtr,
+                                        1);
+
+                                    // Decrement the Reference's dependentCount Count
+                                    --referenceEntryPtr->dependentCount;
+
+                                    CHECK_REPORT_ERROR(
+                                        (referenceEntryPtr->dependentCount != ~0u),
+                                        encode_context_ptr->app_callback_ptr,
+                                        EB_ENC_PM_ERROR1);
+
+                                }
+                            }
+#else
                             if (entryPictureControlSetPtr->ref_list0_count) {
                                 referenceQueueIndex = (uint32_t)CIRCULAR_ADD(
                                     ((int32_t)inputEntryPtr->referenceEntryIndex) - inputEntryPtr->list0Ptr->referenceList,
@@ -812,11 +929,44 @@ void* picture_manager_kernel(void *input_ptr)
                                     EB_ENC_PM_ERROR1);
 
                             }
+#endif
                         }
 
                         // Configure List1
                         if (entryPictureControlSetPtr->slice_type == B_SLICE) {
+#if MRP_ME
+                            uint8_t refIdx;
+                            for (refIdx = 0; refIdx < entryPictureControlSetPtr->ref_list1_count; ++refIdx) {
+                                if (entryPictureControlSetPtr->ref_list1_count) {
+                                    referenceQueueIndex = (uint32_t)CIRCULAR_ADD(
+                                        ((int32_t)inputEntryPtr->referenceEntryIndex) - inputEntryPtr->list1Ptr->referenceList[refIdx],
+                                        REFERENCE_QUEUE_MAX_DEPTH);                                                                                             // Max
 
+                                    referenceEntryPtr = encode_context_ptr->reference_picture_queue[referenceQueueIndex];
+
+                                    // Set the Reference Object
+                                    ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_1] = referenceEntryPtr->referenceObjectPtr;
+
+                                    ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_1] = (uint8_t)((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->object_ptr)->qp;
+                                    ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_1] = ((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->object_ptr)->slice_type;
+
+
+
+                                    // Increment the Reference's liveCount by the number of tiles in the input picture
+                                    eb_object_inc_live_count(
+                                        referenceEntryPtr->referenceObjectPtr,
+                                        1);
+
+                                    // Decrement the Reference's dependentCount Count
+                                    --referenceEntryPtr->dependentCount;
+
+                                    CHECK_REPORT_ERROR(
+                                        (referenceEntryPtr->dependentCount != ~0u),
+                                        encode_context_ptr->app_callback_ptr,
+                                        EB_ENC_PM_ERROR1);
+                                }
+                            }
+#else
                             if (entryPictureControlSetPtr->ref_list1_count) {
                                 referenceQueueIndex = (uint32_t)CIRCULAR_ADD(
                                     ((int32_t)inputEntryPtr->referenceEntryIndex) - inputEntryPtr->list1Ptr->referenceList,
@@ -845,6 +995,7 @@ void* picture_manager_kernel(void *input_ptr)
                                     encode_context_ptr->app_callback_ptr,
                                     EB_ENC_PM_ERROR1);
                             }
+#endif
                         }
 
                         // Adjust the Slice-type if the Lists are Empty, but don't reset the Prediction Structure

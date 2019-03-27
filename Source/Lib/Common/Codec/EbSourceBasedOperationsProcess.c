@@ -258,8 +258,11 @@ void FailingMotionLcu(
             meToOisSadDeviation = 0;
 
             // Get ME SAD
-
+#if MRP_CONNECTION
+            cuMeSAD = picture_control_set_ptr->me_results[sb_index]->me_candidate[rasterScanCuIndex][0].distortion;
+#else
             cuMeSAD = picture_control_set_ptr->me_results[sb_index][rasterScanCuIndex].distortionDirection[0].distortion;
+#endif
 
 
 #if OIS_BASED_INTRA
@@ -325,8 +328,11 @@ void DetectUncoveredLcu(
                 meToOisSadDeviation = 0;
 
                 // Get ME SAD
-
+#if MRP_CONNECTION
+                cuMeSAD = picture_control_set_ptr->me_results[sb_index]->me_candidate[rasterScanCuIndex][0].distortion;
+#else
                 cuMeSAD = picture_control_set_ptr->me_results[sb_index][rasterScanCuIndex].distortionDirection[0].distortion;
+#endif
 
 #if OIS_BASED_INTRA
 
@@ -467,8 +473,11 @@ void LumaContrastDetectorLcu(
                 oisResultsPtr->sorted_ois_candidate[4][0].distortion;
 
 #endif
-
+#if MRP_CONNECTION
+            cuMeSAD = picture_control_set_ptr->me_results[sb_index]->me_candidate[0][0].distortion;
+#else
             cuMeSAD = picture_control_set_ptr->me_results[sb_index][0].distortionDirection[0].distortion;
+#endif
 
 
             context_ptr->to_be_intra_coded_probability += cuOisSAD < cuMeSAD ? 1 : 0;
@@ -819,8 +828,11 @@ void TemporalHighContrastClassifier(
 
 
         for (blkIt = 0; blkIt < 4; blkIt++) {
-
+#if MRP_CONNECTION
+            nsad = ((uint32_t)picture_control_set_ptr->me_results[sb_index]->me_candidate[1 + blkIt][0].distortion) >> NORM_FACTOR;
+#else
             nsad = ((uint32_t)picture_control_set_ptr->me_results[sb_index][1 + blkIt].distortionDirection[0].distortion) >> NORM_FACTOR;
+#endif
 
             if (nsad >= nsadTable[picture_control_set_ptr->temporal_layer_index] + thRes)
                 meDist++;

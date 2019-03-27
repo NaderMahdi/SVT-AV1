@@ -2532,42 +2532,115 @@ void* picture_decision_kernel(void *input_ptr)
 
                             // Configure List0
                             if ((picture_control_set_ptr->slice_type == P_SLICE) || (picture_control_set_ptr->slice_type == B_SLICE)) {
+#if MRP_ME
+                                uint8_t ref_pic_index;
+                                for (ref_pic_index = 0; ref_pic_index < picture_control_set_ptr->ref_list0_count; ++ref_pic_index) {
+                                    if (picture_control_set_ptr->ref_list0_count) {
+                                        paReferenceQueueIndex = (uint32_t)CIRCULAR_ADD(
+                                            ((int32_t)inputEntryPtr->referenceEntryIndex) - inputEntryPtr->list0Ptr->referenceList[ref_pic_index],
+                                            PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH);                                                                                             // Max
 
-                                if (picture_control_set_ptr->ref_list0_count) {
-                                    paReferenceQueueIndex = (uint32_t)CIRCULAR_ADD(
-                                        ((int32_t)inputEntryPtr->referenceEntryIndex) - inputEntryPtr->list0Ptr->referenceList,
-                                        PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH);                                                                                             // Max
+                                        paReferenceEntryPtr = encode_context_ptr->picture_decision_pa_reference_queue[paReferenceQueueIndex];
 
-                                    paReferenceEntryPtr = encode_context_ptr->picture_decision_pa_reference_queue[paReferenceQueueIndex];
+                                        // Calculate the Ref POC
+                                        refPoc = POC_CIRCULAR_ADD(
+                                            picture_control_set_ptr->picture_number,
+                                            -inputEntryPtr->list0Ptr->referenceList[ref_pic_index] /*,// NM: MRP to be reviewed
+                                            sequence_control_set_ptr->bits_for_picture_order_count*/);
 
-                                    // Calculate the Ref POC
-                                    refPoc = POC_CIRCULAR_ADD(
-                                        picture_control_set_ptr->picture_number,
-                                        -inputEntryPtr->list0Ptr->referenceList/*,
-                                        sequence_control_set_ptr->bits_for_picture_order_count*/);
+                                            // Set the Reference Object
+                                        picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0][ref_pic_index] = paReferenceEntryPtr->inputObjectPtr;
+                                        picture_control_set_ptr->ref_pic_poc_array[REF_LIST_0][ref_pic_index] = refPoc;
+                                        picture_control_set_ptr->ref_pa_pcs_array[REF_LIST_0][ref_pic_index] = paReferenceEntryPtr->pPcsPtr;
 
-                                        // Set the Reference Object
-                                    picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0] = paReferenceEntryPtr->inputObjectPtr;
-                                    picture_control_set_ptr->ref_pic_poc_array[REF_LIST_0] = refPoc;
-                                    picture_control_set_ptr->ref_pa_pcs_array[REF_LIST_0] = paReferenceEntryPtr->pPcsPtr;
+                                        // Increment the PA Reference's liveCount by the number of tiles in the input picture
+                                        eb_object_inc_live_count(
+                                            paReferenceEntryPtr->inputObjectPtr,
+                                            1);
 
-                                    // Increment the PA Reference's liveCount by the number of tiles in the input picture
-                                    eb_object_inc_live_count(
-                                        paReferenceEntryPtr->inputObjectPtr,
-                                        1);
+                                        ((EbPaReferenceObject_t*)picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0][ref_pic_index]->object_ptr)->pPcsPtr = paReferenceEntryPtr->pPcsPtr;
 
-                                    ((EbPaReferenceObject_t*)picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0]->object_ptr)->pPcsPtr = paReferenceEntryPtr->pPcsPtr;
+                                        eb_object_inc_live_count(
+                                            paReferenceEntryPtr->pPcsPtr->p_pcs_wrapper_ptr,
+                                            1);
 
-                                    eb_object_inc_live_count(
-                                        paReferenceEntryPtr->pPcsPtr->p_pcs_wrapper_ptr,
-                                        1);
-
-                                    --paReferenceEntryPtr->dependentCount;
+                                        --paReferenceEntryPtr->dependentCount;
+                                    }
                                 }
+#else
+
+                                    if (picture_control_set_ptr->ref_list0_count) {
+                                        paReferenceQueueIndex = (uint32_t)CIRCULAR_ADD(
+                                            ((int32_t)inputEntryPtr->referenceEntryIndex) - inputEntryPtr->list0Ptr->referenceList,
+                                            PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH);                                                                                             // Max
+
+                                        paReferenceEntryPtr = encode_context_ptr->picture_decision_pa_reference_queue[paReferenceQueueIndex];
+
+                                        // Calculate the Ref POC
+                                        refPoc = POC_CIRCULAR_ADD(
+                                            picture_control_set_ptr->picture_number,
+                                            -inputEntryPtr->list0Ptr->referenceList/*,
+                                            sequence_control_set_ptr->bits_for_picture_order_count*/);
+
+                                            // Set the Reference Object
+                                        picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0] = paReferenceEntryPtr->inputObjectPtr;
+                                        picture_control_set_ptr->ref_pic_poc_array[REF_LIST_0] = refPoc;
+                                        picture_control_set_ptr->ref_pa_pcs_array[REF_LIST_0] = paReferenceEntryPtr->pPcsPtr;
+
+                                        // Increment the PA Reference's liveCount by the number of tiles in the input picture
+                                        eb_object_inc_live_count(
+                                            paReferenceEntryPtr->inputObjectPtr,
+                                            1);
+
+                                        ((EbPaReferenceObject_t*)picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0]->object_ptr)->pPcsPtr = paReferenceEntryPtr->pPcsPtr;
+
+                                        eb_object_inc_live_count(
+                                            paReferenceEntryPtr->pPcsPtr->p_pcs_wrapper_ptr,
+                                            1);
+
+                                        --paReferenceEntryPtr->dependentCount;
+                                    }
+#endif
                             }
 
                             // Configure List1
                             if (picture_control_set_ptr->slice_type == B_SLICE) {
+
+#if MRP_ME
+                                uint8_t ref_pic_index;
+                                for (ref_pic_index = 0; ref_pic_index < picture_control_set_ptr->ref_list1_count; ++ref_pic_index) {
+                                    if (picture_control_set_ptr->ref_list1_count) {
+                                        paReferenceQueueIndex = (uint32_t)CIRCULAR_ADD(
+                                            ((int32_t)inputEntryPtr->referenceEntryIndex) - inputEntryPtr->list1Ptr->referenceList[ref_pic_index],
+                                            PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH);                                                                                             // Max
+
+                                        paReferenceEntryPtr = encode_context_ptr->picture_decision_pa_reference_queue[paReferenceQueueIndex];
+
+                                        // Calculate the Ref POC
+                                        refPoc = POC_CIRCULAR_ADD(
+                                            picture_control_set_ptr->picture_number,
+                                            -inputEntryPtr->list1Ptr->referenceList[ref_pic_index]/*,
+                                            sequence_control_set_ptr->bits_for_picture_order_count*/);
+                                        picture_control_set_ptr->ref_pa_pcs_array[REF_LIST_1][ref_pic_index] = paReferenceEntryPtr->pPcsPtr;
+                                        // Set the Reference Object
+                                        picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_1][ref_pic_index] = paReferenceEntryPtr->inputObjectPtr;
+                                        picture_control_set_ptr->ref_pic_poc_array[REF_LIST_1][ref_pic_index] = refPoc;
+
+                                        // Increment the PA Reference's liveCount by the number of tiles in the input picture
+                                        eb_object_inc_live_count(
+                                            paReferenceEntryPtr->inputObjectPtr,
+                                            1);
+
+                                        ((EbPaReferenceObject_t*)picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_1][ref_pic_index]->object_ptr)->pPcsPtr = paReferenceEntryPtr->pPcsPtr;
+
+                                        eb_object_inc_live_count(
+                                            paReferenceEntryPtr->pPcsPtr->p_pcs_wrapper_ptr,
+                                            1);
+
+                                        --paReferenceEntryPtr->dependentCount;
+                                    }
+                                }
+#else
 
                                 if (picture_control_set_ptr->ref_list1_count) {
                                     paReferenceQueueIndex = (uint32_t)CIRCULAR_ADD(
@@ -2599,14 +2672,24 @@ void* picture_decision_kernel(void *input_ptr)
 
                                     --paReferenceEntryPtr->dependentCount;
                                 }
+#endif
                             }
 #if BASE_LAYER_REF
+#if MRP_ME
+                            if (picture_control_set_ptr->temporal_layer_index == 0) {
+                                if (picture_control_set_ptr->ref_pic_poc_array[0][0] == picture_control_set_ptr->ref_pic_poc_array[1][0])
+                                    picture_control_set_ptr->is_skip_mode_allowed = 0;
+                                else
+                                    picture_control_set_ptr->is_skip_mode_allowed = 1;
+                            }
+#else
                             if (picture_control_set_ptr->temporal_layer_index == 0) {
                                 if (picture_control_set_ptr->ref_pic_poc_array[0] == picture_control_set_ptr->ref_pic_poc_array[1])
                                     picture_control_set_ptr->is_skip_mode_allowed = 0;
                                 else
                                     picture_control_set_ptr->is_skip_mode_allowed = 1;
                             }
+#endif
 #endif
                             // SB Loop to reset similarColocatedLcu Array
                             uint16_t *variancePtr;

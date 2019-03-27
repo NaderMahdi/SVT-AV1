@@ -13960,7 +13960,11 @@ extern "C" {
         EbPictureBufferDesc_t                *enhanced_picture_ptr;
         PredictionStructure_t                *pred_struct_ptr;          // need to check
         struct SequenceControlSet_s          *sequence_control_set_ptr;
+#if MRP_ME
+        struct PictureParentControlSet_s     *ref_pa_pcs_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#else
         struct PictureParentControlSet_s     *ref_pa_pcs_array[MAX_NUM_OF_REF_PIC_LIST];
+#endif
         EbObjectWrapper_t                    *p_pcs_wrapper_ptr;
         EbObjectWrapper_t                    *previous_picture_control_set_wrapper_ptr;
         EbObjectWrapper_t                    *output_stream_wrapper_ptr;
@@ -14031,8 +14035,13 @@ extern "C" {
         uint32_t                              cb_sse;
 
         // Pre Analysis
+#if MRP_ME
+        EbObjectWrapper_t                    *ref_pa_pic_ptr_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+        uint64_t                              ref_pic_poc_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#else
         EbObjectWrapper_t                    *ref_pa_pic_ptr_array[MAX_NUM_OF_REF_PIC_LIST];
         uint64_t                              ref_pic_poc_array[MAX_NUM_OF_REF_PIC_LIST];
+#endif
         uint16_t                            **variance;
         uint8_t                             **yMean;
         uint8_t                             **cbMean;
@@ -14117,7 +14126,11 @@ extern "C" {
 
         // Motion Estimation Results
         uint8_t                               max_number_of_pus_per_sb;
+#if MRP_ME
+        MeLcuResults_t                       **me_results;
+#else
         MeCuResults_t                       **me_results;
+#endif
         uint32_t                             *rc_me_distortion;
 
         // Motion Estimation Distortion and OIS Historgram
@@ -14342,6 +14355,10 @@ extern "C" {
 #endif
 #if IBC_MODES
         uint8_t                              ibc_mode;
+#endif
+#if MRP_ME
+        uint8_t                              ref_list_0_count;
+        uint8_t                              ref_list_1_count;
 #endif
     } PictureParentControlSet_t;
 

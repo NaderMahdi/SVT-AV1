@@ -57,8 +57,11 @@ void GetMeDist(
     uint32_t                         sb_index,
     uint32_t                      *distortion)
 {
-
+#if MRP_CONNECTION
+    *distortion = (uint32_t)picture_control_set_ptr->me_results[sb_index]->me_candidate[0][0].distortion;
+#else
     *distortion = (uint32_t)(picture_control_set_ptr->me_results[sb_index][0].distortionDirection[0].distortion);
+#endif
 
 }
 
@@ -430,6 +433,9 @@ void ReleasePaReferenceObjects(
     // PA Reference Pictures
     uint32_t                             numOfListToSearch;
     uint32_t                             listIndex;
+#if MRP_ME
+    uint32_t                             ref_pic_index;
+#endif
     if (picture_control_set_ptr->slice_type != I_SLICE) {
 
         numOfListToSearch = (picture_control_set_ptr->slice_type == P_SLICE) ? REF_LIST_0 : REF_LIST_1;
@@ -438,11 +444,22 @@ void ReleasePaReferenceObjects(
         for (listIndex = REF_LIST_0; listIndex <= numOfListToSearch; ++listIndex) {
 
             // Release PA Reference Pictures
+#if MRP_ME
+             // List Loop
+            for (ref_pic_index = 0; ref_pic_index <= REF_LIST_MAX_DEPTH; ++ref_pic_index) {
+                if (picture_control_set_ptr->ref_pa_pic_ptr_array[listIndex][ref_pic_index] != EB_NULL) {
+
+                    eb_release_object(((EbPaReferenceObject_t*)picture_control_set_ptr->ref_pa_pic_ptr_array[listIndex][ref_pic_index]->object_ptr)->pPcsPtr->p_pcs_wrapper_ptr);
+                    eb_release_object(picture_control_set_ptr->ref_pa_pic_ptr_array[listIndex][ref_pic_index]);
+                }
+            }
+#else
             if (picture_control_set_ptr->ref_pa_pic_ptr_array[listIndex] != EB_NULL) {
 
                 eb_release_object(((EbPaReferenceObject_t*)picture_control_set_ptr->ref_pa_pic_ptr_array[listIndex]->object_ptr)->pPcsPtr->p_pcs_wrapper_ptr);
                 eb_release_object(picture_control_set_ptr->ref_pa_pic_ptr_array[listIndex]);
             }
+#endif
         }
     }
 
@@ -1300,8 +1317,11 @@ void DeriveSimilarCollocatedFlag(
             uint16_t                  refVar, curVar;
 
             EbPaReferenceObject_t    *refObjL0;
-
+#if MRP_ME
+            refObjL0 = (EbPaReferenceObject_t*)picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0][0]->object_ptr;
+#else
             refObjL0 = (EbPaReferenceObject_t*)picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0]->object_ptr;
+#endif
             refMean = refObjL0->yMean[sb_index];
 
             refVar = refObjL0->variance[sb_index];
@@ -1384,8 +1404,11 @@ void QpmGatherStatisticsSW(
                 }
 #endif
 
-
+#if MRP_CONNECTION
+                meSad = picture_control_set_ptr->me_results[sb_index]->me_candidate[rasterScanCuIndex][0].distortion;
+#else
                 meSad = picture_control_set_ptr->me_results[sb_index][rasterScanCuIndex].distortionDirection[0].distortion;
+#endif
 
 
                 //Keep track of the min,max and sum.
@@ -1424,7 +1447,11 @@ void QpmGatherStatisticsSW(
 
             oisSad = oisCu32Cu16ResultsPtr->sorted_ois_candidate[rasterScanCuIndex][0].distortion;
 #endif
+#if MRP_CONNECTION
+            meSad = picture_control_set_ptr->me_results[sb_index]->me_candidate[rasterScanCuIndex][0].distortion;
+#else
             meSad = picture_control_set_ptr->me_results[sb_index][rasterScanCuIndex].distortionDirection[0].distortion;
+#endif
 
             //Keep track of the min,max and sum.
             picture_control_set_ptr->intra_complexity_min[cu_depth] = oisSad < picture_control_set_ptr->intra_complexity_min[cu_depth] ? oisSad : picture_control_set_ptr->intra_complexity_min[cu_depth];
@@ -1455,7 +1482,11 @@ void QpmGatherStatisticsSW(
             oisSad = oisCu32Cu16ResultsPtr->sorted_ois_candidate[rasterScanCuIndex][0].distortion;
 
 #endif
+#if MRP_CONNECTION
+            meSad = picture_control_set_ptr->me_results[sb_index]->me_candidate[rasterScanCuIndex][0].distortion;
+#else
             meSad = picture_control_set_ptr->me_results[sb_index][rasterScanCuIndex].distortionDirection[0].distortion;
+#endif
 
 
             //Keep track of the min,max and sum.
@@ -1491,7 +1522,11 @@ void QpmGatherStatisticsSW(
             oisCu32Cu16ResultsPtr->sorted_ois_candidate[4][0].distortion;
 
 #endif
+#if MRP_CONNECTION
+        meSad = picture_control_set_ptr->me_results[sb_index]->me_candidate[rasterScanCuIndex][0].distortion;
+#else
         meSad = picture_control_set_ptr->me_results[sb_index][RASTER_SCAN_CU_INDEX_64x64].distortionDirection[0].distortion;
+#endif
 
 
         //Keep track of the min,max and sum.

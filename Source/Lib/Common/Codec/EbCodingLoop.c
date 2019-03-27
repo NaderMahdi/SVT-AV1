@@ -2680,15 +2680,22 @@ EbErrorType EncQpmDeriveDeltaQPForEachLeafLcu(
         // INTER MODE
         else {
 
-
+#if MRP_CONNECTION
+            distortion = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index]->me_candidate[cuIndexInRaterScan][0].distortion;
+#else
             distortion = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index][cuIndexInRaterScan].distortionDirection[0].distortion;
+#endif
 
 
 
             if (use16x16Stat) {
                 uint32_t cuIndexRScan = MD_SCAN_TO_RASTER_SCAN[ParentBlockIndex[cu_index]];
 
+#if MRP_CONNECTION
+                distortion = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index]->me_candidate[cuIndexRScan][0].distortion;
+#else
                 distortion = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index][cuIndexRScan].distortionDirection[0].distortion;
+#endif
 
             }
             distortion = (uint32_t)CLIP3(picture_control_set_ptr->parent_pcs_ptr->inter_complexity_min[usedDepth], picture_control_set_ptr->parent_pcs_ptr->inter_complexity_max[usedDepth], distortion);

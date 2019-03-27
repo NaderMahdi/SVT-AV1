@@ -1019,11 +1019,20 @@ EbErrorType picture_parent_control_set_ctor(
 #endif
     // Motion Estimation Results
     object_ptr->max_number_of_pus_per_sb = (initDataPtr->ext_block_flag) ? MAX_ME_PU_COUNT : SQUARE_PU_COUNT;
+#if MRP_CONNECTION
+    EB_MALLOC(MeLcuResults_t**, object_ptr->me_results, sizeof(MeLcuResults_t*) * object_ptr->sb_total_count, EB_N_PTR);
+
+    for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
+        EB_MALLOC(MeLcuResults_t*, object_ptr->me_results[sb_index], sizeof(MeLcuResults_t) * MAX_ME_PU_COUNT, EB_N_PTR);
+    }
+
+#else
     EB_MALLOC(MeCuResults_t**, object_ptr->me_results, sizeof(MeCuResults_t*) * object_ptr->sb_total_count, EB_N_PTR);
 
     for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
         EB_MALLOC(MeCuResults_t*, object_ptr->me_results[sb_index], sizeof(MeCuResults_t) * MAX_ME_PU_COUNT, EB_N_PTR);
     }
+#endif
     EB_MALLOC(uint32_t*, object_ptr->rc_me_distortion, sizeof(uint32_t) * object_ptr->sb_total_count, EB_N_PTR);
     // ME and OIS Distortion Histograms
     EB_MALLOC(uint16_t*, object_ptr->me_distortion_histogram, sizeof(uint16_t) * NUMBER_OF_SAD_INTERVALS, EB_N_PTR);

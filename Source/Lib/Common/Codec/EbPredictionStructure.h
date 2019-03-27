@@ -37,7 +37,11 @@ extern "C" {
        ************************************************/
     typedef struct ReferenceList_s
     {
+#if MRP_ME
+        int32_t                              *referenceList;
+#else
         int32_t                              referenceList;
+#endif
         uint32_t                              referenceListCount;
 
     } ReferenceList_t;

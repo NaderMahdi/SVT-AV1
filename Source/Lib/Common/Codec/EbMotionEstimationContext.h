@@ -284,6 +284,9 @@ extern "C" {
     typedef struct MePredUnit_s {
         uint32_t         distortion;
         EbPredDirection  prediction_direction;
+#if MRP_ME
+        uint8_t          ref_index[MAX_NUM_OF_REF_PIC_LIST];
+#endif
         uint32_t         mv[MAX_NUM_OF_REF_PIC_LIST];
     } MePredUnit_t;
     typedef struct MotionEstimationTierZero_s {

@@ -18,7 +18,11 @@ extern "C" {
 
     // i.e. no 4x4, 8x4, or 4x8 partitions
 #define SQUARE_PU_COUNT          85
+#if MRP_ME
+#define MAX_ME_CANDIDATE_PER_PU   24
+#else
 #define MAX_ME_CANDIDATE_PER_PU   3
+#endif
 
     typedef struct MeCandidate_s {
 
@@ -32,6 +36,10 @@ extern "C" {
             uint64_t MVs;
         };
 
+#if MRP_ME
+        unsigned    ref_idx_l0 : 8;      // allows for up to 4 references   
+        unsigned    ref_idx_l1 : 8;
+#endif
         unsigned    distortion : 32;     // 20-bits holds maximum SAD of 64x64 PU
 
         unsigned    direction : 8;      // 0: uni-pred L0, 1: uni-pred L1, 2: bi-pred
@@ -45,8 +53,13 @@ extern "C" {
         uint8_t          *totalMeCandidateIndex;
         int16_t          xMvHmeSearchCenter[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
         int16_t          yMvHmeSearchCenter[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
-        MeCandidate_t **me_candidate;
-        MeCandidate_t  *meCandidateArray;
+        MeCandidate_t    **me_candidate;
+        MeCandidate_t    *meCandidateArray;
+#if MRP_ME
+#if NSQ_OPTIMASATION
+        uint8_t           me_nsq[2]; // 2 Number of reference lists
+#endif
+#endif
 
     } MeLcuResults_t;
 
