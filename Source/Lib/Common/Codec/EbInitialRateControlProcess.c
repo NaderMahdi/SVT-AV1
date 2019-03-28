@@ -37,9 +37,10 @@ void GetMv(
 
 #if MRP_ME
     const MeLcuResults_t *me_results = picture_control_set_ptr->me_results[sb_index];
+    uint8_t total_me_cnt = me_results->totalMeCandidateIndex[0];
     const MeCandidate_t *me_block_candidates = me_results->me_candidate[0];
     const MeCandidate_t *me_block_results = me_results->me_candidate[0];
-    for (meCandidateIndex = 0; meCandidateIndex < me_results->totalMeCandidateIndex; meCandidateIndex++) {
+    for (meCandidateIndex = 0; meCandidateIndex < total_me_cnt; meCandidateIndex++) {
 
             if (me_block_results->direction == UNI_PRED_LIST_0) {
 
@@ -459,8 +460,13 @@ void ReleasePaReferenceObjects(
 
             // Release PA Reference Pictures
 #if MRP_ME
-             // List Loop
-            for (ref_pic_index = 0; ref_pic_index <= REF_LIST_MAX_DEPTH; ++ref_pic_index) {
+            uint8_t numOfRefPicToSearch = 0; /*(picture_control_set_ptr->slice_type == P_SLICE) ?
+                MIN(picture_control_set_ptr->refList0Count, sequenceControlSetPtr->staticConfig.referenceCount) :
+                (listIndex == REF_LIST_0) ?
+                MIN(picture_control_set_ptr->refList0Count, sequenceControlSetPtr->staticConfig.referenceCount) :
+                MIN(picture_control_set_ptr->refList1Count, sequenceControlSetPtr->staticConfig.referenceCount);*/
+
+            for (ref_pic_index = 0; ref_pic_index <= numOfRefPicToSearch; ++ref_pic_index) {
                 if (picture_control_set_ptr->ref_pa_pic_ptr_array[listIndex][ref_pic_index] != EB_NULL) {
 
                     eb_release_object(((EbPaReferenceObject_t*)picture_control_set_ptr->ref_pa_pic_ptr_array[listIndex][ref_pic_index]->object_ptr)->pPcsPtr->p_pcs_wrapper_ptr);

@@ -1588,25 +1588,25 @@ EbAuraStatus AuraDetection64x64Gold(
 
 
 #if MRP_ME
-        //picture_control_set_ptr->me_results[sb_index]->me_candidate[pu_index][candidateIndex].distortion = me_candidate->distortion;
-        //MeLcuResults_t * mePuResult = &picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index];
-        //Curr Block
+        const MeLcuResults_t *me_results = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index];
+        const MeCandidate_t *me_block_results = me_results->me_candidate[0];
+        uint8_t total_me_cnt = me_results->totalMeCandidateIndex[0];
 
-        for (k = 0; k < picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index][0].totalMeCandidateIndex; k++) {
+        for (k = 0; k < total_me_cnt; k++) {
 
-            if (picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index]->me_candidate[0][k].direction == UNI_PRED_LIST_0) {
+            if (me_block_results[k].direction == UNI_PRED_LIST_0) {
                 // Get reference list 0 / reference index 0 MV
-                xMv0 = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index]->me_candidate[0][k].xMvL0;
-                yMv0 = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index]->me_candidate[0][k].yMvL0;
+                xMv0 = me_block_results[k].xMvL0;
+                yMv0 = me_block_results[k].yMvL0;
             }
-            if (picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index]->me_candidate[0][k].direction == UNI_PRED_LIST_1) {
+            if (me_block_results[k].direction == UNI_PRED_LIST_1) {
                 // Get reference list  1 / reference index 0 MV
-                xMv1 = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index]->me_candidate[0][k].xMvL1;
-                yMv1 = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index]->me_candidate[0][k].yMvL1;
+                xMv1 = me_block_results[k].xMvL1;
+                yMv1 = me_block_results[k].yMvL1;
             }
 
         }
-        currDist = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index]->me_candidate[0][k].distortion;
+        currDist = me_block_results[0].distortion;
 #else
         MeCuResults_t * mePuResult = &picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index][0];
 

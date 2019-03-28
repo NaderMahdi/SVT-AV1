@@ -2433,7 +2433,11 @@ void* picture_decision_kernel(void *input_ptr)
                             inputEntryPtr->list0Ptr->referenceListCount = predPositionPtr->refList0.referenceListCount;
 
                             if (picture_control_set_ptr->temporal_layer_index == 0 && (pictureType != I_SLICE) && picture_control_set_ptr->picture_number < sequence_control_set_ptr->max_frame_window_to_ref_islice + picture_control_set_ptr->last_islice_picture_number)
+#if MRP_ME
+                                inputEntryPtr->list1Ptr->referenceList[0] = picture_control_set_ptr->picture_number - picture_control_set_ptr->last_islice_picture_number; //NM: to be reviewed 
+#else
                                 inputEntryPtr->list1Ptr->referenceList = picture_control_set_ptr->picture_number - picture_control_set_ptr->last_islice_picture_number;
+#endif
                             else
                                 inputEntryPtr->list1Ptr->referenceList = predPositionPtr->refList1.referenceList;
                             inputEntryPtr->list1Ptr->referenceListCount = predPositionPtr->refList1.referenceListCount;

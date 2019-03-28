@@ -80,7 +80,7 @@ extern "C" {
 #define M0_64x64_32x32_HALF_QUARTER_PEL                 1 // F8
 #define IMPROVED_UNIPRED_INJECTION                      1 // F11
 #define IMPROVED_BIPRED_INJECTION                       1 // F10
-#define M0_ME_SEARCH_BASE                               1 // F13
+#define M0_ME_SEARCH_BASE                               0 // F13
 #define INC_NFL12                                       1 // F14
 #define AV1_UPGRADE                                     1 // Upgrade to V1.0.0
 #define INTRAD_ASM                                      1 // asm for intra directionnal modes - Z1
@@ -188,7 +188,7 @@ extern "C" {
 #endif
 #define ENABLE_EOB_ZERO_CHECK                           1
 #define DISABLE_128_SB_FOR_SUB_720                      1
-#define BASE_LAYER_REF                                  1 // Base layer pictures use the previous I slice as the second reference
+#define BASE_LAYER_REF                                  0 // Base layer pictures use the previous I slice as the second reference
 #if BASE_LAYER_REF
 #define MAX_FRAMES_TO_REF_I                             64
 #endif

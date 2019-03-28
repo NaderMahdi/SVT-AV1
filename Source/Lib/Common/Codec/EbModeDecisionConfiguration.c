@@ -1142,7 +1142,30 @@ void PredictionPartitionLoop(
 #endif
                 if (picture_control_set_ptr->slice_type != I_SLICE) {
 
-#if! MD_INJECTION
+#if MD_INJECTION
+                    const MeLcuResults_t *me_results = picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index];
+                    const MeCandidate_t *me_block_results = me_results->me_candidate[cuIndexInRaterScan];
+                    uint8_t total_me_cnt = me_results->totalMeCandidateIndex[cuIndexInRaterScan];
+                    uint8_t me_index = 0;
+                    for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; me_candidate_index++) {
+                        const MeCandidate_t *me_block_results_ptr = &me_block_results[me_candidate_index];
+                        if (picture_control_set_ptr->parent_pcs_ptr->reference_mode == SINGLE_REFERENCE) {
+                            if (me_block_results_ptr->direction == 0) {
+                                me_index = me_candidate_index;
+                                break;
+                            }
+                        }
+                        else {
+                            if (me_block_results_ptr->direction == 2) {
+                                me_index = me_candidate_index;
+                                break;
+                            }  
+                        }
+                    }
+
+                    //const MeCandidate_t *me_results = &me_block_results[me_index];
+
+#else
                     MeCuResults_t * mePuResult = &picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index][cuIndexInRaterScan];
 #endif
 #if MDC_FIX_0            
@@ -1158,7 +1181,7 @@ void PredictionPartitionLoop(
                     context_ptr->mdc_candidate_ptr->prediction_direction[0] = (picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index == 0) ?
                         UNI_PRED_LIST_0 :
 #if MD_INJECTION
-                        picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index]->me_candidate[cuIndexInRaterScan][0].direction;
+                        me_block_results[me_index].direction;
 #else
                         mePuResult->distortionDirection[0].direction;
 #endif
@@ -1183,11 +1206,21 @@ void PredictionPartitionLoop(
                     context_ptr->mdc_candidate_ptr->is_new_mv = 1;
                     context_ptr->mdc_candidate_ptr->is_zero_mv = 0;
                     context_ptr->mdc_candidate_ptr->drl_index = 0;
+#if MD_INJECTION
+                    context_ptr->mdc_candidate_ptr->motionVector_x_L0 = me_block_results[me_index].xMvL0 << 1;
+                    context_ptr->mdc_candidate_ptr->motionVector_y_L0 = me_block_results[me_index].yMvL0 << 1;
+#else
                     context_ptr->mdc_candidate_ptr->motionVector_x_L0 = mePuResult->xMvL0 << 1;
                     context_ptr->mdc_candidate_ptr->motionVector_y_L0 = mePuResult->yMvL0 << 1;
+#endif
 #if MDC_FIX_1
+#if MD_INJECTION
+                    context_ptr->mdc_candidate_ptr->motionVector_x_L1 = me_block_results[me_index].xMvL1 << 1;
+                    context_ptr->mdc_candidate_ptr->motionVector_y_L1 = me_block_results[me_index].yMvL1 << 1;
+#else
                     context_ptr->mdc_candidate_ptr->motionVector_x_L1 = mePuResult->xMvL1 << 1;
                     context_ptr->mdc_candidate_ptr->motionVector_y_L1 = mePuResult->yMvL1 << 1;
+#endif
 #endif
                     context_ptr->mdc_candidate_ptr->ref_mv_index = 0;
                     context_ptr->mdc_candidate_ptr->pred_mv_weight = 0;
@@ -1227,7 +1260,11 @@ void PredictionPartitionLoop(
                         context_ptr->mdc_cu_ptr,
                         context_ptr->mdc_candidate_ptr,
                         context_ptr->qp,
+#if MD_INJECTION
+                        me_block_results[me_index].distortion,
+#else
                         mePuResult->distortionDirection[0].distortion,
+#endif
                         (uint64_t) 0,
                         context_ptr->lambda,
 #if USE_SSE_FL

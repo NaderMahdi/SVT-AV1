@@ -76,8 +76,13 @@ extern "C" {
     typedef struct PredictionStructureConfigEntry_s {
         uint32_t                              temporal_layer_index;
         uint32_t                              decode_order;
+#if MRP_ME
+        int32_t                              refList0[REF_LIST_MAX_DEPTH];
+        int32_t                              refList1[REF_LIST_MAX_DEPTH];
+#else
         int32_t                              refList0;
         int32_t                              refList1;
+#endif
     } PredictionStructureConfigEntry_t;
 
     /************************************************

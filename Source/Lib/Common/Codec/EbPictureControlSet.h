@@ -14127,6 +14127,7 @@ extern "C" {
         // Motion Estimation Results
         uint8_t                               max_number_of_pus_per_sb;
 #if MRP_ME
+        uint8_t                               max_number_of_candidates_per_block;
         MeLcuResults_t                       **me_results;
 #else
         MeCuResults_t                       **me_results;
@@ -14355,10 +14356,6 @@ extern "C" {
 #endif
 #if IBC_MODES
         uint8_t                              ibc_mode;
-#endif
-#if MRP_ME
-        uint8_t                              ref_list_0_count;
-        uint8_t                              ref_list_1_count;
 #endif
     } PictureParentControlSet_t;
 
@@ -14626,7 +14623,12 @@ extern "C" {
     extern EbErrorType picture_parent_control_set_ctor(
         EbPtr *object_dbl_ptr,
         EbPtr  object_init_data_ptr);
-
+#if MRP_ME
+    extern EbErrorType me_sb_results_ctor(
+        MeLcuResults_t     **objectDblPtr,
+        uint32_t           maxNumberOfPusPerLcu,
+        uint32_t           maxNumberOfMeCandidatesPerPU);
+#endif
 
 #ifdef __cplusplus
 }

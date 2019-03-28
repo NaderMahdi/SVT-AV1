@@ -50,7 +50,61 @@ static void set_restoration_unit_size(int32_t width, int32_t height, int32_t sx,
     rst[2].restoration_unit_size = rst[1].restoration_unit_size;
 }
 
+#if MRP_ME
+EbErrorType me_sb_results_ctor(
+    MeLcuResults_t     **objectDblPtr,
+    uint32_t           maxNumberOfPusPerLcu,
+    uint32_t           maxNumberOfMeCandidatesPerPU){
 
+    uint32_t  puIndex;
+    MeLcuResults_t *objectPtr;
+
+    EB_MALLOC(MeLcuResults_t*, objectPtr, sizeof(MeLcuResults_t), EB_N_PTR);
+
+    *objectDblPtr = objectPtr;
+
+    EB_MALLOC(MeCandidate_t**, objectPtr->me_candidate, sizeof(MeCandidate_t*) * maxNumberOfPusPerLcu, EB_N_PTR);
+
+#if ALIGN_MEM 
+    objectPtr->meCandidateArray = (MeCandidate_t*)EB_aligned_malloc(sizeof(MeCandidate_t) * maxNumberOfPusPerLcu * maxNumberOfMeCandidatesPerPU, 64);
+#else
+    EB_MALLOC(MeCandidate_t*, objectPtr->meCandidateArray, sizeof(MeCandidate_t) * maxNumberOfPusPerLcu * maxNumberOfMeCandidatesPerPU, EB_N_PTR);
+#endif 
+    for (puIndex = 0; puIndex < maxNumberOfPusPerLcu; ++puIndex) {
+        //objectPtr->meCandidate[puIndex] = (MeCandidate_t*) malloc(sizeof(MeCandidate_t) * maxNumberOfMeCandidatesPerPU);
+        objectPtr->me_candidate[puIndex] = &objectPtr->meCandidateArray[puIndex * maxNumberOfMeCandidatesPerPU];
+
+        objectPtr->me_candidate[puIndex][0].ref_idx_l0 = 0;
+        objectPtr->me_candidate[puIndex][0].ref_idx_l1 = 0;
+        objectPtr->me_candidate[puIndex][1].ref_idx_l0 = 0;
+        objectPtr->me_candidate[puIndex][1].ref_idx_l1 = 0;
+        objectPtr->me_candidate[puIndex][2].ref_idx_l0 = 0;
+        objectPtr->me_candidate[puIndex][2].ref_idx_l1 = 0;
+
+        objectPtr->me_candidate[puIndex][0].direction = 0;
+        objectPtr->me_candidate[puIndex][1].direction = 1;
+        objectPtr->me_candidate[puIndex][2].direction = 2;
+
+    }
+#if 0
+    objectPtr->xMvSearchAreaCenter[0][0] = 0;
+    objectPtr->yMvSearchAreaCenter[0][0] = 0;
+    objectPtr->xMvSearchAreaCenter[1][0] = 0;
+    objectPtr->yMvSearchAreaCenter[1][0] = 0;
+#endif
+
+
+    EB_MALLOC(uint8_t*, objectPtr->totalMeCandidateIndex, sizeof(uint8_t) * maxNumberOfPusPerLcu, EB_N_PTR);
+
+#if NSQ_OPTIMASATION
+    EB_MALLOC(uint8_t*, objectPtr->me_nsq_0, sizeof(uint8_t) * maxNumberOfPusPerLcu, EB_N_PTR);
+    EB_MALLOC(uint8_t*, objectPtr->me_nsq_1, sizeof(uint8_t) * maxNumberOfPusPerLcu, EB_N_PTR);
+#endif
+
+    objectPtr->lcuDistortion = 0;
+
+}
+#endif
 EbErrorType picture_control_set_ctor(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr)
@@ -1020,10 +1074,15 @@ EbErrorType picture_parent_control_set_ctor(
     // Motion Estimation Results
     object_ptr->max_number_of_pus_per_sb = (initDataPtr->ext_block_flag) ? MAX_ME_PU_COUNT : SQUARE_PU_COUNT;
 #if MRP_CONNECTION
+    object_ptr->max_number_of_candidates_per_block = 100;//(initDataPtr->mePictureSearchCount * initDataPtr->mePictureSearchCount) + (initDataPtr->mePictureSearchCount << 1);
     EB_MALLOC(MeLcuResults_t**, object_ptr->me_results, sizeof(MeLcuResults_t*) * object_ptr->sb_total_count, EB_N_PTR);
 
     for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
-        EB_MALLOC(MeLcuResults_t*, object_ptr->me_results[sb_index], sizeof(MeLcuResults_t) * MAX_ME_PU_COUNT, EB_N_PTR);
+
+        return_error = me_sb_results_ctor(
+            &(object_ptr->me_results[sb_index]),
+            object_ptr->max_number_of_pus_per_sb,
+            object_ptr->max_number_of_candidates_per_block);
     }
 
 #else

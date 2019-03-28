@@ -6772,8 +6772,8 @@ EbErrorType MotionEstimateLcu(
         
 #if MRP_ME
         num_of_ref_pic_to_search = 1;// NM: To be added
-        /*(picture_control_set_ptr->slice_type == P_SLICE) ? picture_control_set_ptr->ref_list_0_count : (listIndex == REF_LIST_0) ?
-            picture_control_set_ptr->ref_list_0_count : picture_control_set_ptr->ref_list_1_count;*/
+        /*(picture_control_set_ptr->slice_type == P_SLICE) ? picture_control_set_ptr->ref_list0_count : (listIndex == REF_LIST_0) ?
+            picture_control_set_ptr->ref_list_0_count : picture_control_set_ptr->ref_list1_count;*/
 
         referenceObject = (EbPaReferenceObject_t*)picture_control_set_ptr->ref_pa_pic_ptr_array[0][0]->object_ptr;
         ref0Poc = picture_control_set_ptr->ref_pic_poc_array[0][0];
@@ -7623,8 +7623,8 @@ EbErrorType MotionEstimateLcu(
         for (listIndex = REF_LIST_0; listIndex <= numOfListToSearch; ++listIndex) {
 #if MRP_ME
             num_of_ref_pic_to_search = 1;// NM: To be added
-            /*(picture_control_set_ptr->slice_type == P_SLICE) ? picture_control_set_ptr->ref_list_0_count : (listIndex == REF_LIST_0) ?
-                picture_control_set_ptr->ref_list_0_count : picture_control_set_ptr->ref_list_1_count;*/
+            /*(picture_control_set_ptr->slice_type == P_SLICE) ? picture_control_set_ptr->ref_list0_count : (listIndex == REF_LIST_0) ?
+                picture_control_set_ptr->ref_list_0_count : picture_control_set_ptr->ref_list1_count;*/
             // Ref Picture Loop
             for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
 
@@ -7658,8 +7658,8 @@ EbErrorType MotionEstimateLcu(
                     pu_index,
                     candidateIndex,
 #if MRP_ME
-                    picture_control_set_ptr->ref_list_0_count,
-                    picture_control_set_ptr->ref_list_1_count,
+                    picture_control_set_ptr->ref_list0_count,
+                    picture_control_set_ptr->ref_list1_count,
 #else
                     1,
                     1,

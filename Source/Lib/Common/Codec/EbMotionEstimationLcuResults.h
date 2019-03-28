@@ -66,7 +66,7 @@ extern "C" {
 
 
 
-#if 1
+#if !MRP_ME
     typedef struct  DistDir_s {
         unsigned    distortion : 32; //20bits are enough
         unsigned    direction : 2;
