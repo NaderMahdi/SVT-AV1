@@ -57,7 +57,8 @@ extern "C" {
         MeCandidate_t    *meCandidateArray;
 #if MRP_ME
 #if NSQ_OPTIMASATION
-        uint8_t           me_nsq[2]; // 2 Number of reference lists
+        uint8_t           *me_nsq_0; // 2 Number of reference lists
+        uint8_t           *me_nsq_1; // 2 Number of reference lists
 #endif
 #endif
 
@@ -65,7 +66,7 @@ extern "C" {
 
 
 
-
+#if 1
     typedef struct  DistDir_s {
         unsigned    distortion : 32; //20bits are enough
         unsigned    direction : 2;
@@ -90,7 +91,7 @@ extern "C" {
         uint8_t       me_nsq[2]; // 2 Number of reference lists
 #endif
     } MeCuResults_t;
-
+#endif
 #ifdef __cplusplus
 }
 #endif

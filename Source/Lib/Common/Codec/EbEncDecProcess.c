@@ -1743,7 +1743,12 @@ void* EncDecKernel(void *input_ptr)
                         int16_t mv_l1_x;
                         int16_t mv_l1_y;
                         uint32_t me_sb_addr;
-
+#if MRP_ME
+                        mv_l0_x = 0;
+                        mv_l0_y = 0;
+                        mv_l1_x = 0;
+                        mv_l1_y = 0;
+#else
                         if (sequence_control_set_ptr->sb_size == BLOCK_128X128) {
 
                             uint32_t me_sb_size = sequence_control_set_ptr->sb_sz;
@@ -1778,7 +1783,7 @@ void* EncDecKernel(void *input_ptr)
                             mv_l1_y = mePuResult->yMvL1 >> 2;
                         }
 
-
+#endif
                         context_ptr->ss_mecontext->search_area_width = 64;
                         context_ptr->ss_mecontext->search_area_height = 64;
 

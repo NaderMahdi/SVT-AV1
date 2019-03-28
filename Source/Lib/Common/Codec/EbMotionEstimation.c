@@ -7683,14 +7683,14 @@ EbErrorType MotionEstimateLcu(
             }
         }
 
-        MeLcuResults_t * mePuResult = &picture_control_set_ptr->me_results[sb_index];
-        mePuResult->totalMeCandidateIndex = totalMeCandidateIndex;
+        MeLcuResults_t * mePuResult = picture_control_set_ptr->me_results[sb_index];
+        mePuResult->totalMeCandidateIndex[pu_index] = totalMeCandidateIndex;
 
 #if NSQ_OPTIMASATION
         uint8_t l0_nsq = is_nsq_table_used ? context_ptr->p_sb_best_nsq[0][0][nIdx] : 0;
         uint8_t l1_nsq = is_nsq_table_used ? context_ptr->p_sb_best_nsq[1][0][nIdx] : 0;
-        mePuResult->me_nsq[0] = l0_nsq;
-        mePuResult->me_nsq[1] = l1_nsq;
+        mePuResult->me_nsq_0[pu_index] = l0_nsq;
+        mePuResult->me_nsq_1[pu_index] = l1_nsq;
 #endif
 
         // Assining the ME candidates to the me Results buffer

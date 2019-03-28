@@ -3510,9 +3510,18 @@ void  order_nsq_table(
     max_number_of_pus_per_sb = picture_control_set_ptr->parent_pcs_ptr->max_number_of_pus_per_sb;
     me2Nx2NTableOffset = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4 || context_ptr->blk_geom->bwidth == 128 || context_ptr->blk_geom->bheight == 128) ? 0 :
         get_me_info_index(max_number_of_pus_per_sb, context_ptr->blk_geom, geom_offset_x, geom_offset_y);
+
+#if MD_INJECTION
+    const MeLcuResults_t *me_results = picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr];
+    const MeCandidate_t *me_block_candidates = me_results->me_candidate[me2Nx2NTableOffset];
+    uint8_t nsq0 = me_results->me_nsq_0[me2Nx2NTableOffset];
+    uint8_t nsq1 = me_results->me_nsq_1[me2Nx2NTableOffset];
+#else
     MeCuResults_t * mePuResult = &picture_control_set_ptr->parent_pcs_ptr->me_results[me_sb_addr][me2Nx2NTableOffset];
+
     uint8_t nsq0 = mePuResult->me_nsq[0];
     uint8_t nsq1 = mePuResult->me_nsq[1];
+#endif
     uint8_t me_part_0 = nsq0 == 0 ? PART_N : nsq0 == 1 ? PART_H : nsq0 == 2 ? PART_V : nsq0 == 3 ? PART_H4 : nsq0 == 4 ? PART_V4 : nsq0 == 5 ? PART_S : 0;
     uint8_t me_part_1 = nsq1 == 0 ? PART_N : nsq1 == 1 ? PART_H : nsq1 == 2 ? PART_V : nsq1 == 3 ? PART_H4 : nsq1 == 4 ? PART_V4 : nsq1 == 5 ? PART_S : 0;
 

@@ -1142,7 +1142,9 @@ void PredictionPartitionLoop(
 #endif
                 if (picture_control_set_ptr->slice_type != I_SLICE) {
 
+#if! MD_INJECTION
                     MeCuResults_t * mePuResult = &picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index][cuIndexInRaterScan];
+#endif
 #if MDC_FIX_0            
                     // Initialize the mdc candidate (only av1 rate estimation inputs)
                     // Hsan: mode, direction, .. could be modified toward better early inter depth decision (e.g. NEARESTMV instead of NEWMV)
@@ -1155,7 +1157,11 @@ void PredictionPartitionLoop(
 #if MDC_FIX_1
                     context_ptr->mdc_candidate_ptr->prediction_direction[0] = (picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index == 0) ?
                         UNI_PRED_LIST_0 :
+#if MD_INJECTION
+                        picture_control_set_ptr->parent_pcs_ptr->me_results[sb_index]->me_candidate[cuIndexInRaterScan][0].direction;
+#else
                         mePuResult->distortionDirection[0].direction;
+#endif
 #else
                     context_ptr->mdc_candidate_ptr->prediction_direction[0] = UNI_PRED_LIST_0;
 #endif

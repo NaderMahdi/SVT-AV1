@@ -228,10 +228,11 @@ extern "C" {
 
 #define AOM_INTERP_EXTEND 4
 
-#define MRP_SUPPORT    1
+#define MRP_SUPPORT    0
 #if MRP_SUPPORT
-#define MRP_ME         0
-#define MRP_CONNECTION 0
+#define MRP_ME         1
+#define MRP_CONNECTION 1
+#define MD_INJECTION   1
 #endif
 struct buf_2d {
     uint8_t *buf;

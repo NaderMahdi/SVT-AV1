@@ -34,12 +34,26 @@ void GetMv(
 
     uint32_t             meCandidateIndex;
 
+
+#if MRP_ME
+    const MeLcuResults_t *me_results = picture_control_set_ptr->me_results[sb_index];
+    const MeCandidate_t *me_block_candidates = me_results->me_candidate[0];
+    const MeCandidate_t *me_block_results = me_results->me_candidate[0];
+    for (meCandidateIndex = 0; meCandidateIndex < me_results->totalMeCandidateIndex; meCandidateIndex++) {
+
+            if (me_block_results->direction == UNI_PRED_LIST_0) {
+
+                *xCurrentMv = me_block_results->xMvL0;
+                *yCurrentMv = me_block_results->yMvL0;
+
+                break;
+            }
+        }
+#else
     MeCuResults_t * cuResults = &picture_control_set_ptr->me_results[sb_index][0];
 
-
-
-
     for (meCandidateIndex = 0; meCandidateIndex < cuResults->totalMeCandidateIndex; meCandidateIndex++) {
+
         if (cuResults->distortionDirection[meCandidateIndex].direction == UNI_PRED_LIST_0) {
 
             *xCurrentMv = cuResults->xMvL0;
@@ -48,7 +62,7 @@ void GetMv(
             break;
         }
     }
-
+#endif
 
 }
 
