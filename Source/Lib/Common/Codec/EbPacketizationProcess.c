@@ -218,10 +218,7 @@ void* PacketizationKernel(void *input_ptr)
         memcpy(&queueEntryPtr->av1RefSignal, &picture_control_set_ptr->parent_pcs_ptr->av1RefSignal, sizeof(Av1RpsNode_t));
 
         queueEntryPtr->slice_type = picture_control_set_ptr->slice_type;
-#if MRP_ME
-        queueEntryPtr->refPOCList0 = picture_control_set_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_0][0]; // NM: MRP to be reviewed
-        queueEntryPtr->refPOCList1 = picture_control_set_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_1][0]; // NM: MRP to be reviewed
-#else
+#if DETAILED_FRAME_OUTPUT
         queueEntryPtr->refPOCList0 = picture_control_set_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_0];
         queueEntryPtr->refPOCList1 = picture_control_set_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_1];
 #endif

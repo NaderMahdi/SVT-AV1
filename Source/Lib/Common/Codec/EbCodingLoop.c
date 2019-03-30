@@ -3136,8 +3136,13 @@ EB_EXTERN void AV1EncodePass(
         {
             if (picture_control_set_ptr->slice_type == B_SLICE) {
 
+#if MRP_MD
+                EbReferenceObject_t  *refObjL0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
+                EbReferenceObject_t  *refObjL1 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
+#else
                 EbReferenceObject_t  *refObjL0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->object_ptr;
                 EbReferenceObject_t  *refObjL1 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->object_ptr;
+#endif
                 uint32_t const TH = (sequence_control_set_ptr->static_config.frame_rate >> 16) < 50 ? 25 : 30;
 
                 if ((refObjL0->tmpLayerIdx == 2 && refObjL0->intra_coded_area > TH) || (refObjL1->tmpLayerIdx == 2 && refObjL1->intra_coded_area > TH))
@@ -3771,9 +3776,15 @@ EB_EXTERN void AV1EncodePass(
                     context_ptr->is_inter = 1;
 #endif
 
+#if MRP_MD
+                    EbReferenceObject_t* refObj0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
+                    EbReferenceObject_t* refObj1 = picture_control_set_ptr->slice_type == B_SLICE ?
+                        (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr : 0;
+#else
                     EbReferenceObject_t* refObj0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->object_ptr;
                     EbReferenceObject_t* refObj1 = picture_control_set_ptr->slice_type == B_SLICE ?
                         (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1]->object_ptr : 0;
+#endif
 
                     uint16_t  txb_origin_x;
                     uint16_t  txb_origin_y;

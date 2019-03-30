@@ -2071,6 +2071,7 @@ void  inject_inter_candidates(
             const uint8_t inter_direction = me_block_results_ptr->direction;
             const uint8_t refPicListZeroIndex = me_block_results_ptr->ref_idx_l0;
             const uint8_t refPicListOneIndex = me_block_results_ptr->ref_idx_l1;
+
             if (inter_direction == 0) {
 #if REMOVED_DUPLICATE_INTER
                 int16_t to_inject_mv_x = use_close_loop_me ? ss_mecontext->inloop_me_mv[0][0][close_loop_me_index][0] << 1 : me_block_results_ptr->xMvL0 << 1;
@@ -2329,6 +2330,9 @@ void  inject_inter_candidates(
                 }
 
             }
+
+
+
 #if 0//M0_ME_SEARCH_BASE && !BASE_LAYER_REF
             /**************
             inject NewMv from L1 as a candidate of NEWMV L0 in base layer frame (Only single reference support in base layer)
@@ -2415,7 +2419,7 @@ void  inject_inter_candidates(
 #endif
         }
     }
-
+#if 1 //NADER_DEBUG
 #if SHUT_GLOBAL_MV
         if (context_ptr->global_mv_injection) {
 #endif
@@ -2627,6 +2631,7 @@ void  inject_inter_candidates(
 #endif
             }
         }
+#endif
     // update the total number of candidates injected
     (*candidateTotalCnt) = canTotalCnt;
 

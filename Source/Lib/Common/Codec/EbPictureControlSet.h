@@ -13724,9 +13724,18 @@ extern "C" {
         Bitstream_t                          *bitstreamPtr;
 
         // Reference Lists
+#if MRP_MD
+        // Reference Lists
+        EbObjectWrapper_t                    *ref_pic_ptr_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+        //EB_S64                                refPicPocArray[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+
+        uint8_t                               ref_pic_qp_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+        EB_SLICE                              ref_slice_type_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#else
         EbObjectWrapper_t                    *ref_pic_ptr_array[MAX_NUM_OF_REF_PIC_LIST];
         uint8_t                               ref_pic_qp_array[MAX_NUM_OF_REF_PIC_LIST];
         EB_SLICE                              ref_slice_type_array[MAX_NUM_OF_REF_PIC_LIST];
+#endif
 
         // GOP
         uint64_t                              picture_number;

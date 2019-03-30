@@ -210,7 +210,11 @@ void* picture_manager_kernel(void *input_ptr)
                             next_pred_struct_ptr = GetPredictionStructure(
                                 encode_context_ptr->prediction_structure_group_ptr,
                                 picture_control_set_ptr->pred_structure,
+#if MRP_ME
+                                sequence_control_set_ptr->static_config.reference_count,
+#else
                                 1,
+#endif
                                 picture_control_set_ptr->hierarchical_levels);
 
                             // Get the prediction struct of a picture in temporal layer 0 (from the new GOP structure)
@@ -489,10 +493,18 @@ void* picture_manager_kernel(void *input_ptr)
 #endif
                 referenceEntryPtr->dependentCount = referenceEntryPtr->depList0Count + referenceEntryPtr->depList1Count;
 
+                
+#if MRP_ME
+                CHECK_REPORT_ERROR(
+                (picture_control_set_ptr->pred_struct_ptr->predStructPeriod * REF_LIST_MAX_DEPTH < MAX_ELAPSED_IDR_COUNT),
+                    encode_context_ptr->app_callback_ptr,
+                    EB_ENC_PM_ERROR6);
+#else
                 CHECK_REPORT_ERROR(
                     (picture_control_set_ptr->pred_struct_ptr->predStructPeriod < MAX_ELAPSED_IDR_COUNT),
                     encode_context_ptr->app_callback_ptr,
                     EB_ENC_PM_ERROR6);
+#endif
 
                 // Release the Reference Buffer once we know it is not a reference
                 if (picture_control_set_ptr->is_used_as_reference_flag == EB_FALSE) {
@@ -595,7 +607,8 @@ void* picture_manager_kernel(void *input_ptr)
 #if MRP_ME
                     uint8_t refIdx;
                     for (refIdx = 0; refIdx < entryPictureControlSetPtr->ref_list0_count; ++refIdx) {
-                        if (entryPictureControlSetPtr->ref_list0_count) {
+                        //if (entryPictureControlSetPtr->ref_list0_count)  // NM: to double check.
+                        {
                             referenceQueueIndex = (uint32_t)CIRCULAR_ADD(
                                 ((int32_t)inputEntryPtr->referenceEntryIndex) -     // Base
                                 inputEntryPtr->list0Ptr->referenceList[refIdx],     // Offset
@@ -665,7 +678,8 @@ void* picture_manager_kernel(void *input_ptr)
 #if MRP_ME
                         uint8_t refIdx;
                         for (refIdx = 0; refIdx < entryPictureControlSetPtr->ref_list1_count; ++refIdx) {
-                            if (entryPictureControlSetPtr->ref_list1_count) {
+                           // if (entryPictureControlSetPtr->ref_list1_count) // NM: To double check
+                            {
                                 // If Reference is valid (non-zero), update the availability
                                 if (inputEntryPtr->list1Ptr->referenceList[refIdx] != (int32_t)INVALID_POC) {
 
@@ -853,16 +867,27 @@ void* picture_manager_kernel(void *input_ptr)
                         ChildPictureControlSetPtr->dif_cu_delta_qp_depth = (uint8_t)entrySequenceControlSetPtr->input_resolution == INPUT_SIZE_4K_RANGE ? 3 : 2;
 
                         // Reset the Reference Lists
+#if MRP_MD
+                        EB_MEMSET(ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper_t*));
+                        EB_MEMSET(ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper_t*));
+
+                        EB_MEMSET(ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(uint8_t));
+                        EB_MEMSET(ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(uint8_t));
+
+                        EB_MEMSET(ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(EB_SLICE));
+                        EB_MEMSET(ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(EB_SLICE));
+
+#else
                         EB_MEMSET(ChildPictureControlSetPtr->ref_pic_ptr_array, 0, 2 * sizeof(EbObjectWrapper_t*));
 
                         EB_MEMSET(ChildPictureControlSetPtr->ref_pic_qp_array, 0, 2 * sizeof(uint8_t));
 
                         EB_MEMSET(ChildPictureControlSetPtr->ref_slice_type_array, 0, 2 * sizeof(EB_SLICE));
-
+#endif
                         // Configure List0
                         if ((entryPictureControlSetPtr->slice_type == P_SLICE) || (entryPictureControlSetPtr->slice_type == B_SLICE)) {
 
-#if MRP_ME
+#if MRP_MD
                             uint8_t refIdx;
                             for (refIdx = 0; refIdx < entryPictureControlSetPtr->ref_list0_count; ++refIdx) {
                                 if (entryPictureControlSetPtr->ref_list0_count) {
@@ -873,14 +898,14 @@ void* picture_manager_kernel(void *input_ptr)
                                     referenceEntryPtr = encode_context_ptr->reference_picture_queue[referenceQueueIndex];
 
                                     // Set the Reference Object
-                                    ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_0] = referenceEntryPtr->referenceObjectPtr;
+                                    ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_0][refIdx] = referenceEntryPtr->referenceObjectPtr;
 
 #if ADD_DELTA_QP_SUPPORT
-                                    ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_0] = (uint8_t)((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->object_ptr)->qp;
-                                    ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_0] = (uint8_t)((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->object_ptr)->slice_type;
+                                    ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_0][refIdx] = (uint8_t)((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->object_ptr)->qp;
+                                    ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_0][refIdx] = (uint8_t)((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->object_ptr)->slice_type;
 #else
-                                    ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_0] = ((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->object_ptr)->qp;
-                                    ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_0] = ((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->object_ptr)->slice_type;
+                                    ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_0][refIdx] = ((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->object_ptr)->qp;
+                                    ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_0][refIdx] = ((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->object_ptr)->slice_type;
 #endif
                                     // Increment the Reference's liveCount by the number of tiles in the input picture
                                     eb_object_inc_live_count(
@@ -934,7 +959,7 @@ void* picture_manager_kernel(void *input_ptr)
 
                         // Configure List1
                         if (entryPictureControlSetPtr->slice_type == B_SLICE) {
-#if MRP_ME
+#if MRP_MD
                             uint8_t refIdx;
                             for (refIdx = 0; refIdx < entryPictureControlSetPtr->ref_list1_count; ++refIdx) {
                                 if (entryPictureControlSetPtr->ref_list1_count) {
@@ -945,10 +970,10 @@ void* picture_manager_kernel(void *input_ptr)
                                     referenceEntryPtr = encode_context_ptr->reference_picture_queue[referenceQueueIndex];
 
                                     // Set the Reference Object
-                                    ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_1] = referenceEntryPtr->referenceObjectPtr;
+                                    ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_1][refIdx] = referenceEntryPtr->referenceObjectPtr;
 
-                                    ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_1] = (uint8_t)((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->object_ptr)->qp;
-                                    ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_1] = ((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->object_ptr)->slice_type;
+                                    ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_1][refIdx] = (uint8_t)((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->object_ptr)->qp;
+                                    ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_1][refIdx] = ((EbReferenceObject_t*)referenceEntryPtr->referenceObjectPtr->object_ptr)->slice_type;
 
 
 

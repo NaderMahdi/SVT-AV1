@@ -5612,10 +5612,16 @@ EbErrorType  BiPredictionCompensation(
     firstRefFracPosy = (uint8_t)firstRefPosY & 0x03;
 
     firstRefFracPos = (uint8_t)(firstRefFracPosx + (firstRefFracPosy << 2));
+#if MRP_ME
+    xfirstSearchIndex = (int32_t)firstRefIntegPosx - context_ptr->x_search_area_origin[firstList][first_list_ref_pic_idx];
+    yfirstSearchIndex = (int32_t)firstRefIntegPosy - context_ptr->y_search_area_origin[firstList][first_list_ref_pic_idx];
+    firstSearchRegionIndexPosInteg = (int32_t)(xfirstSearchIndex + (ME_FILTER_TAP >> 1)) + (int32_t)context_ptr->interpolated_full_stride[firstList][first_list_ref_pic_idx] * (int32_t)(yfirstSearchIndex + (ME_FILTER_TAP >> 1));
 
+#else
     xfirstSearchIndex = (int32_t)firstRefIntegPosx - context_ptr->x_search_area_origin[firstList][0];
     yfirstSearchIndex = (int32_t)firstRefIntegPosy - context_ptr->y_search_area_origin[firstList][0];
     firstSearchRegionIndexPosInteg = (int32_t)(xfirstSearchIndex + (ME_FILTER_TAP >> 1)) + (int32_t)context_ptr->interpolated_full_stride[firstList][0] * (int32_t)(yfirstSearchIndex + (ME_FILTER_TAP >> 1));
+#endif
     firstSearchRegionIndexPosb = (int32_t)(xfirstSearchIndex + (ME_FILTER_TAP >> 1) - 1) + (int32_t)context_ptr->interpolated_stride * (int32_t)(yfirstSearchIndex + (ME_FILTER_TAP >> 1));
     firstSearchRegionIndexPosh = (int32_t)(xfirstSearchIndex + (ME_FILTER_TAP >> 1) - 1) + (int32_t)context_ptr->interpolated_stride * (int32_t)(yfirstSearchIndex + (ME_FILTER_TAP >> 1) - 1);
     firstSearchRegionIndexPosj = (int32_t)(xfirstSearchIndex + (ME_FILTER_TAP >> 1) - 1) + (int32_t)context_ptr->interpolated_stride * (int32_t)(yfirstSearchIndex + (ME_FILTER_TAP >> 1) - 1);
@@ -5635,10 +5641,15 @@ EbErrorType  BiPredictionCompensation(
     secondRefFracPosy = (uint8_t)secondRefPosY & 0x03;
 
     secondRefFracPos = (uint8_t)(secondRefFracPosx + (secondRefFracPosy << 2));
-
+#if MRP_ME
+    xsecondSearchIndex = secondRefIntegPosx - context_ptr->x_search_area_origin[secondList][second_list_ref_pic_idx];
+    ysecondSearchIndex = secondRefIntegPosy - context_ptr->y_search_area_origin[secondList][second_list_ref_pic_idx];
+    secondSearchRegionIndexPosInteg = (int32_t)(xsecondSearchIndex + (ME_FILTER_TAP >> 1)) + (int32_t)context_ptr->interpolated_full_stride[secondList][second_list_ref_pic_idx] * (int32_t)(ysecondSearchIndex + (ME_FILTER_TAP >> 1));
+#else
     xsecondSearchIndex = secondRefIntegPosx - context_ptr->x_search_area_origin[secondList][0];
     ysecondSearchIndex = secondRefIntegPosy - context_ptr->y_search_area_origin[secondList][0];
     secondSearchRegionIndexPosInteg = (int32_t)(xsecondSearchIndex + (ME_FILTER_TAP >> 1)) + (int32_t)context_ptr->interpolated_full_stride[secondList][0] * (int32_t)(ysecondSearchIndex + (ME_FILTER_TAP >> 1));
+#endif
     secondSearchRegionIndexPosb = (int32_t)(xsecondSearchIndex + (ME_FILTER_TAP >> 1) - 1) + (int32_t)context_ptr->interpolated_stride * (int32_t)(ysecondSearchIndex + (ME_FILTER_TAP >> 1));
     secondSearchRegionIndexPosh = (int32_t)(xsecondSearchIndex + (ME_FILTER_TAP >> 1) - 1) + (int32_t)context_ptr->interpolated_stride * (int32_t)(ysecondSearchIndex + (ME_FILTER_TAP >> 1) - 1);
     secondSearchRegionIndexPosj = (int32_t)(xsecondSearchIndex + (ME_FILTER_TAP >> 1) - 1) + (int32_t)context_ptr->interpolated_stride * (int32_t)(ysecondSearchIndex + (ME_FILTER_TAP >> 1) - 1);
@@ -5700,6 +5711,21 @@ EbErrorType  BiPredictionCompensation(
             secondRefFracPos,
             partitionWidth[pu_index],
             partitionHeight[pu_index],
+#if MRP_ME
+            &(context_ptr->integer_buffer_ptr[firstList][first_list_ref_pic_idx][firstSearchRegionIndexPosInteg]),
+            &(context_ptr->pos_b_buffer[firstList][first_list_ref_pic_idx][firstSearchRegionIndexPosb]),
+            &(context_ptr->pos_h_buffer[firstList][first_list_ref_pic_idx][firstSearchRegionIndexPosh]),
+            &(context_ptr->pos_j_buffer[firstList][first_list_ref_pic_idx][firstSearchRegionIndexPosj]),
+            &(context_ptr->integer_buffer_ptr[secondList][second_list_ref_pic_idx][secondSearchRegionIndexPosInteg]),
+            &(context_ptr->pos_b_buffer[secondList][second_list_ref_pic_idx][secondSearchRegionIndexPosb]),
+            &(context_ptr->pos_h_buffer[secondList][second_list_ref_pic_idx][secondSearchRegionIndexPosh]),
+            &(context_ptr->pos_j_buffer[secondList][second_list_ref_pic_idx][secondSearchRegionIndexPosj]),
+            context_ptr->interpolated_stride,
+            context_ptr->interpolated_full_stride[firstList][first_list_ref_pic_idx],
+            context_ptr->interpolated_full_stride[secondList][second_list_ref_pic_idx],
+            &(context_ptr->one_d_intermediate_results_buf0[0]),
+            &(context_ptr->one_d_intermediate_results_buf1[0]),
+#else
             &(context_ptr->integer_buffer_ptr[firstList][0][firstSearchRegionIndexPosInteg]),
             &(context_ptr->pos_b_buffer[firstList][0][firstSearchRegionIndexPosb]),
             &(context_ptr->pos_h_buffer[firstList][0][firstSearchRegionIndexPosh]),
@@ -5713,6 +5739,7 @@ EbErrorType  BiPredictionCompensation(
             context_ptr->interpolated_full_stride[secondList][0],
             &(context_ptr->one_d_intermediate_results_buf0[0]),
             &(context_ptr->one_d_intermediate_results_buf1[0]),
+#endif
             asm_type);
 
     return return_error;
@@ -6624,6 +6651,7 @@ void SwapMeCandidate(
     *a = *b;
     *b = tempPtr;
 }
+
 #endif
 /*******************************************
 * MotionEstimateLcu
@@ -6771,13 +6799,13 @@ EbErrorType MotionEstimateLcu(
 
         
 #if MRP_ME
-        num_of_ref_pic_to_search = 1;// NM: To be added
-        /*(picture_control_set_ptr->slice_type == P_SLICE) ? picture_control_set_ptr->ref_list0_count : (listIndex == REF_LIST_0) ?
-            picture_control_set_ptr->ref_list_0_count : picture_control_set_ptr->ref_list1_count;*/
+        num_of_ref_pic_to_search = (picture_control_set_ptr->slice_type == P_SLICE) ? picture_control_set_ptr->ref_list0_count : (listIndex == REF_LIST_0) ?
+            picture_control_set_ptr->ref_list0_count : picture_control_set_ptr->ref_list1_count;
 
         referenceObject = (EbPaReferenceObject_t*)picture_control_set_ptr->ref_pa_pic_ptr_array[0][0]->object_ptr;
         ref0Poc = picture_control_set_ptr->ref_pic_poc_array[0][0];
         // Ref Picture Loop
+
         for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index)
 #endif 
         {
@@ -7563,10 +7591,10 @@ EbErrorType MotionEstimateLcu(
 #else
                     if (is_nsq_table_used) {
 #endif
-                        context_ptr->p_best_nsq64x64 = &(context_ptr->p_sb_best_nsq[listIndex][0][ME_TIER_ZERO_PU_64x64]);
-                        context_ptr->p_best_nsq32x32 = &(context_ptr->p_sb_best_nsq[listIndex][0][ME_TIER_ZERO_PU_32x32_0]);
-                        context_ptr->p_best_nsq16x16 = &(context_ptr->p_sb_best_nsq[listIndex][0][ME_TIER_ZERO_PU_16x16_0]);
-                        context_ptr->p_best_nsq8x8 = &(context_ptr->p_sb_best_nsq[listIndex][0][ME_TIER_ZERO_PU_8x8_0]);
+                        context_ptr->p_best_nsq64x64 = &(context_ptr->p_sb_best_nsq[listIndex][ref_pic_index][ME_TIER_ZERO_PU_64x64]);
+                        context_ptr->p_best_nsq32x32 = &(context_ptr->p_sb_best_nsq[listIndex][ref_pic_index][ME_TIER_ZERO_PU_32x32_0]);
+                        context_ptr->p_best_nsq16x16 = &(context_ptr->p_sb_best_nsq[listIndex][ref_pic_index][ME_TIER_ZERO_PU_16x16_0]);
+                        context_ptr->p_best_nsq8x8 = &(context_ptr->p_sb_best_nsq[listIndex][ref_pic_index][ME_TIER_ZERO_PU_8x8_0]);
                         nsq_get_analysis_results_block(context_ptr);
                     }
 #endif
@@ -7622,9 +7650,9 @@ EbErrorType MotionEstimateLcu(
 
         for (listIndex = REF_LIST_0; listIndex <= numOfListToSearch; ++listIndex) {
 #if MRP_ME
-            num_of_ref_pic_to_search = 1;// NM: To be added
-            /*(picture_control_set_ptr->slice_type == P_SLICE) ? picture_control_set_ptr->ref_list0_count : (listIndex == REF_LIST_0) ?
-                picture_control_set_ptr->ref_list_0_count : picture_control_set_ptr->ref_list1_count;*/
+            num_of_ref_pic_to_search = (picture_control_set_ptr->slice_type == P_SLICE) ? picture_control_set_ptr->ref_list0_count : (listIndex == REF_LIST_0) ?
+                picture_control_set_ptr->ref_list0_count : picture_control_set_ptr->ref_list1_count;
+
             // Ref Picture Loop
             for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
 
@@ -7672,6 +7700,7 @@ EbErrorType MotionEstimateLcu(
 
 #if MRP_ME
         // Sorting of the ME candidates
+#if 1
         for (candidate_index = 0; candidate_index < totalMeCandidateIndex - 1; ++candidate_index) {
             for (next_candidate_index = candidate_index + 1; next_candidate_index < totalMeCandidateIndex; ++next_candidate_index) {
                 if (context_ptr->me_candidate[candidate_index].pu[pu_index].distortion > context_ptr->me_candidate[next_candidate_index].pu[pu_index].distortion) {
@@ -7682,7 +7711,41 @@ EbErrorType MotionEstimateLcu(
                 }
             }
         }
+#endif
 
+#if 1//TESTING
+        MeLcuResults_t * mePuResult = picture_control_set_ptr->me_results[sb_index];
+        mePuResult->totalMeCandidateIndex[pu_index] = totalMeCandidateIndex;
+
+#if NSQ_OPTIMASATION
+        uint8_t l0_nsq = is_nsq_table_used ? context_ptr->p_sb_best_nsq[0][0][nIdx] : 0;
+        uint8_t l1_nsq = is_nsq_table_used ? context_ptr->p_sb_best_nsq[1][0][nIdx] : 0;
+        mePuResult->me_nsq_0[pu_index] = l0_nsq;
+        mePuResult->me_nsq_1[pu_index] = l1_nsq;
+#endif
+        // Assining the ME candidates to the me Results buffer
+        uint8_t c_index = 0;
+        for (candidateIndex = 0; candidateIndex < totalMeCandidateIndex; ++candidateIndex) {
+            me_candidate = &(context_ptr->me_candidate[candidateIndex].pu[pu_index]);
+            
+            if ((me_candidate->prediction_direction == 0 && me_candidate->ref_index[0] == 0) ||
+                (me_candidate->prediction_direction == 1 && me_candidate->ref_index[1] == 0) ||
+                (me_candidate->prediction_direction == 2 && me_candidate->ref_index[0] == 0 && me_candidate->ref_index[1] == 0)){    
+                picture_control_set_ptr->me_results[sb_index]->me_candidate[pu_index][c_index].distortion = me_candidate->distortion;
+                picture_control_set_ptr->me_results[sb_index]->me_candidate[pu_index][c_index].direction = me_candidate->prediction_direction;
+                picture_control_set_ptr->me_results[sb_index]->me_candidate[pu_index][c_index].ref_idx_l0 = me_candidate->ref_index[0];
+                picture_control_set_ptr->me_results[sb_index]->me_candidate[pu_index][c_index].ref_idx_l1 = me_candidate->ref_index[1];
+                picture_control_set_ptr->me_results[sb_index]->me_candidate[pu_index][c_index].xMvL0 = _MVXT(me_candidate->mv[0]);
+                picture_control_set_ptr->me_results[sb_index]->me_candidate[pu_index][c_index].yMvL0 = _MVYT(me_candidate->mv[0]);
+                picture_control_set_ptr->me_results[sb_index]->me_candidate[pu_index][c_index].xMvL1 = _MVXT(me_candidate->mv[1]);
+                picture_control_set_ptr->me_results[sb_index]->me_candidate[pu_index][c_index].yMvL1 = _MVYT(me_candidate->mv[1]);
+                c_index++;
+            }
+        }
+
+        mePuResult->totalMeCandidateIndex[pu_index] = c_index;
+
+#else
         MeLcuResults_t * mePuResult = picture_control_set_ptr->me_results[sb_index];
         mePuResult->totalMeCandidateIndex[pu_index] = totalMeCandidateIndex;
 
@@ -7693,8 +7756,10 @@ EbErrorType MotionEstimateLcu(
         mePuResult->me_nsq_1[pu_index] = l1_nsq;
 #endif
 
+
         // Assining the ME candidates to the me Results buffer
         for (candidateIndex = 0; candidateIndex < totalMeCandidateIndex; ++candidateIndex) {
+            me_candidate = &(context_ptr->me_candidate[candidateIndex].pu[pu_index]);
             picture_control_set_ptr->me_results[sb_index]->me_candidate[pu_index][candidateIndex].distortion = me_candidate->distortion;
             picture_control_set_ptr->me_results[sb_index]->me_candidate[pu_index][candidateIndex].direction = me_candidate->prediction_direction;
             picture_control_set_ptr->me_results[sb_index]->me_candidate[pu_index][candidateIndex].ref_idx_l0 = me_candidate->ref_index[0];
@@ -7704,6 +7769,7 @@ EbErrorType MotionEstimateLcu(
             picture_control_set_ptr->me_results[sb_index]->me_candidate[pu_index][candidateIndex].xMvL1 = _MVXT(me_candidate->mv[1]);
             picture_control_set_ptr->me_results[sb_index]->me_candidate[pu_index][candidateIndex].yMvL1 = _MVYT(me_candidate->mv[1]);
         }
+#endif
 #else
         MeCuResults_t * mePuResult = &picture_control_set_ptr->me_results[sb_index][pu_index];
         mePuResult->totalMeCandidateIndex = totalMeCandidateIndex;

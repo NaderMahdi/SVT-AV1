@@ -490,7 +490,11 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
                 next_pred_struct_ptr = GetPredictionStructure(
                     encode_context_ptr->prediction_structure_group_ptr,
                     picture_control_set_ptr->pred_structure,
+#if MRP_ME
+                    sequence_control_set_ptr->static_config.reference_count,
+#else
                     1,
+#endif
                     picture_control_set_ptr->hierarchical_levels);			// Number of temporal layer in the current mini GOP  
 
                 // Get the RPS of a base layer input
@@ -605,9 +609,11 @@ EbErrorType GenerateMiniGopRps(
     EncodeContext_t                 *encode_context_ptr) {
 
     EbErrorType return_error = EB_ErrorNone;
-
+#if MRP_ME
+    SequenceControlSet_t		    *sequence_control_set_ptr;
+#endif
     uint32_t                         miniGopIndex;
-    PictureParentControlSet_t    *picture_control_set_ptr;
+    PictureParentControlSet_t        *picture_control_set_ptr;
     uint32_t                         pictureIndex;
 
     // Loop over all mini GOPs
@@ -617,14 +623,20 @@ EbErrorType GenerateMiniGopRps(
         for (pictureIndex = context_ptr->miniGopStartIndex[miniGopIndex]; pictureIndex <= context_ptr->miniGopEndIndex[miniGopIndex]; pictureIndex++) {
 
             picture_control_set_ptr = (PictureParentControlSet_t*)encode_context_ptr->pre_assignment_buffer[pictureIndex]->object_ptr;
-
+#if MRP_ME
+            sequence_control_set_ptr = (SequenceControlSet_t*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
+#endif
             picture_control_set_ptr->pred_structure = EB_PRED_RANDOM_ACCESS;
             picture_control_set_ptr->hierarchical_levels = (uint8_t)context_ptr->miniGopHierarchicalLevels[miniGopIndex];
 
             picture_control_set_ptr->pred_struct_ptr = GetPredictionStructure(
                 encode_context_ptr->prediction_structure_group_ptr,
                 picture_control_set_ptr->pred_structure,
+#if MRP_ME
+                sequence_control_set_ptr->static_config.reference_count,
+#else
                 1,
+#endif
                 picture_control_set_ptr->hierarchical_levels);
         }
     }
@@ -2043,7 +2055,11 @@ void* picture_decision_kernel(void *input_ptr)
                                 picture_control_set_ptr->pred_struct_ptr = GetPredictionStructure(
                                     encode_context_ptr->prediction_structure_group_ptr,
                                     EB_PRED_LOW_DELAY_P,
+#if MRP_ME
+                                    sequence_control_set_ptr->static_config.reference_count,
+#else
                                     1,
+#endif
                                     picture_control_set_ptr->hierarchical_levels);
 
                                 // Set the RPS Override Flag - this current only will convert a Random Access structure to a Low Delay structure
@@ -2492,7 +2508,20 @@ void* picture_decision_kernel(void *input_ptr)
                             printf("depCnt Error5  POC:%i  TL:%i   is needed:%i\n",picture_control_set_ptr->picture_number,picture_control_set_ptr->temporal_layer_index,inputEntryPtr->dependentCount);*/
                             //if (picture_control_set_ptr->slice_type==P_SLICE )
                             //     printf("POC:%i  TL:%i   is needed:%i\n",picture_control_set_ptr->picture_number,picture_control_set_ptr->temporal_layer_index,inputEntryPtr->dependentCount);
+#if MRP_ME
+                            CHECK_REPORT_ERROR(
+                                (picture_control_set_ptr->pred_struct_ptr->predStructPeriod * REF_LIST_MAX_DEPTH < MAX_ELAPSED_IDR_COUNT),
+                                encode_context_ptr->app_callback_ptr,
+                                EB_ENC_PD_ERROR5);
 
+                            // Reset the PA Reference Lists
+                            EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper_t*));
+                            EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper_t*));
+
+                            EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(uint32_t));
+                            EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(uint32_t));
+
+#else
                             CHECK_REPORT_ERROR(
                                 (picture_control_set_ptr->pred_struct_ptr->predStructPeriod < MAX_ELAPSED_IDR_COUNT),
                                 encode_context_ptr->app_callback_ptr,
@@ -2502,6 +2531,7 @@ void* picture_decision_kernel(void *input_ptr)
                             EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array, 0, 2 * sizeof(EbObjectWrapper_t*));
 
                             EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array, 0, 2 * sizeof(uint32_t));
+#endif
 
                         }
 
@@ -2523,6 +2553,13 @@ void* picture_decision_kernel(void *input_ptr)
 
                             } while ((inputQueueIndex != encode_context_ptr->picture_decision_pa_reference_queue_tail_index) && (inputEntryPtr->picture_number != picture_control_set_ptr->picture_number));
 
+#if MRP_ME
+                            EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper_t*));
+                            EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper_t*));
+
+                            EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(uint64_t));
+                            EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(uint64_t));
+#else
                             CHECK_REPORT_ERROR(
                                 (inputEntryPtr->picture_number == picture_control_set_ptr->picture_number),
                                 encode_context_ptr->app_callback_ptr,
@@ -2532,6 +2569,7 @@ void* picture_decision_kernel(void *input_ptr)
                             EB_MEMSET(picture_control_set_ptr->ref_pa_pic_ptr_array, 0, 2 * sizeof(EbObjectWrapper_t*));
 
                             EB_MEMSET(picture_control_set_ptr->ref_pic_poc_array, 0, 2 * sizeof(uint64_t));
+#endif
 
 
                             // Configure List0
@@ -2549,7 +2587,7 @@ void* picture_decision_kernel(void *input_ptr)
                                         // Calculate the Ref POC
                                         refPoc = POC_CIRCULAR_ADD(
                                             picture_control_set_ptr->picture_number,
-                                            -inputEntryPtr->list0Ptr->referenceList[ref_pic_index] /*,// NM: MRP to be reviewed
+                                            -inputEntryPtr->list0Ptr->referenceList[ref_pic_index] /*
                                             sequence_control_set_ptr->bits_for_picture_order_count*/);
 
                                             // Set the Reference Object

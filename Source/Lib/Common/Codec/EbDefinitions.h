@@ -228,11 +228,13 @@ extern "C" {
 
 #define AOM_INTERP_EXTEND 4
 
-#define MRP_SUPPORT    0
+#define MRP_SUPPORT    1
 #if MRP_SUPPORT
 #define MRP_ME         1
 #define MRP_CONNECTION 1
 #define MD_INJECTION   1
+#define MRP_MD         1
+
 #endif
 struct buf_2d {
     uint8_t *buf;
@@ -2739,7 +2741,11 @@ void(*ErrorHandler)(
 #endif
 #define MAX_TEMPORAL_LAYERS                         6
 #define MAX_HIERARCHICAL_LEVEL                      6
+#if MRP_ME
+#define MAX_REF_IDX                                 4
+#else
 #define MAX_REF_IDX                                 1        // Set MAX_REF_IDX as 1 to avoid sending extra refPicIdc for each PU in IPPP flat GOP structure.
+#endif
 #define INVALID_POC                                 (((uint32_t) (~0)) - (((uint32_t) (~0)) >> 1))
 #define MAX_ELAPSED_IDR_COUNT                       1024
 

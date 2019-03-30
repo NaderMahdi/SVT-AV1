@@ -14,6 +14,7 @@ extern "C" {
 #include "EbSvtAv1.h"
 
 #define  TILES    1
+#define  MRP_ME   1
 
     //***HME***
 #define EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT         2
@@ -398,6 +399,10 @@ typedef struct EbSvtAv1EncConfiguration
     uint32_t                 hme_level2_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
 
     uint32_t                 ten_bit_format;
+
+#if MRP_ME
+    uint8_t                 reference_count;
+#endif
 
 } EbSvtAv1EncConfiguration;
 

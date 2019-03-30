@@ -443,6 +443,9 @@ EbErrorType InitialRateControlContextCtor(
 ** release them when appropriate
 ************************************************/
 void ReleasePaReferenceObjects(
+#if MRP_ME
+    SequenceControlSet_t              *sequence_control_set_ptr,
+#endif
     PictureParentControlSet_t         *picture_control_set_ptr)
 {
     // PA Reference Pictures
@@ -460,13 +463,13 @@ void ReleasePaReferenceObjects(
 
             // Release PA Reference Pictures
 #if MRP_ME
-            uint8_t numOfRefPicToSearch = 0; /*(picture_control_set_ptr->slice_type == P_SLICE) ?
-                MIN(picture_control_set_ptr->refList0Count, sequenceControlSetPtr->staticConfig.referenceCount) :
+            uint8_t num_of_ref_pic_to_search = (picture_control_set_ptr->slice_type == P_SLICE) ?
+                MIN(picture_control_set_ptr->ref_list0_count, sequence_control_set_ptr->static_config.reference_count) :
                 (listIndex == REF_LIST_0) ?
-                MIN(picture_control_set_ptr->refList0Count, sequenceControlSetPtr->staticConfig.referenceCount) :
-                MIN(picture_control_set_ptr->refList1Count, sequenceControlSetPtr->staticConfig.referenceCount);*/
+                MIN(picture_control_set_ptr->ref_list0_count, sequence_control_set_ptr->static_config.reference_count) :
+                MIN(picture_control_set_ptr->ref_list1_count, sequence_control_set_ptr->static_config.reference_count);
 
-            for (ref_pic_index = 0; ref_pic_index <= numOfRefPicToSearch; ++ref_pic_index) {
+            for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
                 if (picture_control_set_ptr->ref_pa_pic_ptr_array[listIndex][ref_pic_index] != EB_NULL) {
 
                     eb_release_object(((EbPaReferenceObject_t*)picture_control_set_ptr->ref_pa_pic_ptr_array[listIndex][ref_pic_index]->object_ptr)->pPcsPtr->p_pcs_wrapper_ptr);
@@ -1774,6 +1777,9 @@ void* InitialRateControlKernel(void *input_ptr)
 
             // Release Pa Ref pictures when not needed
             ReleasePaReferenceObjects(
+#if MRP_ME
+                sequence_control_set_ptr,
+#endif
                 picture_control_set_ptr);
 
             //****************************************************
