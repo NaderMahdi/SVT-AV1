@@ -34,7 +34,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    
+
 #define QUICK_ME_CLEANUP        1
 #define SCENE_CONTENT_SETTINGS  1
 
@@ -229,6 +229,7 @@ extern "C" {
 #define AOM_INTERP_EXTEND 4
 
 #define MRP_SUPPORT    1
+#define EC_UPDATE 1
 #if MRP_SUPPORT
 #define MRP_ME         1
 #define MRP_CONNECTION 1
@@ -1642,7 +1643,11 @@ static INLINE int32_t get_ext_tx_set(TxSize tx_size, int32_t is_inter,
 static INLINE int32_t is_inter_compound_mode(PredictionMode mode) {
     return mode >= NEAREST_NEARESTMV && mode <= NEW_NEWMV;
 }
-
+#if EC_UPDATE
+static INLINE int is_inter_singleref_mode(PredictionMode mode) {
+    return mode >= SINGLE_INTER_MODE_START && mode < SINGLE_INTER_MODE_END;
+}
+#endif
 
 //**********************************************************************************************************************//
 // encoder.h
