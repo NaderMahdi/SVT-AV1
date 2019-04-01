@@ -480,6 +480,19 @@ extern "C" {
         uint32_t                                transform_size);
 
     struct CodingLoopContext_s;
+
+#if MRP_LIST_REF_IDX_TYPE_LT
+    /*
+      |-------------------------------------------------------------|
+      | ref_idx          0	        1           2	        3       |
+      | List0        	LAST	    LAST2	    LAST3	    GOLD    |
+      | List1        	BWD	        ALT	        ALT2                |
+      |-------------------------------------------------------------|
+    */
+#define INVALID_REF 0xF
+    extern uint8_t get_ref_frame_idx(uint8_t list, uint8_t ref_type);
+    extern MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
+#endif
 #ifdef __cplusplus
 }
 #endif

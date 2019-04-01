@@ -236,6 +236,7 @@ extern "C" {
 #define MD_INJECTION   1
 #define MRP_MD         1
 #define MRP_MD_UNI_DIR_BIPRED 0
+#define MRP_LIST_REF_IDX_TYPE_LT 1
 
 #endif
 struct buf_2d {

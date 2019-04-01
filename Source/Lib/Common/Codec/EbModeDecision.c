@@ -51,6 +51,36 @@ uint8_t GetNumOfIntraModesFromOisPoint(
     uint32_t                       oisDcSad
 );
 #endif
+#if MRP_LIST_REF_IDX_TYPE_LT
+/*
+  |-------------------------------------------------------------|
+  | ref_idx          0	        1           2	        3       |
+  | List0        	LAST	    LAST2	    LAST3	    GOLD    |
+  | List1        	BWD	        ALT	        ALT2                |
+  |-------------------------------------------------------------|
+*/
+#define INVALID_REF 0xF
+ uint8_t get_ref_frame_idx(uint8_t list, uint8_t ref_type) {
+    switch (list) {
+    case 0:
+        return (ref_type == LAST_FRAME ? 0 : ref_type == LAST2_FRAME ? 1 : ref_type == LAST3_FRAME ? 2 : ref_type == GOLDEN_FRAME ? 3 : INVALID_REF);
+    case 1:
+        return (ref_type == BWDREF_FRAME ? 0 : ref_type == ALTREF_FRAME ? 1 : ref_type == ALTREF2_FRAME ? 2 : INVALID_REF);
+    default:
+        return (INVALID_REF);
+    }
+};
+ MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx) {
+    switch (list) {
+    case 0:
+        return (ref_idx == 0 ? LAST_FRAME : ref_idx == 1 ? LAST2_FRAME : ref_idx == 2 ? LAST3_FRAME : ref_idx == 3 ? GOLDEN_FRAME : INVALID_REF);
+    case 1:
+        return (ref_idx == 0 ? BWDREF_FRAME : ref_idx == 1 ? ALTREF_FRAME : ref_idx == 2 ? ALTREF2_FRAME : INVALID_REF);
+    default:
+        return (INVALID_REF);
+    }
+};
+#endif
 extern uint32_t stage1ModesArray[];
 
 uint8_t GetMaxDrlIndex(uint8_t  refmvCnt, PredictionMode   mode);
@@ -675,6 +705,8 @@ void Unipred3x3CandidatesInjection(
     {
         const MeCandidate_t *me_block_results_ptr = &me_block_results[me_candidate_index];
         const uint8_t inter_direction = me_block_results_ptr->direction;
+        const uint8_t list0_ref_index = me_block_results_ptr->ref_idx_l0;
+        
 
         if (inter_direction == 0) {
 #endif
@@ -740,7 +772,11 @@ void Unipred3x3CandidatesInjection(
                     // will be needed later by the rate estimation
                     candidateArray[canTotalCnt].ref_mv_index = 0;
                     candidateArray[canTotalCnt].pred_mv_weight = 0;
+#if MRP_LIST_REF_IDX_TYPE_LT
+                    candidateArray[canTotalCnt].ref_frame_type = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
+#else
                     candidateArray[canTotalCnt].ref_frame_type = LAST_FRAME;
+#endif
 
 
                     candidateArray[canTotalCnt].transform_type[PLANE_TYPE_Y] = DCT_DCT;
@@ -781,7 +817,7 @@ void Unipred3x3CandidatesInjection(
     {
         const MeCandidate_t *me_block_results_ptr = &me_block_results[me_candidate_index];
         const uint8_t inter_direction = me_block_results_ptr->direction;
-
+        const uint8_t list1_ref_index = me_block_results_ptr->ref_idx_l1;
         if (inter_direction == 0) {
 #endif
             for (bipredIndex = 0; bipredIndex < BIPRED_3x3_REFINMENT_POSITIONS; ++bipredIndex)
@@ -845,8 +881,11 @@ void Unipred3x3CandidatesInjection(
                         // will be needed later by the rate estimation
                         candidateArray[canTotalCnt].ref_mv_index = 0;
                         candidateArray[canTotalCnt].pred_mv_weight = 0;
+#if MRP_LIST_REF_IDX_TYPE_LT
+                        candidateArray[canTotalCnt].ref_frame_type = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
+#else
                         candidateArray[canTotalCnt].ref_frame_type = BWDREF_FRAME;
-
+#endif
 
                         candidateArray[canTotalCnt].transform_type[PLANE_TYPE_Y] = DCT_DCT;
                         candidateArray[canTotalCnt].transform_type[PLANE_TYPE_UV] = DCT_DCT;
@@ -925,6 +964,8 @@ void Bipred3x3CandidatesInjection(
         {
             const MeCandidate_t *me_block_results_ptr = &me_block_results[me_candidate_index];
             const uint8_t inter_direction = me_block_results_ptr->direction;
+            const uint8_t list0_ref_index = me_block_results_ptr->ref_idx_l0;
+            const uint8_t list1_ref_index = me_block_results_ptr->ref_idx_l1;
 
             if (inter_direction == 2) {
 #endif
@@ -996,7 +1037,14 @@ void Bipred3x3CandidatesInjection(
                         candidateArray[canTotalCnt].motion_mode = SIMPLE_TRANSLATION;
                         candidateArray[canTotalCnt].is_compound = 1;
                         candidateArray[canTotalCnt].prediction_direction[0] = (EbPredDirection)2;
+#if MRP_LIST_REF_IDX_TYPE_LT
+                        MvReferenceFrame rf[2];
+                        rf[0] = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
+                        rf[1] = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
+                        candidateArray[canTotalCnt].ref_frame_type = av1_ref_frame_type(rf);
+#else
                         candidateArray[canTotalCnt].ref_frame_type = LAST_BWD_FRAME;
+#endif
 
                         candidateArray[canTotalCnt].transform_type[PLANE_TYPE_Y] = DCT_DCT;
                         candidateArray[canTotalCnt].transform_type[PLANE_TYPE_UV] = DCT_DCT;
@@ -1097,7 +1145,14 @@ void Bipred3x3CandidatesInjection(
                         candidateArray[canTotalCnt].motion_mode = SIMPLE_TRANSLATION;
                         candidateArray[canTotalCnt].is_compound = 1;
                         candidateArray[canTotalCnt].prediction_direction[0] = (EbPredDirection)2;
+#if MRP_LIST_REF_IDX_TYPE_LT
+                        MvReferenceFrame rf[2];
+                        rf[0] = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
+                        rf[1] = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
+                        candidateArray[canTotalCnt].ref_frame_type = av1_ref_frame_type(rf);
+#else
                         candidateArray[canTotalCnt].ref_frame_type = LAST_BWD_FRAME;
+#endif
 
                         candidateArray[canTotalCnt].transform_type[PLANE_TYPE_Y] = DCT_DCT;
                         candidateArray[canTotalCnt].transform_type[PLANE_TYPE_UV] = DCT_DCT;
@@ -1793,8 +1848,8 @@ void inject_warped_motion_candidates(
     {
         const MeCandidate_t *me_block_results_ptr = &me_block_results[me_candidate_index];
         const uint8_t inter_direction = me_block_results_ptr->direction;
-        const uint8_t refPicListZeroIndex = me_block_results_ptr->ref_idx_l0;
-        const uint8_t refPicListOneIndex = me_block_results_ptr->ref_idx_l1;
+        const uint8_t list0_ref_index = me_block_results_ptr->ref_idx_l0;
+        const uint8_t list1_ref_index = me_block_results_ptr->ref_idx_l1;
         if (inter_direction == 0) {
 #endif
             for (int i = 0; i < 9; i++) {
@@ -1854,7 +1909,11 @@ void inject_warped_motion_candidates(
 #endif
                     candidateArray[canIdx].ref_mv_index = 0;
                     candidateArray[canIdx].pred_mv_weight = 0;
+#if MRP_LIST_REF_IDX_TYPE_LT
+                    candidateArray[canIdx].ref_frame_type = svt_get_ref_frame_type(REF_LIST_0,list0_ref_index);
+#else
                     candidateArray[canIdx].ref_frame_type = LAST_FRAME;
+#endif
 
                     candidateArray[canIdx].transform_type[PLANE_TYPE_Y] = DCT_DCT;
                     candidateArray[canIdx].transform_type[PLANE_TYPE_UV] = DCT_DCT;
@@ -2069,8 +2128,8 @@ void  inject_inter_candidates(
         {
             const MeCandidate_t *me_block_results_ptr = &me_block_results[me_candidate_index];
             const uint8_t inter_direction = me_block_results_ptr->direction;
-            const uint8_t refPicListZeroIndex = me_block_results_ptr->ref_idx_l0;
-            const uint8_t refPicListOneIndex = me_block_results_ptr->ref_idx_l1;
+            const uint8_t list0_ref_index = me_block_results_ptr->ref_idx_l0;
+            const uint8_t list1_ref_index = me_block_results_ptr->ref_idx_l1;
 
             if (inter_direction == 0) {
 #if REMOVED_DUPLICATE_INTER
@@ -2122,7 +2181,11 @@ void  inject_inter_candidates(
                     // will be needed later by the rate estimation
                     candidateArray[canTotalCnt].ref_mv_index = 0;
                     candidateArray[canTotalCnt].pred_mv_weight = 0;
+#if MRP_LIST_REF_IDX_TYPE_LT
+                    candidateArray[canTotalCnt].ref_frame_type = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
+#else
                     candidateArray[canTotalCnt].ref_frame_type = LAST_FRAME;
+#endif
 
 
                     candidateArray[canTotalCnt].transform_type[PLANE_TYPE_Y] = DCT_DCT;
@@ -2205,7 +2268,11 @@ void  inject_inter_candidates(
                         // will be needed later by the rate estimation
                         candidateArray[canTotalCnt].ref_mv_index = 0;
                         candidateArray[canTotalCnt].pred_mv_weight = 0;
+#if MRP_LIST_REF_IDX_TYPE_LT
+                        candidateArray[canTotalCnt].ref_frame_type = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
+#else
                         candidateArray[canTotalCnt].ref_frame_type = BWDREF_FRAME;
+#endif
 
 
                         candidateArray[canTotalCnt].transform_type[PLANE_TYPE_Y] = DCT_DCT;
@@ -2293,7 +2360,14 @@ void  inject_inter_candidates(
                             candidateArray[canTotalCnt].motion_mode = SIMPLE_TRANSLATION;
                             candidateArray[canTotalCnt].is_compound = 1;
                             candidateArray[canTotalCnt].prediction_direction[0] = (EbPredDirection)2;
+#if MRP_LIST_REF_IDX_TYPE_LT
+                            MvReferenceFrame rf[2];
+                            rf[0] = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
+                            rf[1] = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
+                            candidateArray[canTotalCnt].ref_frame_type = av1_ref_frame_type(rf);
+#else
                             candidateArray[canTotalCnt].ref_frame_type = LAST_BWD_FRAME;
+#endif
 
                             candidateArray[canTotalCnt].transform_type[PLANE_TYPE_Y] = DCT_DCT;
                             candidateArray[canTotalCnt].transform_type[PLANE_TYPE_UV] = DCT_DCT;
