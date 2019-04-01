@@ -212,6 +212,17 @@ extern "C" {
         uint32_t                         levelsOfHierarchy);
 
 
+#if NEW_RPS
+    enum {
+        LAST = 0,
+        LAST2 = 1,
+        LAST3 = 2,
+        GOLD = 3,
+        BWD = 4,
+        ALT2 = 5,
+        ALT = 6
+    } REF_FRAME_MINUS1;
+#endif
 
 
     typedef struct Av1RpsNode_s {

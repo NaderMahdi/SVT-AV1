@@ -235,7 +235,8 @@ extern "C" {
 #define MRP_CONNECTION 1
 #define MD_INJECTION   1
 #define MRP_MD         1
-
+#define NEW_RPS          1  //RPS supporting MRP
+#define MRP_5L_STRUCT  1  //New 5L prediction structure supporting MRP
 #endif
 struct buf_2d {
     uint8_t *buf;
