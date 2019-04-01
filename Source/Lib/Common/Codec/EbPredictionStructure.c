@@ -277,7 +277,7 @@ static PredictionStructureConfigEntry_t fiveLevelHierarchicalPredStruct[] = {
         0,                  // GOP Index 0 - Temporal Layer
         0,                  // GOP Index 0 - Decode Order
 #if 0//MRP_5L_STRUCT  
-        {16, 0, 0, 0},      // GOP Index 0 - Ref List 0
+        {16, 48, 0, 0},      // GOP Index 0 - Ref List 0
         {32, 0, 0, 0}       // GOP Index 0 - Ref List 1
 #else
         {16, 0, 0, 0},      // GOP Index 0 - Ref List 0
