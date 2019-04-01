@@ -19,6 +19,41 @@
 /************************************************
  * Defines
  ************************************************/
+
+#if NEW_RPS
+uint8_t  circ_dec(uint8_t max, uint8_t off, uint8_t input)
+{
+    int8_t x = input;    
+   
+    x--;
+    if (x < 0)
+        x = max;
+
+    if(off==2)
+    {       
+        x--;
+        if (x < 0)
+            x = max;
+    }
+
+    return x;
+}
+uint8_t  circ_inc(uint8_t max, uint8_t off , uint8_t input)
+{   
+    input++;
+    if (input >= max)
+        input = 0;
+
+    if (off == 2)
+    {
+        input++;
+        if (input >= max)
+            input = 0;
+    }
+
+    return input;
+}
+#endif
 #define POC_CIRCULAR_ADD(base, offset/*, bits*/)             (/*(((int32_t) (base)) + ((int32_t) (offset)) > ((int32_t) (1 << (bits))))   ? ((base) + (offset) - (1 << (bits))) : \
                                                              (((int32_t) (base)) + ((int32_t) (offset)) < 0)                           ? ((base) + (offset) + (1 << (bits))) : \
                                                                                                                                        */((base) + (offset)))
@@ -1409,9 +1444,394 @@ void  Av1GenerateRpsInfo(
             context_ptr->miniGopToggle = 1 - context_ptr->miniGopToggle;
     }
 #if NEW_PRED_STRUCT
-    else if (picture_control_set_ptr->hierarchical_levels == 4)//RPS for 4L GOP
+    else if (picture_control_set_ptr->hierarchical_levels == 4)//RPS for 5L GOP
     {
+#if NEW_RPS
+        if (1)//MRP
+        {
+            //Av1RpsNode_t *av1Rps = &picture_control_set_ptr->av1RefSignal2;
+          
+            //Reset miniGop Toggling. The first miniGop after a KEY frame has toggle=0
+            if (picture_control_set_ptr->av1FrameType == KEY_FRAME)
+            {                
+                context_ptr->lay0_toggle = 0;
+                context_ptr->lay1_toggle = 0;
+                context_ptr->lay2_toggle = 0; 
 
+                picture_control_set_ptr->showFrame = EB_TRUE;
+                picture_control_set_ptr->hasShowExisting = EB_FALSE;
+                return;
+            }
+
+            //pictureIndex has this order:
+            //         0     2    4      6    8     10     12      14
+            //            1          5           9            13
+            //                 3                        11
+            //                              7
+            //                                                          15(could be an I)
+
+            //DPB: Loc7|Loc6|Loc5|Loc4|Loc3|Loc2|Loc1|Loc0
+            //Layer 0 : circular move 0-1-2
+            //Layer 1 : circular move 3-4
+            //Layer 2 : circular move 5-6
+            //Layer 3 : DPB Location 7
+
+            //pic_num                  for poc 17
+            //         1     3    5      7    9     11     13      15         17    19     21    23   25     27    29    31
+            //            2          6           10            14                18           22          26          30
+            //                 4                        12:L2_0                         20:L2_1                 28
+            //                              8:L1_0                                                       24:L1_1
+            //base0:0                                               base1:16                                           base2:32
+
+            #define  LAY0_OFF  0
+            #define  LAY1_OFF  3
+            #define  LAY2_OFF  5
+            #define  LAY3_OFF  7
+
+            const uint8_t  base0_idx = context_ptr->lay0_toggle == 0 ? 1 : context_ptr->lay0_toggle == 1 ? 2 : 0;   //the oldest L0 picture in the DPB
+            const uint8_t  base1_idx = context_ptr->lay0_toggle == 0 ? 2 : context_ptr->lay0_toggle == 1 ? 0 : 1;   //the middle L0 picture in the DPB
+            const uint8_t  base2_idx = context_ptr->lay0_toggle == 0 ? 0 : context_ptr->lay0_toggle == 1 ? 1 : 2;   //the newest L0 picture in the DPB
+           
+            const uint8_t  lay1_0_idx = context_ptr->lay1_toggle==0 ? LAY1_OFF + 1 : LAY1_OFF + 0;   //the oldest L1 picture in the DPB
+            const uint8_t  lay1_1_idx = context_ptr->lay1_toggle==0 ? LAY1_OFF + 0 : LAY1_OFF + 1;   //the newest L1 picture in the DPB
+        
+            const uint8_t  lay2_0_idx = pictureIndex<8 ? LAY2_OFF + 1 : LAY2_OFF + 0;   //the oldest L2 picture in the DPB
+            const uint8_t  lay2_1_idx = pictureIndex<8 ? LAY2_OFF + 0 : LAY2_OFF + 1;   //the newest L2 picture in the DPB           
+
+            const uint8_t  lay3_idx = 7;    //the newest L3 picture in the DPB
+
+            switch (picture_control_set_ptr->temporal_layer_index) {
+
+            case 0:
+                //{16, 0, 0, 0},      // GOP Index 0 - Ref List 0
+                //{32, 0, 0, 0}       // GOP Index 0 - Ref List 1
+                av1Rps->refDpbIndex[LAST ]  = base1_idx;
+                av1Rps->refDpbIndex[LAST2]  = av1Rps->refDpbIndex[LAST];
+                av1Rps->refDpbIndex[LAST3]  = av1Rps->refDpbIndex[LAST];
+                av1Rps->refDpbIndex[GOLD ]  = av1Rps->refDpbIndex[LAST];
+
+                av1Rps->refDpbIndex[BWD] = base0_idx;
+                av1Rps->refDpbIndex[ALT  ]  = av1Rps->refDpbIndex[BWD];
+                av1Rps->refDpbIndex[ALT2 ]  = av1Rps->refDpbIndex[BWD];
+               
+                av1Rps->refreshFrameMask = 1<<context_ptr->lay0_toggle;                
+              
+                break;
+
+            case 1:
+                //{  8, 16, 24, 0},   // GOP Index 8 - Ref List 0
+                //{ -8, 0, 0, 0}      // GOP Index 8 - Ref List 1
+                av1Rps->refDpbIndex[LAST]  = base1_idx; 
+                av1Rps->refDpbIndex[LAST2] = lay1_0_idx;
+                av1Rps->refDpbIndex[LAST3] = base0_idx;
+                av1Rps->refDpbIndex[GOLD] = av1Rps->refDpbIndex[LAST];
+
+                av1Rps->refDpbIndex[BWD]  = base2_idx;
+                av1Rps->refDpbIndex[ALT]  = av1Rps->refDpbIndex[BWD];
+                av1Rps->refDpbIndex[ALT2] = av1Rps->refDpbIndex[BWD];
+  
+                av1Rps->refreshFrameMask = 1<<(LAY1_OFF + context_ptr->lay1_toggle);   
+                
+                break;
+
+            case 2:
+               
+                if (pictureIndex == 3) {
+                    //{  4,   8,  12,  20 },  // GOP Index 4 - Ref List 0
+                    //{ -4, -12,  0,  0 }     // GOP Index 4 - Ref List 1
+                    av1Rps->refDpbIndex[LAST] = base1_idx;
+                    av1Rps->refDpbIndex[LAST2] = lay2_0_idx;
+                    av1Rps->refDpbIndex[LAST3] = lay1_0_idx;
+                    av1Rps->refDpbIndex[GOLD] = base0_idx;
+
+                    av1Rps->refDpbIndex[BWD]  = lay1_1_idx;
+                    av1Rps->refDpbIndex[ALT] = base2_idx;
+                    av1Rps->refDpbIndex[ALT2] = av1Rps->refDpbIndex[BWD];
+                }
+                else if (pictureIndex == 11) {
+                    //{ 4, 8, 12, 0},       // GOP Index 12 - Ref List 0
+                    //{ -4,  0, 0,  0 }     // GOP Index 12 - Ref List 1
+                    av1Rps->refDpbIndex[LAST] = lay1_1_idx;
+                    av1Rps->refDpbIndex[LAST2] = lay2_0_idx;
+                    av1Rps->refDpbIndex[LAST3] = base1_idx;
+                    av1Rps->refDpbIndex[GOLD] = av1Rps->refDpbIndex[LAST];
+
+                    av1Rps->refDpbIndex[BWD] = base2_idx;
+                    av1Rps->refDpbIndex[ALT] = av1Rps->refDpbIndex[BWD];
+                    av1Rps->refDpbIndex[ALT2] = av1Rps->refDpbIndex[BWD];
+                }
+  
+                av1Rps->refreshFrameMask = 1 << (LAY2_OFF + context_ptr->lay2_toggle);
+                //toggle 3->4
+                context_ptr->lay2_toggle = 1 - context_ptr->lay2_toggle;                          
+
+                break;
+
+            case 3:               
+                
+                if (pictureIndex == 1) {
+                    //{ 2, 4, 6, 10},        // GOP Index 2 - Ref List 0
+                    //{ -2, -6, -14,  0 }   // GOP Index 2 - Ref List 1
+                    av1Rps->refDpbIndex[LAST] = base1_idx;
+                    av1Rps->refDpbIndex[LAST2] = lay3_idx;
+                    av1Rps->refDpbIndex[LAST3] = lay2_0_idx;
+                    av1Rps->refDpbIndex[GOLD] = lay1_0_idx;
+
+                    av1Rps->refDpbIndex[BWD] = lay2_1_idx;
+                    av1Rps->refDpbIndex[ALT] = lay1_1_idx;
+                    av1Rps->refDpbIndex[ALT2] = base2_idx;
+
+                }
+                else if (pictureIndex == 5) {
+                    //{ 2, 4, 6, 10},        // GOP Index 6 - Ref List 0
+                    //{ -2, -10,  0,  0 }   // GOP Index 6 - Ref List 1
+                    av1Rps->refDpbIndex[LAST] = lay2_1_idx;
+                    av1Rps->refDpbIndex[LAST2] = lay3_idx;
+                    av1Rps->refDpbIndex[LAST3] = base1_idx;
+                    av1Rps->refDpbIndex[GOLD] = lay2_0_idx;
+
+                    av1Rps->refDpbIndex[BWD] = lay1_1_idx;
+                    av1Rps->refDpbIndex[ALT] = base2_idx;
+                    av1Rps->refDpbIndex[ALT2] = av1Rps->refDpbIndex[BWD];
+                }
+                else if (pictureIndex == 9) {
+                    //{ 2, 4, 6, 10},       // GOP Index 10 - Ref List 0
+                    //{ -2, -6,  0,  0 }    // GOP Index 10 - Ref List 1
+                    av1Rps->refDpbIndex[LAST] = lay1_1_idx;
+                    av1Rps->refDpbIndex[LAST2] = lay3_idx;
+                    av1Rps->refDpbIndex[LAST3] = lay2_0_idx;
+                    av1Rps->refDpbIndex[GOLD] = base1_idx;
+
+                    av1Rps->refDpbIndex[BWD] = lay2_1_idx;
+                    av1Rps->refDpbIndex[ALT] = base2_idx;
+                    av1Rps->refDpbIndex[ALT2] = av1Rps->refDpbIndex[BWD];
+                }
+                else if (pictureIndex == 13) {
+                   //{ 2, 4, 6, 14},    // GOP Index 14 - Ref List 0
+                   //{ -2, 0,  0, 0 }   // GOP Index 14 - Ref List 1
+                    av1Rps->refDpbIndex[LAST] = lay2_1_idx;
+                    av1Rps->refDpbIndex[LAST2] = lay3_idx;
+                    av1Rps->refDpbIndex[LAST3] = lay1_1_idx;
+                    av1Rps->refDpbIndex[GOLD] = base1_idx;
+
+                    av1Rps->refDpbIndex[BWD] = base2_idx;
+                    av1Rps->refDpbIndex[ALT] = av1Rps->refDpbIndex[BWD];
+                    av1Rps->refDpbIndex[ALT2] = av1Rps->refDpbIndex[BWD];
+                    
+                }
+                else {
+                    printf("Error in GOp indexing\n");
+                }
+                                         
+                av1Rps->refreshFrameMask = 1 << 7;
+                break;
+
+            case 4:
+                if (pictureIndex == 0) {
+                    //{ 1, 5, 9, 17},  // GOP Index 1 - Ref List 0
+                    //{ -1, -3, -7, 0 }   // GOP Index 1 - Ref List 1
+                    av1Rps->refDpbIndex[LAST] = base1_idx;
+                    av1Rps->refDpbIndex[LAST2] = lay2_0_idx;
+                    av1Rps->refDpbIndex[LAST3] = lay1_0_idx;
+                    av1Rps->refDpbIndex[GOLD] = base0_idx;
+
+                    av1Rps->refDpbIndex[BWD] = lay3_idx;
+                    av1Rps->refDpbIndex[ALT] = lay2_1_idx;
+                    av1Rps->refDpbIndex[ALT2] = lay1_1_idx;
+                }
+                else if (pictureIndex == 2) {
+                    //{ 1, 3, 7, 11},  // GOP Index 3 - Ref List 0
+                   //{ -1, -5, -13, 0 }   // GOP Index 3 - Ref List 1
+                    av1Rps->refDpbIndex[LAST] = lay3_idx;
+                    av1Rps->refDpbIndex[LAST2] = base1_idx;
+                    av1Rps->refDpbIndex[LAST3] = lay2_0_idx;
+                    av1Rps->refDpbIndex[GOLD] = lay1_0_idx;
+
+                    av1Rps->refDpbIndex[BWD] = lay2_1_idx;
+                    av1Rps->refDpbIndex[ALT] = lay1_1_idx;
+                    av1Rps->refDpbIndex[ALT2] = base2_idx;
+                }
+                else if (pictureIndex == 4) {
+                    //{ 1, 5, 9, 13},  // GOP Index 5 - Ref List 0
+                   //{ -1, -3, -11, 0 }   // GOP Index 5 - Ref List 1
+                    av1Rps->refDpbIndex[LAST] = lay2_1_idx;
+                    av1Rps->refDpbIndex[LAST2] = base1_idx;
+                    av1Rps->refDpbIndex[LAST3] = lay2_0_idx;
+                    av1Rps->refDpbIndex[GOLD] = lay1_0_idx;
+
+                    av1Rps->refDpbIndex[BWD] = lay3_idx;
+                    av1Rps->refDpbIndex[ALT] = lay1_1_idx;
+                    av1Rps->refDpbIndex[ALT2] = base2_idx;
+                }
+                else if (pictureIndex == 6) {
+                    //{ 1, 3, 7, 11},  // GOP Index 7 - Ref List 0
+                   //{ -1, -9, 0, 0 }   // GOP Index 7 - Ref List 1
+                    av1Rps->refDpbIndex[LAST] = lay3_idx;
+                    av1Rps->refDpbIndex[LAST2] = lay2_1_idx;
+                    av1Rps->refDpbIndex[LAST3] = base1_idx;
+                    av1Rps->refDpbIndex[GOLD] = lay2_0_idx;
+
+                    av1Rps->refDpbIndex[BWD] = lay1_1_idx;
+                    av1Rps->refDpbIndex[ALT] = base2_idx;
+                    av1Rps->refDpbIndex[ALT2] = av1Rps->refDpbIndex[BWD];
+                }
+                else if (pictureIndex == 8) {
+                    //{ 1, 5, 9, 17},  // GOP Index 9 - Ref List 0
+                    //{ -1, -3, -7, 0 }   // GOP Index 9 - Ref List 1
+                    av1Rps->refDpbIndex[LAST] = lay1_1_idx;
+                    av1Rps->refDpbIndex[LAST2] = lay2_0_idx;
+                    av1Rps->refDpbIndex[LAST3] = base1_idx;
+                    av1Rps->refDpbIndex[GOLD] = lay1_0_idx;
+
+                    av1Rps->refDpbIndex[BWD] = lay3_idx;
+                    av1Rps->refDpbIndex[ALT] = lay2_1_idx;
+                    av1Rps->refDpbIndex[ALT2] = base2_idx;
+                }
+                else if (pictureIndex == 10) {
+                    //{ 1, 3, 7, 11},  // GOP Index 11 - Ref List 0
+                    //{ -1, -5, 0, 0 }   // GOP Index 11 - Ref List 1
+                    av1Rps->refDpbIndex[LAST] = lay3_idx;
+                    av1Rps->refDpbIndex[LAST2] = lay1_1_idx;
+                    av1Rps->refDpbIndex[LAST3] = lay2_0_idx;
+                    av1Rps->refDpbIndex[GOLD] = base1_idx;
+
+                    av1Rps->refDpbIndex[BWD] = lay2_1_idx;
+                    av1Rps->refDpbIndex[ALT] = base2_idx;
+                    av1Rps->refDpbIndex[ALT2] = av1Rps->refDpbIndex[BWD];
+                }
+                else if (pictureIndex == 12) {
+                    //{ 1, 5, 9, 13},  // GOP Index 13 - Ref List 0
+                    //{ -1, -3, 0, 0 }   // GOP Index 13 - Ref List 1
+                    av1Rps->refDpbIndex[LAST] = lay2_1_idx;
+                    av1Rps->refDpbIndex[LAST2] = lay1_1_idx;
+                    av1Rps->refDpbIndex[LAST3] = lay2_0_idx;
+                    av1Rps->refDpbIndex[GOLD] = base1_idx;
+
+                    av1Rps->refDpbIndex[BWD] = lay3_idx;
+                    av1Rps->refDpbIndex[ALT] = base2_idx;
+                    av1Rps->refDpbIndex[ALT2] = av1Rps->refDpbIndex[BWD];
+                }
+                else if (pictureIndex == 14) {
+                    //{ 1, 3, 7, 11},  // GOP Index 15 - Ref List 0
+                    //{ -1, 0, 0, 0 }   // GOP Index 15 - Ref List 1
+                    av1Rps->refDpbIndex[LAST] = lay3_idx;
+                    av1Rps->refDpbIndex[LAST2] = lay2_1_idx;
+                    av1Rps->refDpbIndex[LAST3] = lay1_1_idx;
+                    av1Rps->refDpbIndex[GOLD] = lay2_0_idx;
+
+                    av1Rps->refDpbIndex[BWD] = base2_idx;
+                    av1Rps->refDpbIndex[ALT] = av1Rps->refDpbIndex[BWD];
+                    av1Rps->refDpbIndex[ALT2] = av1Rps->refDpbIndex[BWD];
+                }
+                else {
+                    printf("Error in GOp indexing\n");
+                }
+                av1Rps->refreshFrameMask = 0;
+                break;
+
+            default:
+                printf("Error: unexpected picture mini Gop number\n");
+                break;
+            }
+
+
+            if (picture_control_set_ptr->pred_struct_ptr->predType == EB_PRED_LOW_DELAY_P)
+            {
+                //P frames.
+                av1Rps->refDpbIndex[1] = av1Rps->refDpbIndex[2] = av1Rps->refDpbIndex[3] = av1Rps->refDpbIndex[0];
+                av1Rps->refDpbIndex[4] = av1Rps->refDpbIndex[5] = av1Rps->refDpbIndex[6] = av1Rps->refDpbIndex[0];
+                picture_control_set_ptr->showFrame = EB_TRUE;
+                picture_control_set_ptr->hasShowExisting = EB_FALSE;
+            }
+            else if (picture_control_set_ptr->pred_struct_ptr->predType == EB_PRED_RANDOM_ACCESS)
+            {
+                // av1Rps->refDpbIndex[1] = av1Rps->refDpbIndex[2] = av1Rps->refDpbIndex[3] = av1Rps->refDpbIndex[0];
+                //av1Rps->refDpbIndex[5] = av1Rps->refDpbIndex[6] = av1Rps->refDpbIndex[4];
+
+                //Decide on Show Mecanism
+                if (picture_control_set_ptr->slice_type == I_SLICE)
+                {
+                    //3 cases for I slice:  1:Key Frame treated above.  2: broken MiniGop due to sc or intra refresh  3: complete miniGop due to sc or intra refresh
+                    if (context_ptr->miniGopLength[0] < picture_control_set_ptr->pred_struct_ptr->predStructPeriod)
+                    {
+                        //Scene Change that breaks the mini gop and switch to LDP (if I scene change happens to be aligned with a complete miniGop, then we do not break the pred structure)
+                        picture_control_set_ptr->showFrame = EB_TRUE;
+                        picture_control_set_ptr->hasShowExisting = EB_FALSE;
+                    }
+                    else
+                    {
+                        picture_control_set_ptr->showFrame = EB_FALSE;
+                        picture_control_set_ptr->hasShowExisting = EB_FALSE;
+                    }
+                }
+                else//B pic
+                {
+                    if (context_ptr->miniGopLength[0] != picture_control_set_ptr->pred_struct_ptr->predStructPeriod)
+                        printf("Error in GOp indexing3\n");
+
+                    if (picture_control_set_ptr->is_used_as_reference_flag)
+                    {
+                        picture_control_set_ptr->showFrame = EB_FALSE;
+                        picture_control_set_ptr->hasShowExisting = EB_FALSE;
+                    }
+                    else
+                    {
+                        picture_control_set_ptr->showFrame = EB_TRUE;
+                        picture_control_set_ptr->hasShowExisting = EB_TRUE;
+
+                        if (pictureIndex == 0) {
+                            picture_control_set_ptr->showExistingLoc = lay3_idx;
+                        }
+                        else if (pictureIndex == 2) {
+                            picture_control_set_ptr->showExistingLoc = lay2_1_idx;
+                        }
+                        else if (pictureIndex == 4) {
+                            picture_control_set_ptr->showExistingLoc = lay3_idx;
+                        }
+                        else if (pictureIndex == 6) {
+                            picture_control_set_ptr->showExistingLoc = lay1_1_idx;
+                        }
+                        else if (pictureIndex == 8) {
+                            picture_control_set_ptr->showExistingLoc = lay3_idx;
+                        }
+                        else if (pictureIndex == 10) {
+                            picture_control_set_ptr->showExistingLoc = lay2_1_idx;
+                        }
+                        else if (pictureIndex == 12) {
+                            picture_control_set_ptr->showExistingLoc = lay3_idx;
+                        }
+                        else if (pictureIndex == 14) {
+                            picture_control_set_ptr->showExistingLoc = base2_idx;
+                        }
+                        else {
+                            printf("Error in GOp indexing2\n");
+                        }
+
+                    }
+
+                }
+
+            }
+            else {
+                printf("Error: Not supported GOP structure!");
+                exit(0);
+            }
+
+            //last pic in MiniGop: Base layer toggling
+            //mini GOP toggling since last Key Frame.
+            //a regular I keeps the toggling process and does not reset the toggle.  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
+            //whoever needs a miniGOP Level toggling, this is the time
+            if (pictureIndex == context_ptr->miniGopEndIndex[0]) {
+                //Layer0 toggle 0->1->2                
+                context_ptr->lay0_toggle = circ_inc(3, 1, context_ptr->lay0_toggle);
+                //Layer1 toggle 3->4
+                context_ptr->lay1_toggle = 1 - context_ptr->lay1_toggle;
+               
+            }
+        }
+        else
+        {
+#endif
     //Reset miniGop Toggling. The first miniGop after a KEY frame has toggle=0
     if (picture_control_set_ptr->av1FrameType == KEY_FRAME)
     {
@@ -1448,198 +1868,202 @@ void  Av1GenerateRpsInfo(
     const uint8_t  layer3_idx1 = 4;
     const uint8_t  layer3_idx2 = 5;
 
-    switch (picture_control_set_ptr->temporal_layer_index) {
+            switch (picture_control_set_ptr->temporal_layer_index) {
 
-    case 0:
+            case 0:
 
-        av1Rps->refDpbIndex[0] = base0_idx;
+                av1Rps->refDpbIndex[0] = base0_idx;
 #if BASE_LAYER_REF
         if (picture_control_set_ptr->picture_number < picture_control_set_ptr->sequence_control_set_ptr->max_frame_window_to_ref_islice + picture_control_set_ptr->last_islice_picture_number)
             av1Rps->refDpbIndex[6] = islice_idx;
         else
-            av1Rps->refDpbIndex[6] = base0_idx;
+                av1Rps->refDpbIndex[6] = base0_idx;
         av1Rps->refreshFrameMask = picture_control_set_ptr->slice_type == I_SLICE ? (context_ptr->miniGopToggle ? (128 + 8) : (128 + 1)) : (context_ptr->miniGopToggle ? 8 : 1);
 
 #else
         av1Rps->refDpbIndex[6] = base0_idx;
         av1Rps->refreshFrameMask = context_ptr->miniGopToggle ? 200 : 1;
 #endif
-        break;
-    case 1:
-        av1Rps->refDpbIndex[0] = base0_idx;
-        av1Rps->refDpbIndex[6] = base1_idx;
-        av1Rps->refreshFrameMask = 2;
-        break;
-    case 2:
+                break;
+            case 1:
+                av1Rps->refDpbIndex[0] = base0_idx;
+                av1Rps->refDpbIndex[6] = base1_idx;
+                av1Rps->refreshFrameMask = 2;
+                break;
+            case 2:
 
-        if (pictureIndex == 3) {
-            av1Rps->refDpbIndex[0] = base0_idx;
-            av1Rps->refDpbIndex[6] = layer1_idx;
-    }
-        else if (pictureIndex == 11) {
-            av1Rps->refDpbIndex[0] = layer1_idx;
-            av1Rps->refDpbIndex[6] = base1_idx;
-        }
-        av1Rps->refreshFrameMask = 4;
-        break;
-    case 3:
+                if (pictureIndex == 3) {
+                    av1Rps->refDpbIndex[0] = base0_idx;
+                    av1Rps->refDpbIndex[6] = layer1_idx;
+                }
+                else if (pictureIndex == 11) {
+                    av1Rps->refDpbIndex[0] = layer1_idx;
+                    av1Rps->refDpbIndex[6] = base1_idx;
+                }
+                av1Rps->refreshFrameMask = 4;
+                break;
+            case 3:
 
-        if (pictureIndex == 1) {
-            av1Rps->refDpbIndex[0] = base0_idx;
-            av1Rps->refDpbIndex[6] = layer2_idx;
-            av1Rps->refreshFrameMask = 16;
-        }
-        else if (pictureIndex == 5) {
-            av1Rps->refDpbIndex[0] = layer2_idx;
-            av1Rps->refDpbIndex[6] = layer1_idx;
-            av1Rps->refreshFrameMask = 32;
-        }
-        else if (pictureIndex == 9) {
-            av1Rps->refDpbIndex[0] = layer1_idx;
-            av1Rps->refDpbIndex[6] = layer2_idx;
-            av1Rps->refreshFrameMask = 16;
-        }
-        else if (pictureIndex == 13) {
-            av1Rps->refDpbIndex[0] = layer2_idx;
-            av1Rps->refDpbIndex[6] = base1_idx;
-            av1Rps->refreshFrameMask = 32;
-        }
-        else {
-            printf("Error in GOp indexing\n");
-        }
-        break;
-    case 4:
-        if (pictureIndex == 0) {
-            av1Rps->refDpbIndex[0] = base0_idx;
-            av1Rps->refDpbIndex[6] = layer3_idx1;
-        }
-        else if (pictureIndex == 2) {
-            av1Rps->refDpbIndex[0] = layer3_idx1;
-            av1Rps->refDpbIndex[6] = layer2_idx;
-        }
-        else if (pictureIndex == 4) {
-            av1Rps->refDpbIndex[0] = layer2_idx;
-            av1Rps->refDpbIndex[6] = layer3_idx2;
-        }
-        else if (pictureIndex == 6) {
-            av1Rps->refDpbIndex[0] = layer3_idx2;
-            av1Rps->refDpbIndex[6] = layer1_idx;
-        }
-        else if (pictureIndex == 8) {
-            av1Rps->refDpbIndex[0] = layer1_idx;
-            av1Rps->refDpbIndex[6] = layer3_idx1;
-        }
-        else if (pictureIndex == 10) {
-            av1Rps->refDpbIndex[0] = layer3_idx1;
-            av1Rps->refDpbIndex[6] = layer2_idx;
-        }
-        else if (pictureIndex == 12) {
-            av1Rps->refDpbIndex[0] = layer2_idx;
-            av1Rps->refDpbIndex[6] = layer3_idx2;
-        }
-        else if (pictureIndex == 14) {
-            av1Rps->refDpbIndex[0] = layer3_idx2;
-            av1Rps->refDpbIndex[6] = base1_idx;
-        }
-        else {
-            printf("Error in GOp indexing\n");
-        }
-        av1Rps->refreshFrameMask = 0;
-        break;
-    default:
-        printf("Error: unexpected picture mini Gop number\n");
-        break;
-    }
-
-    if (picture_control_set_ptr->pred_struct_ptr->predType == EB_PRED_LOW_DELAY_P)
-    {
-        //P frames.
-        av1Rps->refDpbIndex[1] = av1Rps->refDpbIndex[2] = av1Rps->refDpbIndex[3] = av1Rps->refDpbIndex[0];
-        av1Rps->refDpbIndex[4] = av1Rps->refDpbIndex[5] = av1Rps->refDpbIndex[6] = av1Rps->refDpbIndex[0];
-        picture_control_set_ptr->showFrame = EB_TRUE;
-        picture_control_set_ptr->hasShowExisting = EB_FALSE;
-    }
-    else if (picture_control_set_ptr->pred_struct_ptr->predType == EB_PRED_RANDOM_ACCESS)
-    {
-        av1Rps->refDpbIndex[1] = av1Rps->refDpbIndex[2] = av1Rps->refDpbIndex[3] = av1Rps->refDpbIndex[0];
-        av1Rps->refDpbIndex[4] = av1Rps->refDpbIndex[5] = av1Rps->refDpbIndex[6];
-
-        //Decide on Show Mecanism
-        if (picture_control_set_ptr->slice_type == I_SLICE)
-        {
-            //3 cases for I slice:  1:Key Frame treated above.  2: broken MiniGop due to sc or intra refresh  3: complete miniGop due to sc or intra refresh
-            if (context_ptr->miniGopLength[0] < picture_control_set_ptr->pred_struct_ptr->predStructPeriod)
-            {
-                //Scene Change that breaks the mini gop and switch to LDP (if I scene change happens to be aligned with a complete miniGop, then we do not break the pred structure)
-                picture_control_set_ptr->showFrame = EB_TRUE;
-                picture_control_set_ptr->hasShowExisting = EB_FALSE;
-            }
-    else
-    {
-                picture_control_set_ptr->showFrame = EB_FALSE;
-                picture_control_set_ptr->hasShowExisting = EB_FALSE;
-            }
-        }
-        else//B pic
-        {
-            if (context_ptr->miniGopLength[0] != picture_control_set_ptr->pred_struct_ptr->predStructPeriod)
-                printf("Error in GOp indexing3\n");
-
-            if (picture_control_set_ptr->is_used_as_reference_flag)
-            {
-                picture_control_set_ptr->showFrame = EB_FALSE;
-                picture_control_set_ptr->hasShowExisting = EB_FALSE;
-            }
-            else
-            {
-                picture_control_set_ptr->showFrame = EB_TRUE;
-                picture_control_set_ptr->hasShowExisting = EB_TRUE;
-
-                if (pictureIndex == 0) {
-                    picture_control_set_ptr->showExistingLoc = layer3_idx1;
+                if (pictureIndex == 1) {
+                    av1Rps->refDpbIndex[0] = base0_idx;
+                    av1Rps->refDpbIndex[6] = layer2_idx;
+                    av1Rps->refreshFrameMask = 16;
                 }
-                else if (pictureIndex == 2) {
-                    picture_control_set_ptr->showExistingLoc = layer2_idx;
+                else if (pictureIndex == 5) {
+                    av1Rps->refDpbIndex[0] = layer2_idx;
+                    av1Rps->refDpbIndex[6] = layer1_idx;
+                    av1Rps->refreshFrameMask = 32;
                 }
-                else if (pictureIndex == 4) {
-                    picture_control_set_ptr->showExistingLoc = layer3_idx2;
+                else if (pictureIndex == 9) {
+                    av1Rps->refDpbIndex[0] = layer1_idx;
+                    av1Rps->refDpbIndex[6] = layer2_idx;
+                    av1Rps->refreshFrameMask = 16;
                 }
-                else if (pictureIndex == 6) {
-                    picture_control_set_ptr->showExistingLoc = layer1_idx;
-                }
-                else if (pictureIndex == 8) {
-                    picture_control_set_ptr->showExistingLoc = layer3_idx1;
-                }
-                else if (pictureIndex == 10) {
-                    picture_control_set_ptr->showExistingLoc = layer2_idx;
-                }
-                else if (pictureIndex == 12) {
-                    picture_control_set_ptr->showExistingLoc = layer3_idx2;
-                }
-                else if (pictureIndex == 14) {
-                    picture_control_set_ptr->showExistingLoc = base1_idx;
+                else if (pictureIndex == 13) {
+                    av1Rps->refDpbIndex[0] = layer2_idx;
+                    av1Rps->refDpbIndex[6] = base1_idx;
+                    av1Rps->refreshFrameMask = 32;
                 }
                 else {
-                    printf("Error in GOp indexing2\n");
+                    printf("Error in GOp indexing\n");
+                }
+                break;
+            case 4:
+                if (pictureIndex == 0) {
+                    av1Rps->refDpbIndex[0] = base0_idx;
+                    av1Rps->refDpbIndex[6] = layer3_idx1;
+                }
+                else if (pictureIndex == 2) {
+                    av1Rps->refDpbIndex[0] = layer3_idx1;
+                    av1Rps->refDpbIndex[6] = layer2_idx;
+                }
+                else if (pictureIndex == 4) {
+                    av1Rps->refDpbIndex[0] = layer2_idx;
+                    av1Rps->refDpbIndex[6] = layer3_idx2;
+                }
+                else if (pictureIndex == 6) {
+                    av1Rps->refDpbIndex[0] = layer3_idx2;
+                    av1Rps->refDpbIndex[6] = layer1_idx;
+                }
+                else if (pictureIndex == 8) {
+                    av1Rps->refDpbIndex[0] = layer1_idx;
+                    av1Rps->refDpbIndex[6] = layer3_idx1;
+                }
+                else if (pictureIndex == 10) {
+                    av1Rps->refDpbIndex[0] = layer3_idx1;
+                    av1Rps->refDpbIndex[6] = layer2_idx;
+                }
+                else if (pictureIndex == 12) {
+                    av1Rps->refDpbIndex[0] = layer2_idx;
+                    av1Rps->refDpbIndex[6] = layer3_idx2;
+                }
+                else if (pictureIndex == 14) {
+                    av1Rps->refDpbIndex[0] = layer3_idx2;
+                    av1Rps->refDpbIndex[6] = base1_idx;
+                }
+                else {
+                    printf("Error in GOp indexing\n");
+                }
+                av1Rps->refreshFrameMask = 0;
+                break;
+            default:
+                printf("Error: unexpected picture mini Gop number\n");
+                break;
+            }
+
+            if (picture_control_set_ptr->pred_struct_ptr->predType == EB_PRED_LOW_DELAY_P)
+            {
+                //P frames.
+                av1Rps->refDpbIndex[1] = av1Rps->refDpbIndex[2] = av1Rps->refDpbIndex[3] = av1Rps->refDpbIndex[0];
+                av1Rps->refDpbIndex[4] = av1Rps->refDpbIndex[5] = av1Rps->refDpbIndex[6] = av1Rps->refDpbIndex[0];
+                picture_control_set_ptr->showFrame = EB_TRUE;
+                picture_control_set_ptr->hasShowExisting = EB_FALSE;
+            }
+            else if (picture_control_set_ptr->pred_struct_ptr->predType == EB_PRED_RANDOM_ACCESS)
+            {
+                av1Rps->refDpbIndex[1] = av1Rps->refDpbIndex[2] = av1Rps->refDpbIndex[3] = av1Rps->refDpbIndex[0];
+                av1Rps->refDpbIndex[4] = av1Rps->refDpbIndex[5] = av1Rps->refDpbIndex[6];
+
+                //Decide on Show Mecanism
+                if (picture_control_set_ptr->slice_type == I_SLICE)
+                {
+                    //3 cases for I slice:  1:Key Frame treated above.  2: broken MiniGop due to sc or intra refresh  3: complete miniGop due to sc or intra refresh
+                    if (context_ptr->miniGopLength[0] < picture_control_set_ptr->pred_struct_ptr->predStructPeriod)
+                    {
+                        //Scene Change that breaks the mini gop and switch to LDP (if I scene change happens to be aligned with a complete miniGop, then we do not break the pred structure)
+                        picture_control_set_ptr->showFrame = EB_TRUE;
+                        picture_control_set_ptr->hasShowExisting = EB_FALSE;
+                    }
+                    else
+                    {
+                        picture_control_set_ptr->showFrame = EB_FALSE;
+                        picture_control_set_ptr->hasShowExisting = EB_FALSE;
+                    }
+                }
+                else//B pic
+                {
+                    if (context_ptr->miniGopLength[0] != picture_control_set_ptr->pred_struct_ptr->predStructPeriod)
+                        printf("Error in GOp indexing3\n");
+
+                    if (picture_control_set_ptr->is_used_as_reference_flag)
+                    {
+                        picture_control_set_ptr->showFrame = EB_FALSE;
+                        picture_control_set_ptr->hasShowExisting = EB_FALSE;
+                    }
+                    else
+                    {
+                        picture_control_set_ptr->showFrame = EB_TRUE;
+                        picture_control_set_ptr->hasShowExisting = EB_TRUE;
+
+                        if (pictureIndex == 0) {
+                            picture_control_set_ptr->showExistingLoc = layer3_idx1;
+                        }
+                        else if (pictureIndex == 2) {
+                            picture_control_set_ptr->showExistingLoc = layer2_idx;
+                        }
+                        else if (pictureIndex == 4) {
+                            picture_control_set_ptr->showExistingLoc = layer3_idx2;
+                        }
+                        else if (pictureIndex == 6) {
+                            picture_control_set_ptr->showExistingLoc = layer1_idx;
+                        }
+                        else if (pictureIndex == 8) {
+                            picture_control_set_ptr->showExistingLoc = layer3_idx1;
+                        }
+                        else if (pictureIndex == 10) {
+                            picture_control_set_ptr->showExistingLoc = layer2_idx;
+                        }
+                        else if (pictureIndex == 12) {
+                            picture_control_set_ptr->showExistingLoc = layer3_idx2;
+                        }
+                        else if (pictureIndex == 14) {
+                            picture_control_set_ptr->showExistingLoc = base1_idx;
+                        }
+                        else {
+                            printf("Error in GOp indexing2\n");
+                        }
+
+                    }
+
                 }
 
             }
+            else {
+                printf("Error: Not supported GOP structure!");
+                exit(0);
+            }
 
+            //last pic in MiniGop: mGop Toggling
+            //mini GOP toggling since last Key Frame.
+            //a regular I keeps the toggling process and does not reset the toggle.  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
+            if (pictureIndex == context_ptr->miniGopEndIndex[0])
+                context_ptr->miniGopToggle = 1 - context_ptr->miniGopToggle;
+#if NEW_RPS
         }
-
-    }
-    else {
-        printf("Error: Not supported GOP structure!");
-        exit(0);
+#endif
     }
 
-    //last pic in MiniGop: mGop Toggling
-    //mini GOP toggling since last Key Frame.
-    //a regular I keeps the toggling process and does not reset the toggle.  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
-    if (pictureIndex == context_ptr->miniGopEndIndex[0])
-        context_ptr->miniGopToggle = 1 - context_ptr->miniGopToggle;
 
-    }
 #endif
     else
     {

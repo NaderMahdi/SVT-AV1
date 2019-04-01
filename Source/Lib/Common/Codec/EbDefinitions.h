@@ -236,6 +236,8 @@ extern "C" {
 #define MD_INJECTION   1
 #define MRP_MD         1
 #define MRP_MD_UNI_DIR_BIPRED 0
+#define NEW_RPS          1  //RPS supporting MRP
+#define MRP_5L_STRUCT  1  //New 5L prediction structure supporting MRP
 #define MRP_LIST_REF_IDX_TYPE_LT 1
 
 #endif
