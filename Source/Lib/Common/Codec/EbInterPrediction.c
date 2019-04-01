@@ -4520,15 +4520,27 @@ EbErrorType inter_pu_prediction_av1(
 #endif
 
 #if MRP_MD
+    uint8_t ref_idx_l0 = candidate_buffer_ptr->candidate_ptr->ref_frame_index_l0;
+    uint8_t ref_idx_l1 = candidate_buffer_ptr->candidate_ptr->ref_frame_index_l1;
     if (is16bit) {
-        ref_pic_list0 = ((EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr)->referencePicture16bit;
-        if (picture_control_set_ptr->slice_type == B_SLICE)
-            ref_pic_list1 = ((EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr)->referencePicture16bit;
+        if (candidate_buffer_ptr->candidate_ptr->ref_frame_index_l0 >=0)
+            ref_pic_list0 = ((EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0][ref_idx_l0]->object_ptr)->referencePicture16bit;
+        else
+            ref_pic_list0 = (EbPictureBufferDesc_t*)EB_NULL;
+        if (candidate_buffer_ptr->candidate_ptr->ref_frame_index_l1 >= 0)
+            ref_pic_list1 = ((EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1][ref_idx_l1]->object_ptr)->referencePicture16bit;
+        else
+            ref_pic_list1 = (EbPictureBufferDesc_t*)EB_NULL;
     }
     else {
-        ref_pic_list0 = ((EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr)->referencePicture;
-        if (picture_control_set_ptr->slice_type == B_SLICE)
-            ref_pic_list1 = ((EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr)->referencePicture;
+        if (candidate_buffer_ptr->candidate_ptr->ref_frame_index_l0 >= 0)
+             ref_pic_list0 =  ((EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0][ref_idx_l0]->object_ptr)->referencePicture;
+        else
+            ref_pic_list0 = (EbPictureBufferDesc_t*)EB_NULL;
+        if (candidate_buffer_ptr->candidate_ptr->ref_frame_index_l1 >= 0)
+            ref_pic_list1 = ((EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1][ref_idx_l1]->object_ptr)->referencePicture;
+        else
+            ref_pic_list1 = (EbPictureBufferDesc_t*)EB_NULL;
     }
 #else
     if (is16bit) {

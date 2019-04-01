@@ -774,6 +774,8 @@ void Unipred3x3CandidatesInjection(
                     candidateArray[canTotalCnt].pred_mv_weight = 0;
 #if MRP_LIST_REF_IDX_TYPE_LT
                     candidateArray[canTotalCnt].ref_frame_type = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
+                    candidateArray[canTotalCnt].ref_frame_index_l0 = list0_ref_index;
+                    candidateArray[canTotalCnt].ref_frame_index_l1 = -1;
 #else
                     candidateArray[canTotalCnt].ref_frame_type = LAST_FRAME;
 #endif
@@ -883,6 +885,8 @@ void Unipred3x3CandidatesInjection(
                         candidateArray[canTotalCnt].pred_mv_weight = 0;
 #if MRP_LIST_REF_IDX_TYPE_LT
                         candidateArray[canTotalCnt].ref_frame_type = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
+                        candidateArray[canTotalCnt].ref_frame_index_l0 = -1;
+                        candidateArray[canTotalCnt].ref_frame_index_l1 = list1_ref_index;
 #else
                         candidateArray[canTotalCnt].ref_frame_type = BWDREF_FRAME;
 #endif
@@ -1042,6 +1046,8 @@ void Bipred3x3CandidatesInjection(
                         rf[0] = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
                         rf[1] = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
                         candidateArray[canTotalCnt].ref_frame_type = av1_ref_frame_type(rf);
+                        candidateArray[canTotalCnt].ref_frame_index_l0 = list0_ref_index;
+                        candidateArray[canTotalCnt].ref_frame_index_l1 = list1_ref_index;
 #else
                         candidateArray[canTotalCnt].ref_frame_type = LAST_BWD_FRAME;
 #endif
@@ -1150,6 +1156,8 @@ void Bipred3x3CandidatesInjection(
                         rf[0] = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
                         rf[1] = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
                         candidateArray[canTotalCnt].ref_frame_type = av1_ref_frame_type(rf);
+                        candidateArray[canTotalCnt].ref_frame_index_l0 = list0_ref_index;
+                        candidateArray[canTotalCnt].ref_frame_index_l1 = list1_ref_index;
 #else
                         candidateArray[canTotalCnt].ref_frame_type = LAST_BWD_FRAME;
 #endif
@@ -1305,6 +1313,10 @@ void InjectAv1MvpCandidates(
     candidateArray[canIdx].ref_mv_index = 0;
     candidateArray[canIdx].pred_mv_weight = 0;
     candidateArray[canIdx].ref_frame_type = LAST_FRAME;
+#if MRP_LIST_REF_IDX_TYPE_LT
+    candidateArray[canIdx].ref_frame_index_l0 = 0;
+    candidateArray[canIdx].ref_frame_index_l1 = -1;
+#endif
     candidateArray[canIdx].transform_type[PLANE_TYPE_Y] = DCT_DCT;
     candidateArray[canIdx].transform_type[PLANE_TYPE_UV] = DCT_DCT;
     ++canIdx;
@@ -1373,6 +1385,10 @@ void InjectAv1MvpCandidates(
         candidateArray[canIdx].ref_mv_index = 0;
         candidateArray[canIdx].pred_mv_weight = 0;
         candidateArray[canIdx].ref_frame_type = LAST_FRAME;
+#if MRP_LIST_REF_IDX_TYPE_LT
+        candidateArray[canIdx].ref_frame_index_l0 = 0;
+        candidateArray[canIdx].ref_frame_index_l1 = -1;
+#endif
         candidateArray[canIdx].transform_type[PLANE_TYPE_Y] = DCT_DCT;
         candidateArray[canIdx].transform_type[PLANE_TYPE_UV] = DCT_DCT;
         ++canIdx;
@@ -1430,6 +1446,10 @@ void InjectAv1MvpCandidates(
         candidateArray[canIdx].ref_mv_index = 0;
         candidateArray[canIdx].pred_mv_weight = 0;
         candidateArray[canIdx].ref_frame_type = BWDREF_FRAME;
+#if MRP_LIST_REF_IDX_TYPE_LT
+        candidateArray[canIdx].ref_frame_index_l0 = -1;
+        candidateArray[canIdx].ref_frame_index_l1 = 0;
+#endif
         candidateArray[canIdx].transform_type[PLANE_TYPE_Y] = DCT_DCT;
         candidateArray[canIdx].transform_type[PLANE_TYPE_UV] = DCT_DCT;
         ++canIdx;
@@ -1497,6 +1517,10 @@ void InjectAv1MvpCandidates(
             candidateArray[canIdx].ref_mv_index = 0;
             candidateArray[canIdx].pred_mv_weight = 0;
             candidateArray[canIdx].ref_frame_type = BWDREF_FRAME;
+#if MRP_LIST_REF_IDX_TYPE_LT
+            candidateArray[canIdx].ref_frame_index_l0 = -1;
+            candidateArray[canIdx].ref_frame_index_l1 = 0;
+#endif
             candidateArray[canIdx].transform_type[PLANE_TYPE_Y] = DCT_DCT;
             candidateArray[canIdx].transform_type[PLANE_TYPE_UV] = DCT_DCT;
             ++canIdx;
@@ -1562,6 +1586,10 @@ void InjectAv1MvpCandidates(
                 candidateArray[canIdx].ref_mv_index = 0;
                 candidateArray[canIdx].pred_mv_weight = 0;
                 candidateArray[canIdx].ref_frame_type = LAST_BWD_FRAME;
+#if MRP_LIST_REF_IDX_TYPE_LT
+                candidateArray[canIdx].ref_frame_index_l0 = 0;
+                candidateArray[canIdx].ref_frame_index_l1 = 0;
+#endif
                 candidateArray[canIdx].transform_type[PLANE_TYPE_Y] = DCT_DCT;
                 candidateArray[canIdx].transform_type[PLANE_TYPE_UV] = DCT_DCT;
                 ++canIdx;
@@ -1640,6 +1668,10 @@ void InjectAv1MvpCandidates(
                 candidateArray[canIdx].ref_mv_index = 0;
                 candidateArray[canIdx].pred_mv_weight = 0;
                 candidateArray[canIdx].ref_frame_type = LAST_BWD_FRAME;
+#if MRP_LIST_REF_IDX_TYPE_LT
+                candidateArray[canIdx].ref_frame_index_l0 = 0;
+                candidateArray[canIdx].ref_frame_index_l1 = 0;
+#endif
                 candidateArray[canIdx].transform_type[PLANE_TYPE_Y] = DCT_DCT;
                 candidateArray[canIdx].transform_type[PLANE_TYPE_UV] = DCT_DCT;
                 ++canIdx;
@@ -1724,6 +1756,10 @@ void inject_warped_motion_candidates(
         candidateArray[canIdx].ref_mv_index = 0;
         candidateArray[canIdx].pred_mv_weight = 0;
         candidateArray[canIdx].ref_frame_type = LAST_FRAME;
+#if MRP_LIST_REF_IDX_TYPE_LT
+        candidateArray[canIdx].ref_frame_index_l0 = 0;
+        candidateArray[canIdx].ref_frame_index_l1 = -1;
+#endif
         candidateArray[canIdx].transform_type[PLANE_TYPE_Y] = DCT_DCT;
         candidateArray[canIdx].transform_type[PLANE_TYPE_UV] = DCT_DCT;
 
@@ -1807,6 +1843,10 @@ void inject_warped_motion_candidates(
             candidateArray[canIdx].ref_mv_index = 0;
             candidateArray[canIdx].pred_mv_weight = 0;
             candidateArray[canIdx].ref_frame_type = LAST_FRAME;
+#if MRP_LIST_REF_IDX_TYPE_LT
+            candidateArray[canIdx].ref_frame_index_l0 = 0;
+            candidateArray[canIdx].ref_frame_index_l1 = -1;
+#endif
             candidateArray[canIdx].transform_type[PLANE_TYPE_Y] = DCT_DCT;
             candidateArray[canIdx].transform_type[PLANE_TYPE_UV] = DCT_DCT;
 
@@ -1911,6 +1951,8 @@ void inject_warped_motion_candidates(
                     candidateArray[canIdx].pred_mv_weight = 0;
 #if MRP_LIST_REF_IDX_TYPE_LT
                     candidateArray[canIdx].ref_frame_type = svt_get_ref_frame_type(REF_LIST_0,list0_ref_index);
+                    candidateArray[canIdx].ref_frame_index_l0 = list0_ref_index;
+                    candidateArray[canIdx].ref_frame_index_l1 = -1;
 #else
                     candidateArray[canIdx].ref_frame_type = LAST_FRAME;
 #endif
@@ -2183,6 +2225,8 @@ void  inject_inter_candidates(
                     candidateArray[canTotalCnt].pred_mv_weight = 0;
 #if MRP_LIST_REF_IDX_TYPE_LT
                     candidateArray[canTotalCnt].ref_frame_type = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
+                    candidateArray[canTotalCnt].ref_frame_index_l0 = list0_ref_index;
+                    candidateArray[canTotalCnt].ref_frame_index_l1 = -1;
 #else
                     candidateArray[canTotalCnt].ref_frame_type = LAST_FRAME;
 #endif
@@ -2270,6 +2314,8 @@ void  inject_inter_candidates(
                         candidateArray[canTotalCnt].pred_mv_weight = 0;
 #if MRP_LIST_REF_IDX_TYPE_LT
                         candidateArray[canTotalCnt].ref_frame_type = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
+                        candidateArray[canTotalCnt].ref_frame_index_l0 = -1;
+                        candidateArray[canTotalCnt].ref_frame_index_l1 = list1_ref_index;
 #else
                         candidateArray[canTotalCnt].ref_frame_type = BWDREF_FRAME;
 #endif
@@ -2365,6 +2411,9 @@ void  inject_inter_candidates(
                             rf[0] = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
                             rf[1] = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
                             candidateArray[canTotalCnt].ref_frame_type = av1_ref_frame_type(rf);
+
+                            candidateArray[canTotalCnt].ref_frame_index_l0 = list0_ref_index;
+                            candidateArray[canTotalCnt].ref_frame_index_l1 = list1_ref_index;
 #else
                             candidateArray[canTotalCnt].ref_frame_type = LAST_BWD_FRAME;
 #endif
@@ -2540,6 +2589,10 @@ void  inject_inter_candidates(
                     candidateArray[canTotalCnt].ref_mv_index = 0;
                     candidateArray[canTotalCnt].pred_mv_weight = 0;
                     candidateArray[canTotalCnt].ref_frame_type = LAST_FRAME;
+#if MRP_LIST_REF_IDX_TYPE_LT
+                    candidateArray[canTotalCnt].ref_frame_index_l0 = 0;
+                    candidateArray[canTotalCnt].ref_frame_index_l1 = -1;
+#endif
 
                     candidateArray[canTotalCnt].transform_type[PLANE_TYPE_Y] = DCT_DCT;
                     candidateArray[canTotalCnt].transform_type[PLANE_TYPE_UV] = DCT_DCT;
@@ -2607,6 +2660,10 @@ void  inject_inter_candidates(
                     candidateArray[canTotalCnt].ref_mv_index = 0;
                     candidateArray[canTotalCnt].pred_mv_weight = 0;
                     candidateArray[canTotalCnt].ref_frame_type = LAST_BWD_FRAME;
+#if MRP_LIST_REF_IDX_TYPE_LT
+                    candidateArray[canTotalCnt].ref_frame_index_l0 = 0;
+                    candidateArray[canTotalCnt].ref_frame_index_l1 = 0;
+#endif
 
                     candidateArray[canTotalCnt].transform_type[PLANE_TYPE_Y] = DCT_DCT;
                     candidateArray[canTotalCnt].transform_type[PLANE_TYPE_UV] = DCT_DCT;
@@ -4512,6 +4569,10 @@ uint8_t product_full_mode_decision(
         pu_ptr->is_compound = candidate_ptr->is_compound;
         pu_ptr->pred_mv_weight = candidate_ptr->pred_mv_weight;
         pu_ptr->ref_frame_type = candidate_ptr->ref_frame_type;
+#if MRP_MD
+        pu_ptr->ref_frame_index_l0 = candidate_ptr->ref_frame_index_l0;
+        pu_ptr->ref_frame_index_l1 = candidate_ptr->ref_frame_index_l1;
+#endif
         pu_ptr->ref_mv_index = candidate_ptr->ref_mv_index;
 #if !INTRA_INTER_FAST_LOOP
         pu_ptr->is_skip_mode_flag = candidate_ptr->is_skip_mode_flag;

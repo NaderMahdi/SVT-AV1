@@ -3777,9 +3777,11 @@ EB_EXTERN void AV1EncodePass(
 #endif
 
 #if MRP_MD
-                    EbReferenceObject_t* refObj0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
-                    EbReferenceObject_t* refObj1 = picture_control_set_ptr->slice_type == B_SLICE ?
-                        (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr : 0;
+                    int8_t ref_idx_l0 = (&cu_ptr->prediction_unit_array[0])->ref_frame_index_l0;
+                    int8_t ref_idx_l1 = (&cu_ptr->prediction_unit_array[0])->ref_frame_index_l1;
+
+                    EbReferenceObject_t* refObj0 = ref_idx_l0 >= 0 ? (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0][ref_idx_l0]->object_ptr : (EbReferenceObject_t*)EB_NULL;
+                    EbReferenceObject_t* refObj1 = ref_idx_l1 >= 0 ? (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1][ref_idx_l1]->object_ptr : (EbReferenceObject_t*)EB_NULL;
 #else
                     EbReferenceObject_t* refObj0 = (EbReferenceObject_t*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0]->object_ptr;
                     EbReferenceObject_t* refObj1 = picture_control_set_ptr->slice_type == B_SLICE ?
@@ -3945,8 +3947,13 @@ EB_EXTERN void AV1EncodePass(
                                     context_ptr->cu_origin_y,
                                     blk_geom->bwidth,
                                     blk_geom->bheight,
+#if MRP_MD
+                                    cu_ptr->prediction_unit_array->ref_frame_index_l0 >= 0 ? refObj0->referencePicture : (EbPictureBufferDesc_t*)EB_NULL,
+                                    cu_ptr->prediction_unit_array->ref_frame_index_l1 >= 0 ? refObj1->referencePicture : (EbPictureBufferDesc_t*)EB_NULL,
+#else
                                     refObj0->referencePicture,
                                     picture_control_set_ptr->slice_type == B_SLICE ? refObj1->referencePicture : 0,
+#endif
                                     recon_buffer,
                                     context_ptr->cu_origin_x,
                                     context_ptr->cu_origin_y,
