@@ -1503,10 +1503,10 @@ void  Av1GenerateRpsInfo(
             switch (picture_control_set_ptr->temporal_layer_index) {
 
             case 0:
-                //{16, 0, 0, 0},      // GOP Index 0 - Ref List 0
+                //{16, 48, 0, 0},      // GOP Index 0 - Ref List 0
                 //{32, 0, 0, 0}       // GOP Index 0 - Ref List 1
                 av1Rps->refDpbIndex[LAST ]  = base1_idx;
-                av1Rps->refDpbIndex[LAST2]  = av1Rps->refDpbIndex[LAST];
+                av1Rps->refDpbIndex[LAST2] = base2_idx;
                 av1Rps->refDpbIndex[LAST3]  = av1Rps->refDpbIndex[LAST];
                 av1Rps->refDpbIndex[GOLD ]  = av1Rps->refDpbIndex[LAST];
 
