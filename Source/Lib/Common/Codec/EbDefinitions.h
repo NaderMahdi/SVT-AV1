@@ -240,7 +240,10 @@ extern "C" {
 #define NEW_RPS                  1  //RPS supporting MRP
 #define MRP_5L_STRUCT            1  //New 5L prediction structure supporting MRP
 #define MRP_LIST_REF_IDX_TYPE_LT 1
-#define MRP_MVP                  1
+#define MRP_MVP                  1 //MVP upgrade to support MRP
+#define MCP_4XN_FIX              1 //Fix for MCP chroma for 4xN modes
+#define CHECK_CAND               1 //increased and added a safety check for number of fast candidates
+
 #define MRP_COST_EST             1
 #endif
 struct buf_2d {
