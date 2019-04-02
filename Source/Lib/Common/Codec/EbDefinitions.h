@@ -228,20 +228,20 @@ extern "C" {
 
 #define AOM_INTERP_EXTEND 4
 
-#define MRP_SUPPORT    1
+#define MRP_SUPPORT            1
 
 #if MRP_SUPPORT
-#define EC_UPDATE 1
-#define MRP_ME         1
-#define MRP_CONNECTION 1
-#define MD_INJECTION   1
-#define MRP_MD         1
+#define EC_UPDATE               1
+#define MRP_ME                  1
+#define MRP_CONNECTION          1
+#define MD_INJECTION            1
+#define MRP_MD                  1
 #define MRP_MD_UNI_DIR_BIPRED 0
-#define NEW_RPS          1  //RPS supporting MRP
-#define MRP_5L_STRUCT  1  //New 5L prediction structure supporting MRP
+#define NEW_RPS                  1  //RPS supporting MRP
+#define MRP_5L_STRUCT            1  //New 5L prediction structure supporting MRP
 #define MRP_LIST_REF_IDX_TYPE_LT 1
-
-#define MRP_MVP   1
+#define MRP_MVP                  1
+#define MRP_COST_EST             1
 #endif
 struct buf_2d {
     uint8_t *buf;

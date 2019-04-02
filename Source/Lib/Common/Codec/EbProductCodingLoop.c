@@ -1379,6 +1379,9 @@ void perform_fast_loop(
                 context_ptr->blk_geom,
                 context_ptr->cu_origin_y >> MI_SIZE_LOG2,
                 context_ptr->cu_origin_x >> MI_SIZE_LOG2,
+#if MRP_COST_EST
+                1,
+#endif
                 context_ptr->intra_luma_left_mode,
                 context_ptr->intra_luma_top_mode);
 
@@ -1537,6 +1540,9 @@ void perform_fast_loop(
                 context_ptr->blk_geom,
                 context_ptr->cu_origin_y >> MI_SIZE_LOG2,
                 context_ptr->cu_origin_x >> MI_SIZE_LOG2,
+#if MRP_COST_EST
+                1,
+#endif
                 context_ptr->intra_luma_left_mode,
                 context_ptr->intra_luma_top_mode);
         }
@@ -4287,6 +4293,29 @@ EB_EXTERN EbErrorType mode_decision_sb(
                 sb_origin_y);
 #endif
 
+#if MRP_COST_EST
+        int32_t mi_row = context_ptr->cu_origin_y >> MI_SIZE_LOG2;
+        int32_t mi_col = context_ptr->cu_origin_x >> MI_SIZE_LOG2;
+        int mi_stride = picture_control_set_ptr->parent_pcs_ptr->av1_cm->mi_stride;
+        const int32_t offset = mi_row * mi_stride + mi_col;
+        cu_ptr->av1xd->mi = picture_control_set_ptr->parent_pcs_ptr->av1_cm->pcs_ptr->mi_grid_base + offset;
+        ModeInfo *mi_ptr = *cu_ptr->av1xd->mi;
+        cu_ptr->av1xd->up_available = (mi_row > sb_ptr->tile_info.mi_row_start);
+        cu_ptr->av1xd->left_available = (mi_col > sb_ptr->tile_info.mi_col_start);
+        if (cu_ptr->av1xd->up_available) {
+            cu_ptr->av1xd->above_mbmi = &mi_ptr[-mi_stride].mbmi;
+        }
+        else {
+            cu_ptr->av1xd->above_mbmi = NULL;
+        }
+
+        if (cu_ptr->av1xd->left_available) {
+            cu_ptr->av1xd->left_mbmi = &mi_ptr[-1].mbmi;
+        }
+        else {
+            cu_ptr->av1xd->left_mbmi = NULL;
+        }
+#endif
         md_encode_block(
             sequence_control_set_ptr,
             picture_control_set_ptr,

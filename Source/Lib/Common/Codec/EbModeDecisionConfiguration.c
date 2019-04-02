@@ -1275,6 +1275,9 @@ void PredictionPartitionLoop(
                         context_ptr->blk_geom,
                         (tbOriginY + context_ptr->blk_geom->origin_y) >> MI_SIZE_LOG2,
                         (tbOriginX + context_ptr->blk_geom->origin_x) >> MI_SIZE_LOG2,
+#if MRP_COST_EST
+                        0,
+#endif
                         DC_PRED,        // Hsan: neighbor not generated @ open loop partitioning
                         DC_PRED);       // Hsan: neighbor not generated @ open loop partitioning
 #else
