@@ -240,6 +240,7 @@ extern "C" {
 #define MRP_5L_STRUCT  1  //New 5L prediction structure supporting MRP
 #define MRP_LIST_REF_IDX_TYPE_LT 1
 
+#define MRP_MVP   1
 #endif
 struct buf_2d {
     uint8_t *buf;

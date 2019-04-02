@@ -1216,6 +1216,59 @@ EbChromaMode PictureLevelChromaSettings(
 }
 #endif
 
+#if MRP_MVP
+//set the ref frame types used for this picture,
+void set_all_ref_frame_type(PictureParentControlSet_t  *parent_pcs_ptr, MvReferenceFrame ref_frame_arr[], uint8_t* tot_ref_frames)
+{
+    MvReferenceFrame rf[2];
+    *tot_ref_frames = 0;
+
+    //printf("POC %i  totRef L0:%i   totRef L1: %i\n", parent_pcs_ptr->picture_number, parent_pcs_ptr->ref_list0_count, parent_pcs_ptr->ref_list1_count);
+
+    //single ref - List0
+    for (uint8_t ref_idx0 = 0; ref_idx0 < parent_pcs_ptr->ref_list0_count; ++ref_idx0) {         
+        rf[0] = svt_get_ref_frame_type(REF_LIST_0, ref_idx0);
+        ref_frame_arr[(*tot_ref_frames)++] = rf[0];
+    }
+
+    //single ref - List1
+    for (uint8_t ref_idx1 = 0; ref_idx1 < parent_pcs_ptr->ref_list1_count; ++ref_idx1) {        
+        rf[1] = svt_get_ref_frame_type(REF_LIST_1, ref_idx1);
+        ref_frame_arr[(*tot_ref_frames)++] = rf[1];
+    }
+ 
+    //compound Bi-Dir
+    for (uint8_t ref_idx0 = 0; ref_idx0 < parent_pcs_ptr->ref_list0_count; ++ref_idx0) {       
+        for (uint8_t ref_idx1 = 0; ref_idx1 < parent_pcs_ptr->ref_list1_count; ++ref_idx1) {
+            rf[0] = svt_get_ref_frame_type(REF_LIST_0, ref_idx0);
+            rf[1] = svt_get_ref_frame_type(REF_LIST_1, ref_idx1);
+            ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
+        }
+    }
+
+    //compound Uni-Dir   
+    if (parent_pcs_ptr->ref_list0_count > 1) {
+        rf[0] = LAST_FRAME;
+        rf[1] = LAST2_FRAME;
+        ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
+        if (parent_pcs_ptr->ref_list0_count > 2) {
+            rf[1] = LAST3_FRAME;
+            ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
+            if (parent_pcs_ptr->ref_list0_count > 3) {
+                rf[1] = GOLDEN_FRAME;
+                ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
+            }
+        }
+    }
+   
+    if (parent_pcs_ptr->ref_list1_count > 1) {
+        rf[0] = BWDREF_FRAME;
+        rf[1] = ALTREF_FRAME;
+        ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
+    }
+
+}
+#endif
 /*************************************************
 * AV1 Reference Picture Signalling:
 * Stateless derivation of RPS info to be stored in
@@ -3194,7 +3247,10 @@ void* picture_decision_kernel(void *input_ptr)
                                 }
                             }
 
-
+#if MRP_MVP
+                            //set the ref frame types used for this picture,
+                            set_all_ref_frame_type(picture_control_set_ptr, picture_control_set_ptr->ref_frame_type_arr, &picture_control_set_ptr->tot_ref_frame_types);
+#endif
                             // Initialize Segments
                             picture_control_set_ptr->me_segments_column_count = (uint8_t)(sequence_control_set_ptr->me_segment_column_count_array[picture_control_set_ptr->temporal_layer_index]);
                             picture_control_set_ptr->me_segments_row_count = (uint8_t)(sequence_control_set_ptr->me_segment_row_count_array[picture_control_set_ptr->temporal_layer_index]);
