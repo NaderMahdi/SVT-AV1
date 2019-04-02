@@ -2702,7 +2702,7 @@ int32_t av1_get_pred_context_single_ref_p1(const MacroBlockD *xd) {
     assert(pred_context >= 0 && pred_context < REF_CONTEXTS);
     return pred_context;
 }
-
+#if EC_UPDATE
 static INLINE aom_cdf_prob *av1_get_pred_cdf_single_ref_p1(
     const MacroBlockD *xd) {
     return xd->tile_ctx
@@ -2734,7 +2734,7 @@ static INLINE aom_cdf_prob *av1_get_pred_cdf_single_ref_p6(
         ->single_ref_cdf[av1_get_pred_context_single_ref_p6(xd)][5];
 }
 
-
+#endif
 // For the bit to signal whether the single reference is ALTREF_FRAME or
 // non-ALTREF backward reference frame, knowing that it shall be either of
 // these 2 choices.

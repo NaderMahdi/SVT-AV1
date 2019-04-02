@@ -80,7 +80,7 @@ extern "C" {
 #define M0_64x64_32x32_HALF_QUARTER_PEL                 1 // F8
 #define IMPROVED_UNIPRED_INJECTION                      1 // F11
 #define IMPROVED_BIPRED_INJECTION                       1 // F10
-#define M0_ME_SEARCH_BASE                               0 // F13
+#define M0_ME_SEARCH_BASE                               1 // F13
 #define INC_NFL12                                       1 // F14
 #define AV1_UPGRADE                                     1 // Upgrade to V1.0.0
 #define INTRAD_ASM                                      1 // asm for intra directionnal modes - Z1
@@ -229,8 +229,9 @@ extern "C" {
 #define AOM_INTERP_EXTEND 4
 
 #define MRP_SUPPORT    1
-#define EC_UPDATE 1
+
 #if MRP_SUPPORT
+#define EC_UPDATE 1
 #define MRP_ME         1
 #define MRP_CONNECTION 1
 #define MD_INJECTION   1
