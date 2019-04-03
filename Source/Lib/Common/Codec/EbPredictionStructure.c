@@ -276,9 +276,9 @@ static PredictionStructureConfigEntry_t fiveLevelHierarchicalPredStruct[] = {
     {
         0,                  // GOP Index 0 - Temporal Layer
         0,                  // GOP Index 0 - Decode Order
-#if 0//MRP_5L_STRUCT  
+#if MRP_BASE
         {16, 48, 0, 0},      // GOP Index 0 - Ref List 0
-        {32, 0, 0, 0}       // GOP Index 0 - Ref List 1
+        {16, 32, 0, 0}       // GOP Index 0 - Ref List 1     //we need keep 16 as first entry in List1, this will ensure that for poc=16 there is a valid ref frame in List1.
 #else
         {16, 0, 0, 0},      // GOP Index 0 - Ref List 0
         {16, 0, 0, 0}       // GOP Index 0 - Ref List 1
