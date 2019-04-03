@@ -2756,7 +2756,7 @@ void* picture_decision_kernel(void *input_ptr)
                             picture_control_set_ptr->reference_mode = (ReferenceMode)0xFF;
 
                             if (picture_control_set_ptr->slice_type != I_SLICE) {
-#if BASE_LAYER_REF
+#if BASE_LAYER_REF || MRP_SUPPORT
                                 picture_control_set_ptr->allow_comp_inter_inter = 1;
                                 if (picture_control_set_ptr->slice_type == P_SLICE) {
                                     picture_control_set_ptr->is_skip_mode_allowed = 0;
@@ -2795,7 +2795,7 @@ void* picture_decision_kernel(void *input_ptr)
                             picture_control_set_ptr->av1_cm->mi_rows = picture_control_set_ptr->sequence_control_set_ptr->luma_height >> MI_SIZE_LOG2;
 
                             memset(picture_control_set_ptr->av1_cm->ref_frame_sign_bias, 0, 8 * sizeof(int32_t));
-#if BASE_LAYER_REF
+#if BASE_LAYER_REF || MRP_SUPPORT
                             if (picture_control_set_ptr->reference_mode == REFERENCE_MODE_SELECT && picture_control_set_ptr->temporal_layer_index)
 #else
                             if (picture_control_set_ptr->reference_mode == REFERENCE_MODE_SELECT)
@@ -3206,7 +3206,7 @@ void* picture_decision_kernel(void *input_ptr)
                                 }
 #endif
                             }
-#if BASE_LAYER_REF
+#if BASE_LAYER_REF || MRP_SUPPORT
 #if MRP_ME
                             if (picture_control_set_ptr->temporal_layer_index == 0) {
                                 if (picture_control_set_ptr->ref_pic_poc_array[0][0] == picture_control_set_ptr->ref_pic_poc_array[1][0])

@@ -1296,7 +1296,7 @@ void InjectAv1MvpCandidates(
     uint32_t                   canIdx = *candTotCnt;
     ModeDecisionCandidate_t    *candidateArray = context_ptr->fast_candidate_array;
     EbBool isCompoundEnabled = (picture_control_set_ptr->parent_pcs_ptr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
-#if  !BASE_LAYER_REF
+#if  !BASE_LAYER_REF && !MRP_SUPPORT
     isCompoundEnabled = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : isCompoundEnabled;
 #endif
     MacroBlockD  *xd = cu_ptr->av1xd;
@@ -1578,7 +1578,7 @@ void InjectAv1MvpCandidates(
 #endif
         }
 
-#if BASE_LAYER_REF
+#if BASE_LAYER_REF || MRP_SUPPORT
         if (allow_bipred)
 #endif
         {
@@ -2164,7 +2164,7 @@ void  inject_inter_candidates(
         ((context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) || (context_ptr->blk_geom->bwidth > 64 || context_ptr->blk_geom->bheight > 64)) ? EB_TRUE : EB_FALSE;
 
     uint32_t close_loop_me_index = use_close_loop_me ? get_in_loop_me_info_index(MAX_SS_ME_PU_COUNT, sequence_control_set_ptr->sb_size == BLOCK_128X128 ? 1 : 0, context_ptr->blk_geom) : 0;
-#if BASE_LAYER_REF
+#if BASE_LAYER_REF || MRP_SUPPORT
     EbBool allow_bipred = (picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index == 0 || context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
 #else    
     EbBool allow_bipred = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
@@ -2534,7 +2534,7 @@ void  inject_inter_candidates(
                 }
 
             }
-#if M0_ME_SEARCH_BASE && !BASE_LAYER_REF
+#if M0_ME_SEARCH_BASE && !BASE_LAYER_REF && !MRP_SUPPORT
             /**************
             inject NewMv from L1 as a candidate of NEWMV L0 in base layer frame (Only single reference support in base layer)
             ************* */
@@ -2812,7 +2812,7 @@ void  inject_inter_candidates(
         }
 
         if (inject_newmv_candidate) {
-#if BASE_LAYER_REF
+#if BASE_LAYER_REF || MRP_SUPPORT
             if (isCompoundEnabled) {
                 if (allow_bipred) {
 #else
@@ -2835,7 +2835,7 @@ void  inject_inter_candidates(
                             me2Nx2NTableOffset,
                             &canTotalCnt);
 #endif
-#if BASE_LAYER_REF
+#if BASE_LAYER_REF || MRP_SUPPORT
                 }
 #endif
 #if IMPROVED_UNIPRED_INJECTION
