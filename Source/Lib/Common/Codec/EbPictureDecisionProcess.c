@@ -3209,7 +3209,7 @@ void* picture_decision_kernel(void *input_ptr)
 #if BASE_LAYER_REF || MRP_SUPPORT
 #if MRP_ME
                             if (picture_control_set_ptr->temporal_layer_index == 0) {
-                                if (picture_control_set_ptr->ref_pic_poc_array[0][0] == picture_control_set_ptr->ref_pic_poc_array[1][0])
+                                if (picture_control_set_ptr->picture_number == 16)
                                     picture_control_set_ptr->is_skip_mode_allowed = 0;
                                 else
                                     picture_control_set_ptr->is_skip_mode_allowed = 1;
