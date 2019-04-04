@@ -254,6 +254,9 @@ extern "C" {
 
 #define MRP_DUPLICATION_FIX       0
 
+#define MRP_ENABLE_SKIP_FOR_BASE  1
+#define MRP_ENABLE_BI_FOR_BASE    1
+
 #endif
 struct buf_2d {
     uint8_t *buf;

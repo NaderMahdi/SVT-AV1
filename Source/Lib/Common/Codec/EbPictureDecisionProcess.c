@@ -3205,13 +3205,30 @@ void* picture_decision_kernel(void *input_ptr)
                                     --paReferenceEntryPtr->dependentCount;
                                 }
 #endif
+      
+                      }
+
+#if MRP_ENABLE_SKIP_FOR_BASE
+                            if (picture_control_set_ptr->temporal_layer_index == 0 && picture_control_set_ptr->slice_type != I_SLICE) {
+                                if (picture_control_set_ptr->ref_list0_count <= 1 && picture_control_set_ptr->ref_list1_count <= 1) {
+                                    picture_control_set_ptr->is_skip_mode_allowed = 0;
+                                    picture_control_set_ptr->skip_mode_flag = 0;
+                                }
+
+                                else {
+                                    picture_control_set_ptr->is_skip_mode_allowed = 1;
+                                    picture_control_set_ptr->skip_mode_flag = 1;
+                                }
+
                             }
+
+#else
 #if BASE_LAYER_REF || MRP_REF_MODE
 #if MRP_ME
                             if (picture_control_set_ptr->temporal_layer_index == 0 && picture_control_set_ptr->slice_type != I_SLICE) {
-                                if (picture_control_set_ptr->ref_list0_count <= 1 && picture_control_set_ptr->ref_list1_count <= 1)
+                                if (picture_control_set_ptr->ref_list0_count <= 1 && picture_control_set_ptr->ref_list1_count <= 1) 
                                     picture_control_set_ptr->is_skip_mode_allowed = 0;
-                                else
+                                else 
                                     picture_control_set_ptr->is_skip_mode_allowed = 1;
                             }
 #else
@@ -3221,6 +3238,7 @@ void* picture_decision_kernel(void *input_ptr)
                                 else
                                     picture_control_set_ptr->is_skip_mode_allowed = 1;
                             }
+#endif
 #endif
 #endif
                             // SB Loop to reset similarColocatedLcu Array

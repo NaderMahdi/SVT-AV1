@@ -1671,15 +1671,18 @@ void mrp_inject_mvp_candidates(
         }
         //NEAR_NEAR
         if (allow_bipred) {
-
-            maxDrlIndex = GetMaxDrlIndex(xd->ref_mv_count[LAST_BWD_FRAME], NEAR_NEARMV);
+            MvReferenceFrame rf[2];
+            rf[0] = frame_type_l0;
+            rf[1] = frame_type_l1;
+            uint8_t ref_frame_bi =  av1_ref_frame_type(rf);
+            maxDrlIndex = GetMaxDrlIndex(xd->ref_mv_count[ref_frame_bi], NEAR_NEARMV);
             //maxDrlIndex = 1;
             for (drli = 0; drli < maxDrlIndex; drli++) {
 
                 get_av1_mv_pred_drl(
                     context_ptr,
                     cu_ptr,
-                    LAST_BWD_FRAME,
+                    ref_frame_bi,
                     1,
                     NEAR_NEARMV,
                     drli,
@@ -1737,7 +1740,7 @@ void mrp_inject_mvp_candidates(
                     MvReferenceFrame rf[2];
                     rf[0] = frame_type_l0;
                     rf[1] = frame_type_l1;
-                    candidateArray[canIdx].ref_frame_type = av1_ref_frame_type(rf);
+                    candidateArray[canIdx].ref_frame_type = ref_frame_bi;
                     //candidateArray[canIdx].ref_frame_type = LAST_BWD_FRAME;
 #if MRP_LIST_REF_IDX_TYPE_LT
                     candidateArray[canIdx].ref_frame_index_l0 = ref_frame_idx_l0;
@@ -2654,7 +2657,12 @@ void  inject_inter_candidates(
 
     uint32_t close_loop_me_index = use_close_loop_me ? get_in_loop_me_info_index(MAX_SS_ME_PU_COUNT, sequence_control_set_ptr->sb_size == BLOCK_128X128 ? 1 : 0, context_ptr->blk_geom) : 0;
 #if BASE_LAYER_REF || MRP_REF_MODE
+#if MRP_ENABLE_BI_FOR_BASE
+    EbBool allow_bipred = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
+    EbBool amp_allow_bipred = (picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index == 0 || context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
+#else
     EbBool allow_bipred = (picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index == 0 || context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
+#endif
 #else    
     EbBool allow_bipred = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
 #endif
@@ -2719,12 +2727,12 @@ void  inject_inter_candidates(
 #if !M8_SKIP_BLK
         leaf_index,
 #endif
-        allow_bipred,
+        amp_allow_bipred,
         &canTotalCnt);
 
 #if MRP_NEAR_NEAREST
     if (1) {
-
+       
         if (picture_control_set_ptr->parent_pcs_ptr->ref_list1_count > 1)
             mrp_inject_mvp_candidates(
                 context_ptr,
@@ -2741,7 +2749,7 @@ void  inject_inter_candidates(
 #if !M8_SKIP_BLK
                 leaf_index,
 #endif
-                allow_bipred,
+                amp_allow_bipred,
                 &canTotalCnt);
 
         if (picture_control_set_ptr->parent_pcs_ptr->ref_list1_count > 2)
@@ -2760,7 +2768,7 @@ void  inject_inter_candidates(
 #if !M8_SKIP_BLK
                 leaf_index,
 #endif
-                allow_bipred,
+                amp_allow_bipred,
                 &canTotalCnt);
 
         if (picture_control_set_ptr->parent_pcs_ptr->ref_list0_count > 1)
@@ -2779,7 +2787,7 @@ void  inject_inter_candidates(
 #if !M8_SKIP_BLK
                 leaf_index,
 #endif
-                allow_bipred,
+                amp_allow_bipred,
                 &canTotalCnt);
 
 
@@ -2799,7 +2807,7 @@ void  inject_inter_candidates(
 #if !M8_SKIP_BLK
                 leaf_index,
 #endif
-                allow_bipred,
+                amp_allow_bipred,
                 &canTotalCnt);
 
 
@@ -2819,7 +2827,7 @@ void  inject_inter_candidates(
 #if !M8_SKIP_BLK
                 leaf_index,
 #endif
-                allow_bipred,
+                amp_allow_bipred,
                 &canTotalCnt);
     }
 #endif
