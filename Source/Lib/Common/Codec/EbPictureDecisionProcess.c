@@ -20,6 +20,178 @@
  * Defines
  ************************************************/
 
+#if SETUP_SKIP
+
+typedef struct {
+    int enable_order_hint;           // 0 - disable order hint, and related tools
+    int order_hint_bits_minus_1;     // dist_wtd_comp, ref_frame_mvs,
+                                                           // frame_sign_bias
+                                                           // if 0, enable_dist_wtd_comp and
+                                                           // enable_ref_frame_mvs must be set as 0.
+    int enable_dist_wtd_comp;        // 0 - disable dist-wtd compound modes
+                                                           // 1 - enable it
+    int enable_ref_frame_mvs;        // 0 - disable ref frame mvs
+                                                           // 1 - enable it
+} OrderHintInfo;
+
+typedef struct {
+    MvReferenceFrame ref_type;
+    int used;
+    uint64_t poc;
+
+} RefFrameInfo;
+
+static INLINE int get_relative_dist(const OrderHintInfo *oh, int a, int b) {
+    if (!oh->enable_order_hint) return 0;
+
+    const int bits = oh->order_hint_bits_minus_1 + 1;
+
+    assert(bits >= 1);
+    assert(a >= 0 && a < (1 << bits));
+    assert(b >= 0 && b < (1 << bits));
+
+    int diff = a - b;
+    const int m = 1 << (bits - 1);
+    diff = (diff & (m - 1)) - (diff & m);
+    return diff;
+}
+void av1_setup_skip_mode_allowed(PictureParentControlSet_t  *parent_pcs_ptr) {
+
+
+
+    RefFrameInfo ref_frame_arr_single[7];
+
+    for (uint8_t i = 0; i < 7; ++i) {
+        ref_frame_arr_single[i].used = 0;
+    }
+
+    for (uint8_t i = 0; i < parent_pcs_ptr->ref_list0_count; ++i) {
+        ref_frame_arr_single[i].used = 1;
+        ref_frame_arr_single[i].ref_type = i + 1;
+        ref_frame_arr_single[i].poc = parent_pcs_ptr->ref_pic_poc_array[0][i];
+    }
+
+    if (parent_pcs_ptr->ref_list1_count > 0)
+    {
+        ref_frame_arr_single[BWD].used = 1;
+        ref_frame_arr_single[BWD].ref_type = BWDREF_FRAME;
+        ref_frame_arr_single[BWD].poc = parent_pcs_ptr->ref_pic_poc_array[1][0];
+        if (parent_pcs_ptr->ref_list1_count > 1)
+        {
+            ref_frame_arr_single[ALT].used = 1;
+            ref_frame_arr_single[ALT].ref_type = ALTREF_FRAME;
+            ref_frame_arr_single[ALT].poc = parent_pcs_ptr->ref_pic_poc_array[1][1];//careful about ALT2/ALT they are reversed to take advantage of BWD-ALT(uni-direction compound)
+
+            if (parent_pcs_ptr->ref_list1_count > 2)
+            {
+                ref_frame_arr_single[ALT2].used = 1;
+                ref_frame_arr_single[ALT2].ref_type = ALTREF2_FRAME;
+                ref_frame_arr_single[ALT2].poc = parent_pcs_ptr->ref_pic_poc_array[1][2];
+            }
+        }
+
+    }
+
+    OrderHintInfo order_hint_info_st;
+    order_hint_info_st.enable_order_hint = 1;
+    order_hint_info_st.order_hint_bits_minus_1 = 6;
+
+
+
+    const OrderHintInfo *const order_hint_info = &order_hint_info_st;// cm->seq_params.order_hint_info;
+    SkipModeInfo *const skip_mode_info = &parent_pcs_ptr->skip_mode_info;// cm->current_frame.skip_mode_info;
+
+    skip_mode_info->skip_mode_allowed = 0;
+    skip_mode_info->ref_frame_idx_0 = INVALID_IDX;
+    skip_mode_info->ref_frame_idx_1 = INVALID_IDX;
+
+    if (/*!order_hint_info->enable_order_hint ||*/ parent_pcs_ptr->slice_type == I_SLICE /*frame_is_intra_only(cm)*/ ||
+        parent_pcs_ptr->reference_mode == SINGLE_REFERENCE)
+        return;
+
+    const int cur_order_hint = parent_pcs_ptr->picture_number;// cm->current_frame.order_hint;
+    int ref_order_hints[2] = { -1, INT_MAX };
+    int ref_idx[2] = { INVALID_IDX, INVALID_IDX };
+
+    // Identify the nearest forward and backward references.
+
+    for (int i = 0; i < INTER_REFS_PER_FRAME; ++i) {
+
+        //const RefCntBuffer *const buf = get_ref_frame_buf(cm, LAST_FRAME + i);
+        //if (buf == NULL) continue;
+
+        if (ref_frame_arr_single[i].used == 0) continue;
+
+        const int ref_order_hint = ref_frame_arr_single[i].poc;// buf->order_hint;
+        if (get_relative_dist(order_hint_info, ref_order_hint, cur_order_hint) <
+            0) {
+            // Forward reference
+            if (ref_order_hints[0] == -1 ||
+                get_relative_dist(order_hint_info, ref_order_hint,
+                    ref_order_hints[0]) > 0) {
+                ref_order_hints[0] = ref_order_hint;
+                ref_idx[0] = i;
+            }
+        }
+        else if (get_relative_dist(order_hint_info, ref_order_hint,
+            cur_order_hint) > 0) {
+            // Backward reference
+            if (ref_order_hints[1] == INT_MAX ||
+                get_relative_dist(order_hint_info, ref_order_hint,
+                    ref_order_hints[1]) < 0) {
+                ref_order_hints[1] = ref_order_hint;
+                ref_idx[1] = i;
+            }
+        }
+    }
+
+    if (ref_idx[0] != INVALID_IDX && ref_idx[1] != INVALID_IDX) {
+        // == Bi-directional prediction ==
+        skip_mode_info->skip_mode_allowed = 1;
+        skip_mode_info->ref_frame_idx_0 = AOMMIN(ref_idx[0], ref_idx[1]);
+        skip_mode_info->ref_frame_idx_1 = AOMMAX(ref_idx[0], ref_idx[1]);
+    }
+    else if (ref_idx[0] != INVALID_IDX && ref_idx[1] == INVALID_IDX) {
+        // == Forward prediction only ==
+        // Identify the second nearest forward reference.
+        ref_order_hints[1] = -1;
+        for (int i = 0; i < INTER_REFS_PER_FRAME; ++i) {
+
+            //const RefCntBuffer *const buf = get_ref_frame_buf(cm, LAST_FRAME + i);
+            //if (buf == NULL) continue;
+            if (ref_frame_arr_single[i].used == 0) continue;
+
+            const int ref_order_hint = ref_frame_arr_single[i].poc;// buf->order_hint;
+            if ((ref_order_hints[0] != -1 &&
+                get_relative_dist(order_hint_info, ref_order_hint,
+                    ref_order_hints[0]) < 0) &&
+                    (ref_order_hints[1] == -1 ||
+                        get_relative_dist(order_hint_info, ref_order_hint,
+                            ref_order_hints[1]) > 0)) {
+                // Second closest forward reference
+                ref_order_hints[1] = ref_order_hint;
+                ref_idx[1] = i;
+            }
+        }
+        if (ref_order_hints[1] != -1) {
+            skip_mode_info->skip_mode_allowed = 1;
+            skip_mode_info->ref_frame_idx_0 = AOMMIN(ref_idx[0], ref_idx[1]);
+            skip_mode_info->ref_frame_idx_1 = AOMMAX(ref_idx[0], ref_idx[1]);
+        }
+    }
+
+    //output: idx
+    //0 :LAST 
+    //1 :LAST2
+    //2 :LAST3
+    //3 :GOLD
+    //4 :BWD
+    //5 :ALT2
+    //6 :ALT 
+
+}
+#endif
+
 #if NEW_RPS
 uint8_t  circ_dec(uint8_t max, uint8_t off, uint8_t input)
 {
@@ -3208,6 +3380,12 @@ void* picture_decision_kernel(void *input_ptr)
       
                       }
 
+#if SETUP_SKIP
+                            av1_setup_skip_mode_allowed(picture_control_set_ptr);
+                            picture_control_set_ptr->is_skip_mode_allowed = picture_control_set_ptr->skip_mode_info.skip_mode_allowed;
+                            picture_control_set_ptr->skip_mode_flag = picture_control_set_ptr->is_skip_mode_allowed;
+                            printf("POC:%i  skip_mode_allowed:%i  REF_SKIP_0: %i   REF_SKIP_1: %i \n",picture_control_set_ptr->picture_number, picture_control_set_ptr->skip_mode_info.skip_mode_allowed, picture_control_set_ptr->skip_mode_info.ref_frame_idx_0, picture_control_set_ptr->skip_mode_info.ref_frame_idx_1);
+#else
 #if MRP_ENABLE_SKIP_FOR_BASE
                             if (picture_control_set_ptr->temporal_layer_index == 0 && picture_control_set_ptr->slice_type != I_SLICE) {
                                 if (picture_control_set_ptr->ref_list0_count <= 1 && picture_control_set_ptr->ref_list1_count <= 1) {
@@ -3238,6 +3416,7 @@ void* picture_decision_kernel(void *input_ptr)
                                 else
                                     picture_control_set_ptr->is_skip_mode_allowed = 1;
                             }
+#endif
 #endif
 #endif
 #endif

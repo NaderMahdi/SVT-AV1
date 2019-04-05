@@ -1595,12 +1595,17 @@ void mrp_inject_mvp_candidates(
         if (allow_bipred)
 #endif
         {
+            MvReferenceFrame rf[2];
+            rf[0] = frame_type_l0;
+            rf[1] = frame_type_l1;
+            uint8_t ref_frame_type_bi = av1_ref_frame_type(rf);
+
             //SKIP (NEAREST_NEAREST with LAST_BWD_FRAME)
 #if REMOVED_DUPLICATE_INTER_BIPRED
-            int16_t to_inject_mv_x_l0 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[LAST_BWD_FRAME][0].this_mv.as_mv.col;
-            int16_t to_inject_mv_y_l0 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[LAST_BWD_FRAME][0].this_mv.as_mv.row;
-            int16_t to_inject_mv_x_l1 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[LAST_BWD_FRAME][0].comp_mv.as_mv.col;
-            int16_t to_inject_mv_y_l1 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[LAST_BWD_FRAME][0].comp_mv.as_mv.row;
+            int16_t to_inject_mv_x_l0 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[ref_frame_type_bi][0].this_mv.as_mv.col;
+            int16_t to_inject_mv_y_l0 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[ref_frame_type_bi][0].this_mv.as_mv.row;
+            int16_t to_inject_mv_x_l1 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[ref_frame_type_bi][0].comp_mv.as_mv.col;
+            int16_t to_inject_mv_y_l1 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[ref_frame_type_bi][0].comp_mv.as_mv.row;
             if (context_ptr->injected_mv_count_bipred == 0 || is_already_injected_mv_bipred(context_ptr, to_inject_mv_x_l0, to_inject_mv_y_l0, to_inject_mv_x_l1, to_inject_mv_y_l1) == EB_FALSE) {
 #endif
                 candidateArray[canIdx].type = INTER_MODE;
@@ -1644,11 +1649,8 @@ void mrp_inject_mvp_candidates(
                 candidateArray[canIdx].drl_index = 0;
                 candidateArray[canIdx].ref_mv_index = 0;
                 candidateArray[canIdx].pred_mv_weight = 0;
-                MvReferenceFrame rf[2];
-                rf[0] = frame_type_l0;
-                rf[1] = frame_type_l1;
-                candidateArray[canIdx].ref_frame_type = av1_ref_frame_type(rf);
-                //candidateArray[canIdx].ref_frame_type = LAST_BWD_FRAME;
+                
+                candidateArray[canIdx].ref_frame_type = ref_frame_type_bi;
 #if MRP_LIST_REF_IDX_TYPE_LT
                 candidateArray[canIdx].ref_frame_index_l0 = ref_frame_idx_l0;
                 candidateArray[canIdx].ref_frame_index_l1 = ref_frame_idx_l1;
@@ -2731,7 +2733,7 @@ void  inject_inter_candidates(
         &canTotalCnt);
 
 #if MRP_NEAR_NEAREST
-    if (1) {
+    if (picture_control_set_ptr->temporal_layer_index == 0 && picture_control_set_ptr->parent_pcs_ptr->is_skip_mode_allowed) {
        
         if (picture_control_set_ptr->parent_pcs_ptr->ref_list1_count > 1)
             mrp_inject_mvp_candidates(
@@ -2749,87 +2751,10 @@ void  inject_inter_candidates(
 #if !M8_SKIP_BLK
                 leaf_index,
 #endif
-                amp_allow_bipred,
+                0,//allow_bipred,
                 &canTotalCnt);
 
-        if (picture_control_set_ptr->parent_pcs_ptr->ref_list1_count > 2)
-            mrp_inject_mvp_candidates(
-                context_ptr,
-                context_ptr->cu_ptr,
-                refFrames,
-                picture_control_set_ptr,
-                lcuAddr,
-                LAST_FRAME,
-                0,
-                0,
-                ALTREF2_FRAME,
-                2,
-                1,
-#if !M8_SKIP_BLK
-                leaf_index,
-#endif
-                amp_allow_bipred,
-                &canTotalCnt);
-
-        if (picture_control_set_ptr->parent_pcs_ptr->ref_list0_count > 1)
-            mrp_inject_mvp_candidates(
-                context_ptr,
-                context_ptr->cu_ptr,
-                refFrames,
-                picture_control_set_ptr,
-                lcuAddr,
-                LAST2_FRAME,
-                1, // ref_index
-                1, 
-                LAST2_FRAME,
-                0,
-                0,
-#if !M8_SKIP_BLK
-                leaf_index,
-#endif
-                amp_allow_bipred,
-                &canTotalCnt);
-
-
-        if (picture_control_set_ptr->parent_pcs_ptr->ref_list0_count > 2)
-            mrp_inject_mvp_candidates(
-                context_ptr,
-                context_ptr->cu_ptr,
-                refFrames,
-                picture_control_set_ptr,
-                lcuAddr,
-                LAST3_FRAME,
-                2,
-                1, // ref_index
-                LAST2_FRAME,
-                0,
-                0,
-#if !M8_SKIP_BLK
-                leaf_index,
-#endif
-                amp_allow_bipred,
-                &canTotalCnt);
-
-
-        if (picture_control_set_ptr->parent_pcs_ptr->ref_list0_count > 3)
-            mrp_inject_mvp_candidates(
-                context_ptr,
-                context_ptr->cu_ptr,
-                refFrames,
-                picture_control_set_ptr,
-                lcuAddr,
-                GOLDEN_FRAME,
-                3,
-                1, // ref_index
-                LAST2_FRAME,
-                0,
-                0,
-#if !M8_SKIP_BLK
-                leaf_index,
-#endif
-                amp_allow_bipred,
-                &canTotalCnt);
-    }
+        }
 #endif
 
     if (inject_newmv_candidate) {
