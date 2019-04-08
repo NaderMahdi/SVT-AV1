@@ -493,7 +493,7 @@ extern "C" {
       |-------------------------------------------------------------|
       | ref_idx          0	        1           2	        3       |
       | List0        	LAST	    LAST2	    LAST3	    GOLD    |
-      | List1        	BWD	        ALT	        ALT2                |
+      | List1        	BWD	        ALT2	        ALT                |
       |-------------------------------------------------------------|
     */
 #define INVALID_REF 0xF
@@ -503,6 +503,9 @@ extern "C" {
     extern uint8_t get_ref_frame_idx(uint8_t list, uint8_t ref_type);
 #endif
     extern MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
+#endif
+#if INJ_MVP
+	uint8_t get_list_idx(uint8_t ref_type);
 #endif
 #ifdef __cplusplus
 }

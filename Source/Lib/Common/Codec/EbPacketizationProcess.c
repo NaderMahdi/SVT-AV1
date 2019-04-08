@@ -15,6 +15,9 @@
 #include "EbRateControlTasks.h"
 #include "EbSvtAv1Time.h"
 
+
+#define DETAILED_FRAME_OUTPUT 0
+
 static EbBool IsPassthroughData(EbLinkedListNode* dataNode)
 {
     return dataNode->passthrough;
@@ -219,9 +222,14 @@ void* PacketizationKernel(void *input_ptr)
 
         queueEntryPtr->slice_type = picture_control_set_ptr->slice_type;
 #if DETAILED_FRAME_OUTPUT
-        queueEntryPtr->refPOCList0 = picture_control_set_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_0];
-        queueEntryPtr->refPOCList1 = picture_control_set_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_1];
+        queueEntryPtr->refPOCList0 = picture_control_set_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_0][0];
+        queueEntryPtr->refPOCList1 = picture_control_set_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_1][0];
+#if REF_ORDER		
+		memcpy(queueEntryPtr->ref_poc_array, picture_control_set_ptr->parent_pcs_ptr->av1RefSignal.ref_poc_array, 7 * sizeof(uint64_t));
 #endif
+
+#endif
+
 
         queueEntryPtr->showFrame = picture_control_set_ptr->parent_pcs_ptr->showFrame;
         queueEntryPtr->hasShowExisting = picture_control_set_ptr->parent_pcs_ptr->hasShowExisting;
@@ -366,6 +374,18 @@ void* PacketizationKernel(void *input_ptr)
                             SVT_LOG("L1 MISMATCH POC:%i\n", (int32_t)queueEntryPtr->poc);
                             exit(0);
                         }
+
+
+#if REF_ORDER
+						for (int rr = 0; rr < 7; rr++)
+						{
+							uint8_t dpb_spot = queueEntryPtr->av1RefSignal.refDpbIndex[rr];
+
+							if (queueEntryPtr->ref_poc_array[rr] != context_ptr->dpbDispOrder[dpb_spot])
+								printf("REF_POC MISMATCH \n");
+						}
+#endif
+
                     }
                     else
                     {

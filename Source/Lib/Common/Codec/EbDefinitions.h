@@ -259,7 +259,11 @@ extern "C" {
 
 #define SETUP_SKIP                1
 
-#endif
+#define INJ_MVP                   1   //new injection of MVP supporting MRP case.
+#define FIX_INIT                  1   //fix ref_poc_array init
+#define NORMAL_ORDER              1   //  order(ALT/ALT2) 
+#define REF_ORDER                   1   //correctly construct decoder based ref order hint array
+#endif				              
 struct buf_2d {
     uint8_t *buf;
     uint8_t *buf0;

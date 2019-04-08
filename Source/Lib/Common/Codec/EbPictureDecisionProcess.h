@@ -56,6 +56,10 @@ typedef struct PictureDecisionContext_s
 #if SC_DETECT_GOP
     uint8_t         last_i_picture_sc_detection;
 #endif
+
+#if REF_ORDER
+	uint64_t         key_poc;
+#endif
 } PictureDecisionContext_t;
 
 /***************************************

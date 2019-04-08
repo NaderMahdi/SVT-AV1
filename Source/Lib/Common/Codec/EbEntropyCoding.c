@@ -5762,6 +5762,11 @@ EbErrorType write_modes_b(
     }
     else {
         if (picture_control_set_ptr->parent_pcs_ptr->skip_mode_flag && is_comp_ref_allowed(bsize)) {
+
+			//if (picture_control_set_ptr->temporal_layer_index == 0 && cu_ptr->skip_flag == 1)
+			//	printf("SKIP POC:%i    %i %i\n", picture_control_set_ptr->picture_number, blkOriginX, blkOriginY);
+
+
             EncodeSkipModeAv1(
                 frameContext,
                 ecWriter,

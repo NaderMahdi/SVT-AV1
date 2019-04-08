@@ -29,6 +29,9 @@ extern "C" {
         uint8_t                                 slice_type;
         uint64_t                                refPOCList0;
         uint64_t                                refPOCList1;
+#if REF_ORDER
+		uint64_t                                ref_poc_array[7];
+#endif
         uint64_t                                 poc;
         FRAME_TYPE                            av1FrameType;
         Av1RpsNode_t                          av1RefSignal;

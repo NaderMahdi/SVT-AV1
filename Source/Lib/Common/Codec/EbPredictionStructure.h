@@ -228,6 +228,9 @@ extern "C" {
     typedef struct Av1RpsNode_s {
         uint8_t refreshFrameMask;
         uint8_t refDpbIndex[7];//LAST-LAST2-LAST3-GOLDEN-BWD-ALT2-ALT
+#if REF_ORDER
+		uint64_t ref_poc_array[7]; //decoder based ref poc array //LAST-LAST2-LAST3-GOLDEN-BWD-ALT2-ALT
+#endif
     } Av1RpsNode_t;
 
 
