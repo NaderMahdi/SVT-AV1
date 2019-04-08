@@ -1080,10 +1080,10 @@ void Bipred3x3CandidatesInjection(
                             continue;
 #if REMOVED_DUPLICATE_INTER_BIPRED
 #if MD_INJECTION
-                    int16_t to_inject_mv_x_l0 = use_close_loop_me ? inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][0] << 1 : me_block_results->xMvL0 << 1;
-                    int16_t to_inject_mv_y_l0 = use_close_loop_me ? inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][1] << 1 : me_block_results->yMvL0 << 1;
-                    int16_t to_inject_mv_x_l1 = use_close_loop_me ? ((inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][0] + BIPRED_3x3_X_POS[bipredIndex]) << 1) : (me_block_results->xMvL1 + BIPRED_3x3_X_POS[bipredIndex]) << 1;
-                    int16_t to_inject_mv_y_l1 = use_close_loop_me ? ((inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][1] + BIPRED_3x3_Y_POS[bipredIndex]) << 1) : (me_block_results->yMvL1 + BIPRED_3x3_Y_POS[bipredIndex]) << 1;
+                    int16_t to_inject_mv_x_l0 = use_close_loop_me ? inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][0] << 1 : me_block_results_ptr->xMvL0 << 1;
+                    int16_t to_inject_mv_y_l0 = use_close_loop_me ? inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][1] << 1 : me_block_results_ptr->yMvL0 << 1;
+                    int16_t to_inject_mv_x_l1 = use_close_loop_me ? ((inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][0] + BIPRED_3x3_X_POS[bipredIndex]) << 1) : (me_block_results_ptr->xMvL1 + BIPRED_3x3_X_POS[bipredIndex]) << 1;
+                    int16_t to_inject_mv_y_l1 = use_close_loop_me ? ((inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][1] + BIPRED_3x3_Y_POS[bipredIndex]) << 1) : (me_block_results_ptr->yMvL1 + BIPRED_3x3_Y_POS[bipredIndex]) << 1;
 
 #else
                     int16_t to_inject_mv_x_l0 = use_close_loop_me ? inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][0] << 1 : mePuResult->xMvL0 << 1;
@@ -1206,10 +1206,10 @@ void Bipred3x3CandidatesInjection(
                             continue;
 #if REMOVED_DUPLICATE_INTER_BIPRED
 #if MD_INJECTION
-                    int16_t to_inject_mv_x_l0 = use_close_loop_me ? (inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][0] + BIPRED_3x3_X_POS[bipredIndex]) << 1 : (me_block_results->xMvL0 + BIPRED_3x3_X_POS[bipredIndex]) << 1;
-                    int16_t to_inject_mv_y_l0 = use_close_loop_me ? (inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][1] + BIPRED_3x3_Y_POS[bipredIndex]) << 1 : (me_block_results->yMvL0 + BIPRED_3x3_Y_POS[bipredIndex]) << 1;
-                    int16_t to_inject_mv_x_l1 = use_close_loop_me ? inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][0] << 1 : me_block_results->xMvL1 << 1;
-                    int16_t to_inject_mv_y_l1 = use_close_loop_me ? inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][1] << 1 : me_block_results->yMvL1 << 1;
+                    int16_t to_inject_mv_x_l0 = use_close_loop_me ? (inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][0] + BIPRED_3x3_X_POS[bipredIndex]) << 1 : (me_block_results_ptr->xMvL0 + BIPRED_3x3_X_POS[bipredIndex]) << 1;
+                    int16_t to_inject_mv_y_l0 = use_close_loop_me ? (inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][1] + BIPRED_3x3_Y_POS[bipredIndex]) << 1 : (me_block_results_ptr->yMvL0 + BIPRED_3x3_Y_POS[bipredIndex]) << 1;
+                    int16_t to_inject_mv_x_l1 = use_close_loop_me ? inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][0] << 1 : me_block_results_ptr->xMvL1 << 1;
+                    int16_t to_inject_mv_y_l1 = use_close_loop_me ? inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][1] << 1 : me_block_results_ptr->yMvL1 << 1;
 
 #else
                     int16_t to_inject_mv_x_l0 = use_close_loop_me ? (inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][0] + BIPRED_3x3_X_POS[bipredIndex]) << 1 : (mePuResult->xMvL0 + BIPRED_3x3_X_POS[bipredIndex]) << 1;
