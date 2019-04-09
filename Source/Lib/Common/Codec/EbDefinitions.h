@@ -262,7 +262,10 @@ extern "C" {
 #define INJ_MVP                   1   //new injection of MVP supporting MRP case.
 #define FIX_INIT                  1   //fix ref_poc_array init
 #define NORMAL_ORDER              1   //  order(ALT/ALT2) 
-#define REF_ORDER                   1   //correctly construct decoder based ref order hint array
+#define REF_ORDER                 1   //correctly construct decoder based ref order hint array
+#define FIX_INTRA_UV              1   //mismatch in intra prediction
+
+#define RPS_4L         0 //RPS for 4L case
 #endif				              
 struct buf_2d {
     uint8_t *buf;
