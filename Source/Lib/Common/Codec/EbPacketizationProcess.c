@@ -382,7 +382,7 @@ void* PacketizationKernel(void *input_ptr)
 							uint8_t dpb_spot = queueEntryPtr->av1RefSignal.refDpbIndex[rr];
 
 							if (queueEntryPtr->ref_poc_array[rr] != context_ptr->dpbDispOrder[dpb_spot])
-								printf("REF_POC MISMATCH \n");
+								printf("REF_POC MISMATCH POC:%i  ref:%i\n", (int32_t)queueEntryPtr->poc,rr);
 						}
 #endif
 

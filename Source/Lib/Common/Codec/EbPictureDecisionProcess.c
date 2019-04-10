@@ -19,7 +19,15 @@
 /************************************************
  * Defines
  ************************************************/
-
+#if NEW_RPS
+#define  LAY0_OFF  0
+#define  LAY1_OFF  3
+#define  LAY2_OFF  5
+#define  LAY3_OFF  7
+#endif
+#if RPS_4L
+PredictionStructureConfigEntry_t fourLevelHierarchicalPredStruct[];
+#endif
 #if REF_ORDER
 extern PredictionStructureConfigEntry_t fiveLevelHierarchicalPredStruct[];
 
@@ -85,7 +93,12 @@ void av1_setup_skip_mode_allowed(PictureParentControlSet_t  *parent_pcs_ptr) {
 		ref_frame_arr_single[i].used = 1;	
 	
 	for (uint8_t i = 0; i < 7; ++i) {		
+
+#if FIX_ORDER_HINT
+		ref_frame_arr_single[i].poc = parent_pcs_ptr->av1RefSignal.ref_poc_array[i] % (1 << (parent_pcs_ptr->sequence_control_set_ptr->order_hint_bits_minus1 + 1));
+#else
 		ref_frame_arr_single[i].poc = parent_pcs_ptr->av1RefSignal.ref_poc_array[i];
+#endif
 	}
 #else
     for (uint8_t i = 0; i < 7; ++i) {
@@ -137,7 +150,11 @@ void av1_setup_skip_mode_allowed(PictureParentControlSet_t  *parent_pcs_ptr) {
         parent_pcs_ptr->reference_mode == SINGLE_REFERENCE)
         return;
 
+#if FIX_ORDER_HINT
+	const int cur_order_hint = parent_pcs_ptr->picture_number % (1 << (parent_pcs_ptr->sequence_control_set_ptr->order_hint_bits_minus1 + 1));
+#else
     const int cur_order_hint = parent_pcs_ptr->picture_number;// cm->current_frame.order_hint;
+#endif
     int ref_order_hints[2] = { -1, INT_MAX };
     int ref_idx[2] = { INVALID_IDX, INVALID_IDX };
 
@@ -1185,8 +1202,10 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #endif
 
+#if M8_CDEF_DEBUG
 	//this is for only M8
-	//picture_control_set_ptr->cdef_filter_mode = 4;
+	picture_control_set_ptr->cdef_filter_mode = 4;
+#endif
 
 #if FAST_SG
     // SG Level                                    Settings
@@ -1429,7 +1448,7 @@ void set_all_ref_frame_type(PictureParentControlSet_t  *parent_pcs_ptr, MvRefere
     MvReferenceFrame rf[2];
     *tot_ref_frames = 0;
 
-   // printf("POC %i  totRef L0:%i   totRef L1: %i\n", parent_pcs_ptr->picture_number, parent_pcs_ptr->ref_list0_count, parent_pcs_ptr->ref_list1_count);
+    //printf("POC %i  totRef L0:%i   totRef L1: %i\n", parent_pcs_ptr->picture_number, parent_pcs_ptr->ref_list0_count, parent_pcs_ptr->ref_list1_count);
 
     //single ref - List0
     for (uint8_t ref_idx0 = 0; ref_idx0 < parent_pcs_ptr->ref_list0_count; ++ref_idx0) {         
@@ -1531,7 +1550,394 @@ void  Av1GenerateRpsInfo(
     }
     else if (picture_control_set_ptr->hierarchical_levels == 3)//RPS for 4L GOP
     {
+#if RPS_4L
 
+		uint8_t gop_i;
+
+
+		if (picture_control_set_ptr->av1FrameType == KEY_FRAME)
+		{
+			context_ptr->lay0_toggle = 0;
+			context_ptr->lay1_toggle = 0;
+			context_ptr->lay2_toggle = 0;
+
+			picture_control_set_ptr->showFrame = EB_TRUE;
+			picture_control_set_ptr->hasShowExisting = EB_FALSE;
+			return;
+		}
+
+		//pictureIndex has this order:
+		//         0     2    4      6    
+		//            1          5          
+		//                 3                        
+		//                              7(could be an I)
+		//                                                          
+
+		//DPB: Loc7|Loc6|Loc5|Loc4|Loc3|Loc2|Loc1|Loc0
+		//Layer 0 : circular move 0-1-2
+		//Layer 1 : circular move 3-4
+		//Layer 2 : circular move 5-6
+		//Layer 3 : not kept. DPB Location 7 is unused.
+
+		//pic_num                  
+		//         1     3    5      7    9     11     13      15         
+		//            2          6           10            14               
+		//                 4                        12                         
+		//                                                                                     
+		//base0:0                   base1:8                          base2:16                                          
+
+		const uint8_t  base0_idx = context_ptr->lay0_toggle == 0 ? 1 : context_ptr->lay0_toggle == 1 ? 2 : 0;   //the oldest L0 picture in the DPB
+		const uint8_t  base1_idx = context_ptr->lay0_toggle == 0 ? 2 : context_ptr->lay0_toggle == 1 ? 0 : 1;   //the middle L0 picture in the DPB
+		const uint8_t  base2_idx = context_ptr->lay0_toggle == 0 ? 0 : context_ptr->lay0_toggle == 1 ? 1 : 2;   //the newest L0 picture in the DPB
+
+		const uint8_t  lay1_0_idx = context_ptr->lay1_toggle == 0 ? LAY1_OFF + 1 : LAY1_OFF + 0;   //the oldest L1 picture in the DPB
+		const uint8_t  lay1_1_idx = context_ptr->lay1_toggle == 0 ? LAY1_OFF + 0 : LAY1_OFF + 1;   //the newest L1 picture in the DPB
+
+		const uint8_t  lay2_0_idx = pictureIndex < 4 ? LAY2_OFF + 1 : LAY2_OFF + 0;   //the oldest L2 picture in the DPB
+		const uint8_t  lay2_1_idx = pictureIndex < 4 ? LAY2_OFF + 0 : LAY2_OFF + 1;   //the newest L2 picture in the DPB           
+
+		const uint8_t  lay3_idx = 7;    //the newest L3 picture in the DPB
+
+		/*in 5L struct, we switich to  4L at the end of the seq.
+		the current pred struct is reset, and the previous 5L minGop is out of reach!
+		fourLevelHierarchicalPredStruct will be set to follow 4L order, but this will generate some RPS mismatch for some frames.
+		PKTization DPB can detect those  */
+
+		switch (picture_control_set_ptr->temporal_layer_index) {
+
+		case 0:
+
+			//{8, 0, 0, 0},     // GOP Index 0 - Ref List 0
+			//{8, 0,  0, 0}      // GOP Index 0 - Ref List 1
+			av1Rps->refDpbIndex[LAST] = base1_idx;
+			av1Rps->refDpbIndex[LAST2] = av1Rps->refDpbIndex[LAST];
+			av1Rps->refDpbIndex[LAST3] = av1Rps->refDpbIndex[LAST];
+			av1Rps->refDpbIndex[GOLD] = av1Rps->refDpbIndex[LAST];
+
+			av1Rps->refDpbIndex[BWD] = base1_idx;
+			av1Rps->refDpbIndex[ALT] = av1Rps->refDpbIndex[BWD];
+			av1Rps->refDpbIndex[ALT2] = av1Rps->refDpbIndex[BWD];
+#if REF_ORDER
+			gop_i = 0;
+			av1Rps->ref_poc_array[LAST]  = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[0]);
+			av1Rps->ref_poc_array[LAST2] = av1Rps->ref_poc_array[LAST];
+			av1Rps->ref_poc_array[LAST3] = av1Rps->ref_poc_array[LAST];
+			av1Rps->ref_poc_array[GOLD]  = av1Rps->ref_poc_array[LAST];
+
+			av1Rps->ref_poc_array[BWD]  = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList1[0]);
+			av1Rps->ref_poc_array[ALT]  = av1Rps->ref_poc_array[BWD];
+			av1Rps->ref_poc_array[ALT2] = av1Rps->ref_poc_array[BWD];
+#endif
+
+			av1Rps->refreshFrameMask = 1 << context_ptr->lay0_toggle;
+
+			break;
+
+		case 1:
+			//{ 4, 8, 12,  0},   // GOP Index 4 - Ref List 0
+			//{-4,  0, 0,  0}     // GOP Index 4 - Ref List 1
+			av1Rps->refDpbIndex[LAST] = base1_idx;
+			av1Rps->refDpbIndex[LAST2] = lay1_0_idx;
+			av1Rps->refDpbIndex[LAST3] = base0_idx;
+			av1Rps->refDpbIndex[GOLD] = av1Rps->refDpbIndex[LAST];
+
+			av1Rps->refDpbIndex[BWD] = base2_idx;
+			av1Rps->refDpbIndex[ALT] = av1Rps->refDpbIndex[BWD];
+			av1Rps->refDpbIndex[ALT2] = av1Rps->refDpbIndex[BWD];
+
+#if REF_ORDER
+			gop_i = 4;
+			av1Rps->ref_poc_array[LAST]  = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[0]);
+			av1Rps->ref_poc_array[LAST2] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[1]);
+			av1Rps->ref_poc_array[LAST3] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[2]); 
+			av1Rps->ref_poc_array[GOLD]  = av1Rps->ref_poc_array[LAST];
+
+			av1Rps->ref_poc_array[BWD]  = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList1[0]);
+			av1Rps->ref_poc_array[ALT]  = av1Rps->ref_poc_array[BWD];
+			av1Rps->ref_poc_array[ALT2] = av1Rps->ref_poc_array[BWD];
+#endif
+			av1Rps->refreshFrameMask = 1 << (LAY1_OFF + context_ptr->lay1_toggle);
+
+			break;
+
+		case 2:
+
+			if (pictureIndex == 1) {
+
+				
+				//{  2,  4,  6,  10}    // GOP Index 2 - Ref List 0
+				//{ -2, -6,  0,   0}    // GOP Index 2 - Ref List 1
+
+				av1Rps->refDpbIndex[LAST] = base1_idx;
+				av1Rps->refDpbIndex[LAST2] = lay2_0_idx;
+				av1Rps->refDpbIndex[LAST3] = lay1_0_idx;
+				av1Rps->refDpbIndex[GOLD] = base0_idx;
+
+				av1Rps->refDpbIndex[BWD] = lay1_1_idx;
+				av1Rps->refDpbIndex[ALT] = base2_idx;
+				av1Rps->refDpbIndex[ALT2] = av1Rps->refDpbIndex[BWD];
+#if REF_ORDER
+				gop_i = 2;
+				av1Rps->ref_poc_array[LAST]  = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[0]);
+				av1Rps->ref_poc_array[LAST2] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[1]); 
+				av1Rps->ref_poc_array[LAST3] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[2]); 
+				av1Rps->ref_poc_array[GOLD]  = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[3]); 
+
+				av1Rps->ref_poc_array[BWD]  = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList1[0]);
+				av1Rps->ref_poc_array[ALT]  = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList1[1]);
+				av1Rps->ref_poc_array[ALT2] = av1Rps->ref_poc_array[BWD];
+#endif
+			}
+			else if (pictureIndex == 5) {
+				//{ 2, 4, 6, 10}   // GOP Index 6 - Ref List 0
+				//{ -2,  0, 0,  0 }    // GOP Index 6 - Ref List 1
+
+				av1Rps->refDpbIndex[LAST] = lay1_1_idx;
+				av1Rps->refDpbIndex[LAST2] = lay2_0_idx;
+				av1Rps->refDpbIndex[LAST3] = base1_idx;
+				av1Rps->refDpbIndex[GOLD] = lay1_0_idx;// av1Rps->refDpbIndex[LAST];
+
+				av1Rps->refDpbIndex[BWD] = base2_idx;
+				av1Rps->refDpbIndex[ALT] = av1Rps->refDpbIndex[BWD];
+				av1Rps->refDpbIndex[ALT2] = av1Rps->refDpbIndex[BWD];
+#if REF_ORDER
+				gop_i = 6;
+				av1Rps->ref_poc_array[LAST]  = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[0]);
+				av1Rps->ref_poc_array[LAST2] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[1]);
+				av1Rps->ref_poc_array[LAST3] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[2]);
+				av1Rps->ref_poc_array[GOLD]  = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[3]);
+
+				av1Rps->ref_poc_array[BWD]  = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList1[0]);
+				av1Rps->ref_poc_array[ALT]  = av1Rps->ref_poc_array[BWD];
+				av1Rps->ref_poc_array[ALT2] = av1Rps->ref_poc_array[BWD];
+#endif
+			}
+
+			av1Rps->refreshFrameMask = 1 << (LAY2_OFF + context_ptr->lay2_toggle);
+			//toggle 3->4
+			context_ptr->lay2_toggle = 1 - context_ptr->lay2_toggle;
+
+			break;
+
+		case 3:
+			if (pictureIndex == 0) {
+				//{ 1, 3, 5, 9}         // GOP Index 1 - Ref List 0
+				//{ -1, -3, -7,  0 }    // GOP Index 1 - Ref List 1
+				av1Rps->refDpbIndex[LAST] = base1_idx;
+				av1Rps->refDpbIndex[LAST2] = lay2_0_idx;
+				av1Rps->refDpbIndex[LAST3] = lay1_0_idx;
+				av1Rps->refDpbIndex[GOLD] = base0_idx; 
+
+				av1Rps->refDpbIndex[BWD] = lay2_1_idx;
+				av1Rps->refDpbIndex[ALT] = lay1_1_idx;
+				av1Rps->refDpbIndex[ALT2] = base2_idx;
+#if REF_ORDER
+				gop_i = 1;
+				av1Rps->ref_poc_array[LAST]  = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[0]);
+				av1Rps->ref_poc_array[LAST2] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[1]);
+				av1Rps->ref_poc_array[LAST3] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[2]);
+				av1Rps->ref_poc_array[GOLD]  = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[3]);
+
+				av1Rps->ref_poc_array[BWD]  = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList1[0]);
+				av1Rps->ref_poc_array[ALT]  = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList1[1]);
+				av1Rps->ref_poc_array[ALT2] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList1[2]);
+#endif
+			}
+			else if (pictureIndex == 2) {
+				
+				//{ 1, 3, 5, 7},         //    GOP Index 3 - Ref List 0  
+				//{ -1,  -5, 0,  0 }     //	 GOP Index 3 - Ref List 1
+
+				av1Rps->refDpbIndex[LAST] = lay2_1_idx;
+				av1Rps->refDpbIndex[LAST2] = base1_idx;
+				av1Rps->refDpbIndex[LAST3] = lay2_0_idx;
+				av1Rps->refDpbIndex[GOLD] = lay1_0_idx;
+
+				av1Rps->refDpbIndex[BWD] = lay1_1_idx;
+				av1Rps->refDpbIndex[ALT] = base2_idx;
+				av1Rps->refDpbIndex[ALT2] = av1Rps->refDpbIndex[BWD];
+#if REF_ORDER
+				gop_i = 3;
+				av1Rps->ref_poc_array[LAST]  = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[0]);
+				av1Rps->ref_poc_array[LAST2] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[1]);
+				av1Rps->ref_poc_array[LAST3] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[2]); 
+				av1Rps->ref_poc_array[GOLD]  = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[3]); 
+
+				av1Rps->ref_poc_array[BWD] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList1[0]);
+				av1Rps->ref_poc_array[ALT] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList1[1]);
+				av1Rps->ref_poc_array[ALT2] = av1Rps->ref_poc_array[BWD];
+#endif
+			}
+			else if (pictureIndex == 4) {
+				//{ 1, 3, 5, 9},         // GOP Index 5 - Ref List 0
+				//{ -1,  -3, 0,  0 }     // GOP Index 5 - Ref List 1
+				av1Rps->refDpbIndex[LAST] = lay1_1_idx;
+				av1Rps->refDpbIndex[LAST2] = lay2_0_idx;
+				av1Rps->refDpbIndex[LAST3] = base1_idx;
+				av1Rps->refDpbIndex[GOLD] = lay1_0_idx;
+
+				av1Rps->refDpbIndex[BWD] = lay2_1_idx;
+				av1Rps->refDpbIndex[ALT] = base2_idx;
+				av1Rps->refDpbIndex[ALT2] = av1Rps->refDpbIndex[BWD];
+#if REF_ORDER
+				gop_i = 5;
+				av1Rps->ref_poc_array[LAST]  = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[0]);
+				av1Rps->ref_poc_array[LAST2] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[1]);
+				av1Rps->ref_poc_array[LAST3] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[2]);
+				av1Rps->ref_poc_array[GOLD]  = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[3]);
+
+				av1Rps->ref_poc_array[BWD] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList1[0]);
+				av1Rps->ref_poc_array[ALT] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList1[1]);
+				av1Rps->ref_poc_array[ALT2] = av1Rps->ref_poc_array[BWD];
+#endif
+			}
+			else if (pictureIndex == 6) {
+				//{ 1, 3, 5, 7},         //  GOP Index 7 - Ref List 0
+				//{ -1,  0, 0,  0 }      // GOP Index 7 - Ref List 1
+				av1Rps->refDpbIndex[LAST] = lay2_1_idx;
+				av1Rps->refDpbIndex[LAST2] = lay1_1_idx;
+				av1Rps->refDpbIndex[LAST3] = lay2_0_idx;
+				av1Rps->refDpbIndex[GOLD] = base1_idx;
+
+				av1Rps->refDpbIndex[BWD] = base2_idx;
+				av1Rps->refDpbIndex[ALT] = av1Rps->refDpbIndex[BWD];
+				av1Rps->refDpbIndex[ALT2] = av1Rps->refDpbIndex[BWD];
+#if REF_ORDER
+				gop_i = 7;
+				av1Rps->ref_poc_array[LAST]  = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[0]);
+				av1Rps->ref_poc_array[LAST2] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[1]);
+				av1Rps->ref_poc_array[LAST3] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[2]);
+				av1Rps->ref_poc_array[GOLD]  = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList0[3]);
+
+				av1Rps->ref_poc_array[BWD]  = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, fourLevelHierarchicalPredStruct[gop_i].refList1[0]);
+				av1Rps->ref_poc_array[ALT]  = av1Rps->ref_poc_array[BWD];
+				av1Rps->ref_poc_array[ALT2] = av1Rps->ref_poc_array[BWD];
+#endif
+			}
+			else {
+				printf("Error in GOp indexing\n");
+			}
+			av1Rps->refreshFrameMask = 0;
+			break;
+
+		default:
+			printf("Error: unexpected picture mini Gop number\n");
+			break;
+		}
+
+
+#if  NORMAL_ORDER
+			{
+			int tmp = av1Rps->refDpbIndex[ALT];
+			av1Rps->refDpbIndex[ALT] = av1Rps->refDpbIndex[ALT2];
+			av1Rps->refDpbIndex[ALT2] = tmp;
+
+			uint64_t tmp1 = av1Rps->ref_poc_array[ALT];
+			av1Rps->ref_poc_array[ALT] = av1Rps->ref_poc_array[ALT2];
+			av1Rps->ref_poc_array[ALT2] = tmp1;
+			}
+#endif
+
+
+		if (picture_control_set_ptr->pred_struct_ptr->predType == EB_PRED_LOW_DELAY_P)
+		{
+			//P frames 
+#if 0
+			if (1) {//use single ref frames
+				av1Rps->refDpbIndex[1] = av1Rps->refDpbIndex[2] = av1Rps->refDpbIndex[3] = av1Rps->refDpbIndex[0];
+				av1Rps->refDpbIndex[4] = av1Rps->refDpbIndex[5] = av1Rps->refDpbIndex[6] = av1Rps->refDpbIndex[0];
+
+				av1Rps->ref_poc_array[1] = av1Rps->ref_poc_array[2] = av1Rps->ref_poc_array[3] = av1Rps->ref_poc_array[0];
+				av1Rps->ref_poc_array[4] = av1Rps->ref_poc_array[5] = av1Rps->ref_poc_array[6] = av1Rps->ref_poc_array[0];
+			}
+#else
+			av1Rps->refDpbIndex[4] = av1Rps->refDpbIndex[5] = av1Rps->refDpbIndex[6] = av1Rps->refDpbIndex[0];
+			av1Rps->ref_poc_array[4] = av1Rps->ref_poc_array[5] = av1Rps->ref_poc_array[6] = av1Rps->ref_poc_array[0];
+#endif
+
+			picture_control_set_ptr->showFrame = EB_TRUE;
+			picture_control_set_ptr->hasShowExisting = EB_FALSE;
+		}
+		else if (picture_control_set_ptr->pred_struct_ptr->predType == EB_PRED_RANDOM_ACCESS)
+		{
+#if 0
+			if (1) {//use single ref frames
+				av1Rps->refDpbIndex[1] = av1Rps->refDpbIndex[2] = av1Rps->refDpbIndex[3] = av1Rps->refDpbIndex[0];
+				av1Rps->refDpbIndex[5] = av1Rps->refDpbIndex[6] = av1Rps->refDpbIndex[4];
+
+				av1Rps->ref_poc_array[1] = av1Rps->ref_poc_array[2] = av1Rps->ref_poc_array[3] = av1Rps->ref_poc_array[0];
+				av1Rps->ref_poc_array[5] = av1Rps->ref_poc_array[6] = av1Rps->ref_poc_array[4];
+			}
+#endif
+			//Decide on Show Mecanism
+			if (picture_control_set_ptr->slice_type == I_SLICE)
+			{
+				//3 cases for I slice:  1:Key Frame treated above.  2: broken MiniGop due to sc or intra refresh  3: complete miniGop due to sc or intra refresh
+				if (context_ptr->miniGopLength[0] < picture_control_set_ptr->pred_struct_ptr->predStructPeriod)
+				{
+					//Scene Change that breaks the mini gop and switch to LDP (if I scene change happens to be aligned with a complete miniGop, then we do not break the pred structure)
+					picture_control_set_ptr->showFrame = EB_TRUE;
+					picture_control_set_ptr->hasShowExisting = EB_FALSE;
+				}
+				else
+				{
+					picture_control_set_ptr->showFrame = EB_FALSE;
+					picture_control_set_ptr->hasShowExisting = EB_FALSE;
+				}
+			}
+			else//B pic
+			{
+				if (context_ptr->miniGopLength[0] != picture_control_set_ptr->pred_struct_ptr->predStructPeriod)
+					printf("Error in GOp indexing3\n");
+
+				if (picture_control_set_ptr->is_used_as_reference_flag)
+				{
+					picture_control_set_ptr->showFrame = EB_FALSE;
+					picture_control_set_ptr->hasShowExisting = EB_FALSE;
+				}
+				else
+				{
+					picture_control_set_ptr->showFrame = EB_TRUE;
+					picture_control_set_ptr->hasShowExisting = EB_TRUE;
+
+					if (pictureIndex == 0) {
+						picture_control_set_ptr->showExistingLoc = lay2_1_idx;
+					}
+					else if (pictureIndex == 2) {
+						picture_control_set_ptr->showExistingLoc = lay1_1_idx;
+					}
+					else if (pictureIndex == 4) {
+						picture_control_set_ptr->showExistingLoc = lay2_1_idx;
+					}
+					else if (pictureIndex == 6) {
+						picture_control_set_ptr->showExistingLoc = base2_idx;
+					}
+					else {
+						printf("Error in GOp indexing2\n");
+					}
+
+				}
+
+			}
+
+		}
+		else {
+			printf("Error: Not supported GOP structure!");
+			exit(0);
+		}
+
+		//last pic in MiniGop: Base layer toggling
+		//mini GOP toggling since last Key Frame.
+		//a regular I keeps the toggling process and does not reset the toggle.  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
+		//whoever needs a miniGOP Level toggling, this is the time
+		if (pictureIndex == context_ptr->miniGopEndIndex[0]) {
+			//Layer0 toggle 0->1->2                
+			context_ptr->lay0_toggle = circ_inc(3, 1, context_ptr->lay0_toggle);
+			//Layer1 toggle 3->4
+			context_ptr->lay1_toggle = 1 - context_ptr->lay1_toggle;
+
+		}
+#else
         //Reset miniGop Toggling. The first miniGop after a KEY frame has toggle=0
         if (picture_control_set_ptr->av1FrameType == KEY_FRAME)
         {
@@ -1705,6 +2111,7 @@ void  Av1GenerateRpsInfo(
         //a regular I keeps the toggling process and does not reset the toggle.  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
         if (pictureIndex == context_ptr->miniGopEndIndex[0])
             context_ptr->miniGopToggle = 1 - context_ptr->miniGopToggle;
+#endif
     }
 #if NEW_PRED_STRUCT
     else if (picture_control_set_ptr->hierarchical_levels == 4)//RPS for 5L GOP
@@ -1749,10 +2156,7 @@ void  Av1GenerateRpsInfo(
             //                              8:L1_0                                                       24:L1_1
             //base0:0                                               base1:16                                           base2:32
 
-            #define  LAY0_OFF  0
-            #define  LAY1_OFF  3
-            #define  LAY2_OFF  5
-            #define  LAY3_OFF  7
+ 
 
             const uint8_t  base0_idx = context_ptr->lay0_toggle == 0 ? 1 : context_ptr->lay0_toggle == 1 ? 2 : 0;   //the oldest L0 picture in the DPB
             const uint8_t  base1_idx = context_ptr->lay0_toggle == 0 ? 2 : context_ptr->lay0_toggle == 1 ? 0 : 1;   //the middle L0 picture in the DPB
@@ -3660,6 +4064,22 @@ void* picture_decision_kernel(void *input_ptr)
 #endif
 #endif
 #endif
+
+#if 0//RPS_4L
+							// if (picture_control_set_ptr->picture_number == 36)
+							{
+								printf("   \n\nPOC:%i   List0:%i frames  \n", picture_control_set_ptr->picture_number, picture_control_set_ptr->ref_list0_count);
+								for (int i = 0; i < picture_control_set_ptr->ref_list0_count; ++i)
+									printf("   List0POC:%i  \n", picture_control_set_ptr->ref_pic_poc_array[REF_LIST_0][i]);
+
+								printf("   POC:%i   List1:%i frames  \n", picture_control_set_ptr->picture_number, picture_control_set_ptr->ref_list1_count);
+								for (int j = 0; j < picture_control_set_ptr->ref_list1_count; ++j)
+									printf("   List1POC:%i  \n", picture_control_set_ptr->ref_pic_poc_array[REF_LIST_1][j]);
+
+							}
+#endif
+
+
                             // SB Loop to reset similarColocatedLcu Array
                             uint16_t *variancePtr;
                             uint32_t  NullVarCnt = 0;
