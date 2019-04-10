@@ -426,6 +426,15 @@ void* picture_manager_kernel(void *input_ptr)
                 // set the Reference Counts Based on Temporal Layer and how many frames are active
                 picture_control_set_ptr->ref_list0_count = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (uint8_t)predPositionPtr->refList0.referenceListCount;
                 picture_control_set_ptr->ref_list1_count = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (uint8_t)predPositionPtr->refList1.referenceListCount;
+
+#if MRP_M0_ONLY
+                if (picture_control_set_ptr->enc_mode >= ENC_M1) {
+                    if (picture_control_set_ptr->temporal_layer_index > 0) {
+                        picture_control_set_ptr->ref_list0_count = MIN(picture_control_set_ptr->ref_list0_count, 1);
+                        picture_control_set_ptr->ref_list1_count = MIN(picture_control_set_ptr->ref_list1_count, 1);
+                    }
+                }
+#endif
 #if BASE_LAYER_REF
                 inputEntryPtr->list0Ptr->referenceList = predPositionPtr->refList0.referenceList;
                 inputEntryPtr->list0Ptr->referenceListCount = predPositionPtr->refList0.referenceListCount;

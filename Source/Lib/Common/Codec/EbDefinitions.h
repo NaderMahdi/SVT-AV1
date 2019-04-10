@@ -269,6 +269,7 @@ extern "C" {
 #define FIX_ORDER_HINT            1 //fix order hint usage.
 
 #define M8_CDEF_DEBUG             0 //Debug flag ofr M8
+#define MRP_M0_ONLY               1 // Enable MRP for Base only for M1-M9
 #endif				              
 struct buf_2d {
     uint8_t *buf;
