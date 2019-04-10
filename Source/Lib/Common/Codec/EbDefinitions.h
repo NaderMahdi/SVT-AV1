@@ -236,7 +236,7 @@ extern "C" {
 #define MRP_CONNECTION          1
 #define MD_INJECTION            1
 #define MRP_MD                  1
-#define MRP_MD_UNI_DIR_BIPRED 0
+#define MRP_MD_UNI_DIR_BIPRED   1
 #define NEW_RPS                  1  //RPS supporting MRP
 #define MRP_5L_STRUCT            1  //New 5L prediction structure supporting MRP
 #define MRP_LIST_REF_IDX_TYPE_LT 1
@@ -244,7 +244,7 @@ extern "C" {
 #define MCP_4XN_FIX              1 //Fix for MCP chroma for 4xN modes
 #define CHECK_CAND               1 //increased and added a safety check for number of fast candidates
 
-#define MRP_COST_EST             0
+#define MRP_COST_EST             1
 
 #define MRP_NEAR_NEAREST         1
 

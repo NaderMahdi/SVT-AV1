@@ -5605,6 +5605,9 @@ EbErrorType  BiPredictionCompensation(
 #if MRP_ME
     me_candidate->ref_index[0] = (uint8_t)first_list_ref_pic_idx;
 #endif
+#if MRP_MD_UNI_DIR_BIPRED
+    me_candidate->ref0_list = (uint8_t)firstList;
+#endif
 
     firstRefIntegPosx = (firstRefPosX >> 2);
     firstRefIntegPosy = (firstRefPosY >> 2);
@@ -5634,6 +5637,9 @@ EbErrorType  BiPredictionCompensation(
     me_candidate->mv[1] = secondRefMv;
 #if MRP_ME
     me_candidate->ref_index[1] = (uint8_t)second_list_ref_pic_idx;
+#endif
+#if MRP_MD_UNI_DIR_BIPRED
+    me_candidate->ref1_list = (uint8_t)secondList;
 #endif
     secondRefIntegPosx = (secondRefPosX >> 2);
     secondRefIntegPosy = (secondRefPosY >> 2);
@@ -7804,6 +7810,11 @@ EbErrorType MotionEstimateLcu(
             picture_control_set_ptr->me_results[sb_index]->me_candidate[pu_index][candidateIndex].direction = me_candidate->prediction_direction;
             picture_control_set_ptr->me_results[sb_index]->me_candidate[pu_index][candidateIndex].ref_idx_l0 = me_candidate->ref_index[0];
             picture_control_set_ptr->me_results[sb_index]->me_candidate[pu_index][candidateIndex].ref_idx_l1 = me_candidate->ref_index[1];
+#if MRP_MD_UNI_DIR_BIPRED 
+            picture_control_set_ptr->me_results[sb_index]->me_candidate[pu_index][candidateIndex].ref0_list = me_candidate->ref0_list;
+            picture_control_set_ptr->me_results[sb_index]->me_candidate[pu_index][candidateIndex].ref1_list = me_candidate->ref1_list;
+#endif
+
             picture_control_set_ptr->me_results[sb_index]->me_candidate[pu_index][candidateIndex].xMvL0 = _MVXT(me_candidate->mv[0]);
             picture_control_set_ptr->me_results[sb_index]->me_candidate[pu_index][candidateIndex].yMvL0 = _MVYT(me_candidate->mv[0]);
             picture_control_set_ptr->me_results[sb_index]->me_candidate[pu_index][candidateIndex].xMvL1 = _MVXT(me_candidate->mv[1]);

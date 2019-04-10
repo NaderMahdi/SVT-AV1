@@ -2350,7 +2350,7 @@ int av1_get_reference_mode_context(const MacroBlockD *xd) {
     assert(ctx >= 0 && ctx < COMP_INTER_CONTEXTS);
     return ctx;
 }
-static INLINE void av1_collect_neighbors_ref_counts(MacroBlockD *const xd) {
+INLINE void av1_collect_neighbors_ref_counts(MacroBlockD *const xd) {
     av1_zero(xd->neighbors_ref_counts);
 
     uint8_t *const ref_counts = xd->neighbors_ref_counts;

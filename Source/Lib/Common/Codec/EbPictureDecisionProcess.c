@@ -1466,8 +1466,12 @@ void set_all_ref_frame_type(PictureParentControlSet_t  *parent_pcs_ptr, MvRefere
             }
         }
     }
-   
+#if NORMAL_ORDER
+    if (parent_pcs_ptr->ref_list1_count > 2) {
+
+#else
     if (parent_pcs_ptr->ref_list1_count > 1) {
+#endif
         rf[0] = BWDREF_FRAME;
         rf[1] = ALTREF_FRAME;
         ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
