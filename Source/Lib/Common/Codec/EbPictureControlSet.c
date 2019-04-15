@@ -1081,7 +1081,11 @@ EbErrorType picture_parent_control_set_ctor(
 
         return_error = me_sb_results_ctor(
             &(object_ptr->me_results[sb_index]),
+#if NO_CFG_FILE
+			MAX_ME_PU_COUNT,
+#else
             object_ptr->max_number_of_pus_per_sb,
+#endif
             object_ptr->max_number_of_candidates_per_block);
     }
 

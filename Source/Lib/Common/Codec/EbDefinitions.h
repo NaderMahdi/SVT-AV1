@@ -188,10 +188,18 @@ extern "C" {
 #endif
 #define ENABLE_EOB_ZERO_CHECK                           1
 #define DISABLE_128_SB_FOR_SUB_720                      1
-#define BASE_LAYER_REF                                  0 // Base layer pictures use the previous I slice as the second reference
+
+#define MRP_SUPPORT            1//------------------------------
+
+#if !MRP_SUPPORT
+#define BASE_LAYER_REF                                  1 // Base layer pictures use the previous I slice as the second reference
+#endif
+
 #if BASE_LAYER_REF
 #define MAX_FRAMES_TO_REF_I                             64
 #endif
+
+
 
 #define NSQ_OPTIMASATION                                1
 
@@ -228,9 +236,10 @@ extern "C" {
 
 #define AOM_INTERP_EXTEND 4
 
-#define MRP_SUPPORT            1
+
 
 #if MRP_SUPPORT
+#define MRP_PRED_STRUCTURE 1
 #define EC_UPDATE               1
 #define MRP_ME                  1
 #define MRP_CONNECTION          1
@@ -270,6 +279,8 @@ extern "C" {
 
 #define M8_CDEF_DEBUG             0 //Debug flag ofr M8
 #define MRP_M0_ONLY               1 // Enable MRP for Base only for M1-M9
+#define NO_CFG_FILE               1 //allocate ME results for 209 PUs
+#define NO_UNI                    1
 #endif				              
 struct buf_2d {
     uint8_t *buf;

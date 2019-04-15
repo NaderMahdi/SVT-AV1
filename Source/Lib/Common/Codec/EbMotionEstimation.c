@@ -5846,38 +5846,45 @@ EbErrorType  BiPredictionSearch(
     }
 
 #if MRP_MD_UNI_DIR_BIPRED
-    //NM: Within list 0	bipred: (LAST,LAST2)	(LAST,LAST3)	(LAST,GOLD)
-    for (firstListRefPictdx = 1; firstListRefPictdx < activeRefPicFirstLisNum; firstListRefPictdx++) {
-        BiPredictionCompensation(
-            context_ptr,
-            pu_index,
-            &(context_ptr->me_candidate[candidateIndex].pu[pu_index]),
-            REFERENCE_PIC_LIST_0,
-            0,
-            context_ptr->p_sb_best_mv[REFERENCE_PIC_LIST_0][0][nIndex],
-            REFERENCE_PIC_LIST_0,
-            firstListRefPictdx,
-            context_ptr->p_sb_best_mv[REFERENCE_PIC_LIST_0][firstListRefPictdx][nIndex],
-            asm_type);
+#if NO_UNI
+	if (picture_control_set_ptr->mrp_mode == 0)
+	{
+#endif
+		//NM: Within list 0	bipred: (LAST,LAST2)	(LAST,LAST3)	(LAST,GOLD)
+		for (firstListRefPictdx = 1; firstListRefPictdx < activeRefPicFirstLisNum; firstListRefPictdx++) {
+			BiPredictionCompensation(
+				context_ptr,
+				pu_index,
+				&(context_ptr->me_candidate[candidateIndex].pu[pu_index]),
+				REFERENCE_PIC_LIST_0,
+				0,
+				context_ptr->p_sb_best_mv[REFERENCE_PIC_LIST_0][0][nIndex],
+				REFERENCE_PIC_LIST_0,
+				firstListRefPictdx,
+				context_ptr->p_sb_best_mv[REFERENCE_PIC_LIST_0][firstListRefPictdx][nIndex],
+				asm_type);
 
-        candidateIndex++;
-    }
-    //NM: Within list 1	bipred: (BWD, ALT)		 
-    for (secondListRefPictdx = 1; secondListRefPictdx < MIN(activeRefPicSecondLisNum,1); secondListRefPictdx++) {
-        BiPredictionCompensation(
-            context_ptr,
-            pu_index,
-            &(context_ptr->me_candidate[candidateIndex].pu[pu_index]),
-            REFERENCE_PIC_LIST_1,
-            0,
-            context_ptr->p_sb_best_mv[REFERENCE_PIC_LIST_1][0][nIndex],
-            REFERENCE_PIC_LIST_1,
-            secondListRefPictdx,
-            context_ptr->p_sb_best_mv[REFERENCE_PIC_LIST_1][secondListRefPictdx][nIndex],
-            asm_type);
+			candidateIndex++;
+		}
+		//NM: Within list 1	bipred: (BWD, ALT)		 
+		for (secondListRefPictdx = 1; secondListRefPictdx < MIN(activeRefPicSecondLisNum, 1); secondListRefPictdx++) {
+			BiPredictionCompensation(
+				context_ptr,
+				pu_index,
+				&(context_ptr->me_candidate[candidateIndex].pu[pu_index]),
+				REFERENCE_PIC_LIST_1,
+				0,
+				context_ptr->p_sb_best_mv[REFERENCE_PIC_LIST_1][0][nIndex],
+				REFERENCE_PIC_LIST_1,
+				secondListRefPictdx,
+				context_ptr->p_sb_best_mv[REFERENCE_PIC_LIST_1][secondListRefPictdx][nIndex],
+				asm_type);
 
-        candidateIndex++;
-    }
+			candidateIndex++;
+		}
+#if NO_UNI		
+	}
+#endif
 #endif
 
     *totalMeCandidateIndex = candidateIndex;

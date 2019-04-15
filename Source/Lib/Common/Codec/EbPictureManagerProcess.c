@@ -428,7 +428,11 @@ void* picture_manager_kernel(void *input_ptr)
                 picture_control_set_ptr->ref_list1_count = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (uint8_t)predPositionPtr->refList1.referenceListCount;
 
 #if MRP_M0_ONLY
+#if NO_UNI
+				if (picture_control_set_ptr->mrp_mode == 2) {
+#else
                 if (picture_control_set_ptr->enc_mode >= ENC_M1) {
+#endif
                     if (picture_control_set_ptr->temporal_layer_index > 0) {
                         picture_control_set_ptr->ref_list0_count = MIN(picture_control_set_ptr->ref_list0_count, 1);
                         picture_control_set_ptr->ref_list1_count = MIN(picture_control_set_ptr->ref_list1_count, 1);

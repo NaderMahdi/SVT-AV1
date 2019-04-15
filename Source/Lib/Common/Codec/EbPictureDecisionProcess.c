@@ -1472,31 +1472,38 @@ void set_all_ref_frame_type(PictureParentControlSet_t  *parent_pcs_ptr, MvRefere
         }
     }
 
-    //compound Uni-Dir   
-    if (parent_pcs_ptr->ref_list0_count > 1) {
-        rf[0] = LAST_FRAME;
-        rf[1] = LAST2_FRAME;
-        ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
-        if (parent_pcs_ptr->ref_list0_count > 2) {
-            rf[1] = LAST3_FRAME;
-            ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
-            if (parent_pcs_ptr->ref_list0_count > 3) {
-                rf[1] = GOLDEN_FRAME;
-                ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
-            }
-        }
-    }
+#if NO_UNI
+	if (parent_pcs_ptr->mrp_mode==0)
+	{
+#endif
+
+		//compound Uni-Dir   
+		if (parent_pcs_ptr->ref_list0_count > 1) {
+			rf[0] = LAST_FRAME;
+			rf[1] = LAST2_FRAME;
+			ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
+			if (parent_pcs_ptr->ref_list0_count > 2) {
+				rf[1] = LAST3_FRAME;
+				ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
+				if (parent_pcs_ptr->ref_list0_count > 3) {
+					rf[1] = GOLDEN_FRAME;
+					ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
+				}
+			}
+		}
 #if NORMAL_ORDER
-    if (parent_pcs_ptr->ref_list1_count > 2) {
+		if (parent_pcs_ptr->ref_list1_count > 2) {
 
 #else
-    if (parent_pcs_ptr->ref_list1_count > 1) {
+		if (parent_pcs_ptr->ref_list1_count > 1) {
 #endif
-        rf[0] = BWDREF_FRAME;
-        rf[1] = ALTREF_FRAME;
-        ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
-    }
-
+			rf[0] = BWDREF_FRAME;
+			rf[1] = ALTREF_FRAME;
+			ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
+		}
+#if NO_UNI
+	}
+#endif
 }
 #endif
 /*************************************************
@@ -3747,8 +3754,21 @@ void* picture_decision_kernel(void *input_ptr)
                             // set the Reference Counts Based on Temporal Layer and how many frames are active
                             picture_control_set_ptr->ref_list0_count = (pictureType == I_SLICE) ? 0 : (uint8_t)predPositionPtr->refList0.referenceListCount;
                             picture_control_set_ptr->ref_list1_count = (pictureType == I_SLICE) ? 0 : (uint8_t)predPositionPtr->refList1.referenceListCount;
+
+#if NO_UNI
+							if (MR_MODE)
+								picture_control_set_ptr->mrp_mode = 0; //ON- full
+							else
+								picture_control_set_ptr->mrp_mode = picture_control_set_ptr->enc_mode == ENC_M0 ? 1 : //ON- no-uniDirection
+								2; //OFF 
+
+#endif
 #if MRP_M0_ONLY
+#if NO_UNI
+							if(picture_control_set_ptr->mrp_mode==2){
+#else
                             if (picture_control_set_ptr->enc_mode >= ENC_M1){
+#endif
                                 if (picture_control_set_ptr->temporal_layer_index > 0) {
                                     picture_control_set_ptr->ref_list0_count = MIN(picture_control_set_ptr->ref_list0_count, 1);
                                     picture_control_set_ptr->ref_list1_count = MIN(picture_control_set_ptr->ref_list1_count, 1);

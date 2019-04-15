@@ -2,8 +2,8 @@
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
-#define MRP_PRED_STRUCTURE 1
-#if MRP_PRED_STRUCTURE
+//#define MRP_PRED_STRUCTURE 0
+
 // Confidential & Priviledged Information
 // Copyright © eBrisk Video Inc. All Rights Reserved
 
@@ -12,6 +12,8 @@
 #include <string.h>
 
 #include "EbDefinitions.h"
+
+#if MRP_PRED_STRUCTURE
 #include "EbPredictionStructure.h"
 #include "EbUtility.h"
 

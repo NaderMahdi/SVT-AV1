@@ -14380,6 +14380,9 @@ extern "C" {
 #if SETUP_SKIP
         SkipModeInfo                         skip_mode_info;
 #endif
+#if NO_UNI
+		uint8_t                              mrp_mode;
+#endif
     } PictureParentControlSet_t;
 
 
