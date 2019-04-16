@@ -36,8 +36,21 @@ extern "C" {
             uint64_t MVs;
         };
 
+#if MRP_MEM_OPT
+		unsigned    distortion : 32;     // 20-bits holds maximum SAD of 64x64 PU
+		unsigned    direction : 2;
 #if MRP_ME
-        unsigned    ref_idx_l0 : 8;      // allows for up to 4 references   
+		unsigned    ref_idx_l0 : 2;      // allows for up to 4 references   
+		unsigned    ref_idx_l1 : 2;
+#if MRP_MD_UNI_DIR_BIPRED 
+		unsigned    ref0_list : 1;
+		unsigned    ref1_list : 1;
+#endif
+#endif
+#else
+
+#if MRP_ME
+        unsigned    ref_idx_l0 :  8;      // allows for up to 4 references   
         unsigned    ref_idx_l1 : 8;
 #if MRP_MD_UNI_DIR_BIPRED 
         unsigned    ref0_list : 8;      
@@ -47,7 +60,7 @@ extern "C" {
         unsigned    distortion : 32;     // 20-bits holds maximum SAD of 64x64 PU
 
         unsigned    direction : 8;      // 0: uni-pred L0, 1: uni-pred L1, 2: bi-pred
-
+#endif
     } MeCandidate_t;
 
     // move this to a new file with ctor & dtor

@@ -1074,7 +1074,11 @@ EbErrorType picture_parent_control_set_ctor(
     // Motion Estimation Results
     object_ptr->max_number_of_pus_per_sb = (initDataPtr->ext_block_flag) ? MAX_ME_PU_COUNT : SQUARE_PU_COUNT;
 #if MRP_CONNECTION
-    object_ptr->max_number_of_candidates_per_block = 100;//(initDataPtr->mePictureSearchCount * initDataPtr->mePictureSearchCount) + (initDataPtr->mePictureSearchCount << 1);
+#if MRP_MEM_OPT
+	object_ptr->max_number_of_candidates_per_block = 23; //[Single Ref = 7] + [BiDir = 12 = 3*4 ] + [UniDir = 4 = 3+1]
+#else
+	object_ptr->max_number_of_candidates_per_block =  100;//(initDataPtr->mePictureSearchCount * initDataPtr->mePictureSearchCount) + (initDataPtr->mePictureSearchCount << 1);
+#endif
     EB_MALLOC(MeLcuResults_t**, object_ptr->me_results, sizeof(MeLcuResults_t*) * object_ptr->sb_total_count, EB_N_PTR);
 
     for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {

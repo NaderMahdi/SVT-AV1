@@ -281,6 +281,8 @@ extern "C" {
 #define MRP_M0_ONLY               1 // Enable MRP for Base only for M1-M9
 #define NO_CFG_FILE               1 //allocate ME results for 209 PUs
 #define NO_UNI                    1
+#define MRP_MEM_OPT               1
+#define MRP_FLAG                  1
 #endif				              
 struct buf_2d {
     uint8_t *buf;

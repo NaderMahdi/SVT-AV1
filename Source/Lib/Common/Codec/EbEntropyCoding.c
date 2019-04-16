@@ -2557,9 +2557,13 @@ void Av1CollectNeighborsRefCounts(
         }
     }
 }
-
+#if EC_UPDATE
 #define WRITE_REF_BIT(bname, pname) \
   aom_write_symbol(w, bname, av1_get_pred_cdf_##pname(xd), 2)
+#else
+#define WRITE_REF_BIT(bname, pname) \
+  aom_write_symbol(ecWriter, bname, av1_get_pred_cdf_##pname(), 2)
+  #endif
 /***************************************************************************************/
 // == Common context functions for both comp and single ref ==
 //
