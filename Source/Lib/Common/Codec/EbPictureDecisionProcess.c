@@ -3762,6 +3762,7 @@ void* picture_decision_kernel(void *input_ptr)
 								picture_control_set_ptr->mrp_mode = picture_control_set_ptr->enc_mode == ENC_M0 ? 1 : //ON- no-uniDirection
 								2; //OFF 
 
+							picture_control_set_ptr->mrp_mode = 0; //ON- full
 #endif
 #if MRP_M0_ONLY
 #if NO_UNI
@@ -4059,39 +4060,18 @@ void* picture_decision_kernel(void *input_ptr)
                             picture_control_set_ptr->skip_mode_flag = picture_control_set_ptr->is_skip_mode_allowed;
                             //printf("POC:%i  skip_mode_allowed:%i  REF_SKIP_0: %i   REF_SKIP_1: %i \n",picture_control_set_ptr->picture_number, picture_control_set_ptr->skip_mode_info.skip_mode_allowed, picture_control_set_ptr->skip_mode_info.ref_frame_idx_0, picture_control_set_ptr->skip_mode_info.ref_frame_idx_1);
 #else
-#if MRP_ENABLE_SKIP_FOR_BASE
-                            if (picture_control_set_ptr->temporal_layer_index == 0 && picture_control_set_ptr->slice_type != I_SLICE) {
-                                if (picture_control_set_ptr->ref_list0_count <= 1 && picture_control_set_ptr->ref_list1_count <= 1) {
-                                    picture_control_set_ptr->is_skip_mode_allowed = 0;
-                                    picture_control_set_ptr->skip_mode_flag = 0;
-                                }
 
-                                else {
-                                    picture_control_set_ptr->is_skip_mode_allowed = 1;
-                                    picture_control_set_ptr->skip_mode_flag = 1;
-                                }
-
-                            }
-
-#else
 #if BASE_LAYER_REF || MRP_REF_MODE
-#if MRP_ME
-                            if (picture_control_set_ptr->temporal_layer_index == 0 && picture_control_set_ptr->slice_type != I_SLICE) {
-                                if (picture_control_set_ptr->ref_list0_count <= 1 && picture_control_set_ptr->ref_list1_count <= 1) 
-                                    picture_control_set_ptr->is_skip_mode_allowed = 0;
-                                else 
-                                    picture_control_set_ptr->is_skip_mode_allowed = 1;
-                            }
-#else
+
                             if (picture_control_set_ptr->temporal_layer_index == 0) {
                                 if (picture_control_set_ptr->ref_pic_poc_array[0] == picture_control_set_ptr->ref_pic_poc_array[1])
                                     picture_control_set_ptr->is_skip_mode_allowed = 0;
                                 else
                                     picture_control_set_ptr->is_skip_mode_allowed = 1;
                             }
+
 #endif
-#endif
-#endif
+
 #endif
 
 #if 0//RPS_4L

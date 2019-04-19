@@ -14,7 +14,7 @@ extern "C" {
 #include "EbSvtAv1.h"
 
 #define  TILES    1
-//#define  MRP_ME   0
+
 
     //***HME***
 #define EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT         2

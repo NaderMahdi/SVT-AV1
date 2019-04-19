@@ -191,6 +191,37 @@ extern "C" {
 
 #define MRP_SUPPORT            1//------------------------------
 
+//NEDED FLAGS  ON
+
+
+//M0_SSD_HALF_QUARTER_PEL_BIPRED_SEARCH
+//DISABLE_NSQ_FOR_NON_REF 
+//DISABLE_NSQ
+//M0_ME_QUARTER_PEL_SEARCH
+//NSQ_OPTIMASATION
+//M8_SKIP_BLK
+//DISABLE_IN_LOOP_ME
+//TILES
+//REMOVED_DUPLICATE_INTER
+//REMOVED_DUPLICATE_INTER_L1
+//REMOVED_DUPLICATE_INTER_BIPRED
+//ICOPY
+//INTRA_INTER_FAST_LOOP
+//M0_ME_SEARCH_BASE
+//SHUT_GLOBAL_MV
+//IMPROVED_BIPRED_INJECTION
+//IMPROVED_UNIPRED_INJECTION
+
+
+
+//NEEDED FLAGS  OFF
+//M0_HIGH_PRECISION_INTERPOLATION
+//TEST5_DISABLE_NSQ_ME
+//ALIGN_MEM
+//TWO_FAST_LOOP
+//ADD_DELTA_QP_SUPPORT
+
+
 #if !MRP_SUPPORT
 #define BASE_LAYER_REF                                  1 // Base layer pictures use the previous I slice as the second reference
 #endif
@@ -239,31 +270,31 @@ extern "C" {
 
 
 #if MRP_SUPPORT
-#define MRP_PRED_STRUCTURE 1
-#define EC_UPDATE               1
-#define MRP_ME                  1
-#define MRP_CONNECTION          1
-#define MD_INJECTION            1
-#define MRP_MD                  1
-#define MRP_MD_UNI_DIR_BIPRED   1
+#define MRP_PRED_STRUCTURE       1
+#define EC_UPDATE                1
+#define MRP_ME                   1 //ported all chnges except those in pred_sruct.c
+#define MRP_CONNECTION           1 
+#define MD_INJECTION             1 
+#define MRP_MD                   1 
+#define MRP_MD_UNI_DIR_BIPRED    1
+
 #define NEW_RPS                  1  //RPS supporting MRP
 #define MRP_5L_STRUCT            1  //New 5L prediction structure supporting MRP
-#define MRP_LIST_REF_IDX_TYPE_LT 1
+#define MRP_LIST_REF_IDX_TYPE_LT 1  //ok
 #define MRP_MVP                  1 //MVP upgrade to support MRP
 #define MCP_4XN_FIX              1 //Fix for MCP chroma for 4xN modes
 #define CHECK_CAND               1 //increased and added a safety check for number of fast candidates
 
 #define MRP_COST_EST             1
 
-#define MRP_NEAR_NEAREST         1
 
 #define MRP_BASE                 1 //enable MRP for Base
 
-#define MRP_REF_MODE             1
+#define MRP_REF_MODE             1  //--------------- carefull
 
 #define MRP_DUPLICATION_FIX       1
 
-#define MRP_ENABLE_SKIP_FOR_BASE  1
+
 #define MRP_ENABLE_BI_FOR_BASE    1
 
 #define SETUP_SKIP                1

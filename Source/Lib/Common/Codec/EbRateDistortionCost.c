@@ -939,7 +939,7 @@ uint64_t EstimateRefFramesNumBits(
             if (picture_control_set_ptr->parent_pcs_ptr->reference_mode == REFERENCE_MODE_SELECT) {
                 if (MIN(bwidth, bheight) >= 8) {
                     //aom_write_symbol(w, is_compound, av1_get_reference_mode_cdf(cu_ptr->av1xd), 2);
-                    int32_t context = av1_get_reference_mode_context(cu_ptr->av1xd);
+                    int32_t context = av1_get_reference_mode_context_new(cu_ptr->av1xd);
                     refRateA = candidate_ptr->md_rate_estimation_ptr->compInterFacBits[context][is_compound];
                 }
             }
@@ -954,7 +954,7 @@ uint64_t EstimateRefFramesNumBits(
                     : BIDIR_COMP_REFERENCE;
 
 
-                const int pred_context = av1_get_comp_reference_type_context(cu_ptr->av1xd);
+                const int pred_context = av1_get_comp_reference_type_context_new(cu_ptr->av1xd);
                 refRateB = candidate_ptr->md_rate_estimation_ptr->compRefTypeFacBits[pred_context][comp_ref_type];
                 /*aom_write_symbol(w, comp_ref_type, av1_get_comp_reference_type_cdf(cu_ptr->av1xd),
                     2);*/
@@ -2543,7 +2543,7 @@ void coding_loop_context_generation(
 
     //Collect Neighbor ref cout
 #if MRP_COST_EST
-    av1_collect_neighbors_ref_counts(cu_ptr->av1xd);
+    av1_collect_neighbors_ref_counts_new(cu_ptr->av1xd);
 #else
     Av1CollectNeighborsRefCounts(
         cu_ptr,

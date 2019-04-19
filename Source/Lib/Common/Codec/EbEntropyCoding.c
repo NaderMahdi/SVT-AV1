@@ -2074,13 +2074,13 @@ int32_t Av1GetReferenceModeContext(
 #if EC_UPDATE
 int av1_get_intra_inter_context(const MacroBlockD *xd);
 
-int av1_get_reference_mode_context(const MacroBlockD *xd);
+int av1_get_reference_mode_context_new(const MacroBlockD *xd);
 
 static INLINE aom_cdf_prob *av1_get_reference_mode_cdf(const MacroBlockD *xd) {
-    return xd->tile_ctx->comp_inter_cdf[av1_get_reference_mode_context(xd)];
+    return xd->tile_ctx->comp_inter_cdf[av1_get_reference_mode_context_new(xd)];
 }
 
-int av1_get_comp_reference_type_context(const MacroBlockD *xd);
+int av1_get_comp_reference_type_context_new(const MacroBlockD *xd);
 
 // == Uni-directional contexts ==
 
@@ -2092,7 +2092,7 @@ int av1_get_pred_context_uni_comp_ref_p2(const MacroBlockD *xd);
 
 static INLINE aom_cdf_prob *av1_get_comp_reference_type_cdf(
     const MacroBlockD *xd) {
-    const int pred_context = av1_get_comp_reference_type_context(xd);
+    const int pred_context = av1_get_comp_reference_type_context_new(xd);
     return xd->tile_ctx->comp_ref_type_cdf[pred_context];
 }
 
@@ -2147,7 +2147,7 @@ static INLINE aom_cdf_prob *av1_get_pred_cdf_comp_bwdref_p1(
   (((ref_frame) >= BWDREF_FRAME) && ((ref_frame) <= ALTREF_FRAME))
 #define IS_BACKWARD_REF_FRAME(ref_frame) CHECK_BACKWARD_REFS(ref_frame)
 
-int av1_get_comp_reference_type_context(const MacroBlockD *xd) {
+int av1_get_comp_reference_type_context_new(const MacroBlockD *xd) {
     int pred_context;
     const MbModeInfo *const above_mbmi = xd->above_mbmi;
     const MbModeInfo *const left_mbmi = xd->left_mbmi;
@@ -2307,7 +2307,7 @@ static INLINE int has_uni_comp_refs(const MbModeInfo *mbmi) {
         (mbmi->ref_frame[1] >= BWDREF_FRAME)));
 }
 
-int av1_get_reference_mode_context(const MacroBlockD *xd) {
+int av1_get_reference_mode_context_new(const MacroBlockD *xd) {
     int ctx;
     const MbModeInfo *const above_mbmi = xd->above_mbmi;
     const MbModeInfo *const left_mbmi = xd->left_mbmi;
@@ -2350,7 +2350,7 @@ int av1_get_reference_mode_context(const MacroBlockD *xd) {
     assert(ctx >= 0 && ctx < COMP_INTER_CONTEXTS);
     return ctx;
 }
-INLINE void av1_collect_neighbors_ref_counts(MacroBlockD *const xd) {
+INLINE void av1_collect_neighbors_ref_counts_new(MacroBlockD *const xd) {
     av1_zero(xd->neighbors_ref_counts);
 
     uint8_t *const ref_counts = xd->neighbors_ref_counts;
@@ -5877,7 +5877,7 @@ EbErrorType write_modes_b(
             else {
 
 #if EC_UPDATE
-                av1_collect_neighbors_ref_counts(cu_ptr->av1xd);
+                av1_collect_neighbors_ref_counts_new(cu_ptr->av1xd);
 
                 write_ref_frames(
                     frameContext,
