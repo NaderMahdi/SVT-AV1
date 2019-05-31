@@ -263,7 +263,10 @@ extern "C" {
 #define AOM_INTERP_EXTEND 4
 #define MRP_DISABLE_ADDED_CAND_M1                        0
 
-#define EIGTH_PEL_MV                                    0
+#define EIGTH_PEL_MV                                     0
+
+#define IMPROVED_SUBPEL_SEARCH                           1
+
 
 struct Buf2D 
 {
@@ -579,7 +582,18 @@ typedef enum ATTRIBUTE_PACKED
     COMPONENT_ALL = 4,            // Y+Cb+Cr
     COMPONENT_NONE = 15
 }COMPONENT_TYPE;
-
+#if IMPROVED_SUBPEL_SEARCH
+typedef enum ME_HP_MODE
+{
+    EX_HP_MODE = 0,
+    REFINMENT_HP_MODE = 1
+}ME_HP_MODE;
+typedef enum ME_QP_MODE
+{
+    EX_QP_MODE = 0,
+    REFINMENT_QP_MODE = 1
+}ME_QP_MODE;
+#endif
 static int32_t clamp(int32_t value, int32_t low, int32_t high) {
     return value < low ? low : (value > high ? high : value);
 }
